@@ -1,0 +1,15 @@
+{
+  "name": "ultima-linha-claude-backend",
+  "version": "1.0.0",
+  "description": "Backend mínimo que guarda a Anthropic API key e faz proxy de chamadas da Claude API para o jogo 'última linha'.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
