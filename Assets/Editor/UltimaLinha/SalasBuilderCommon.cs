@@ -184,6 +184,7 @@ namespace UltimaLinha.EditorTools
             public DocumentView document;
             public DigitLockUI lockUi;
             public CanvasGroup darkness, redTint;
+            public TMP_Text timer;
         }
 
         public struct Fonts
@@ -476,6 +477,10 @@ namespace UltimaLinha.EditorTools
             var controls = Label("Controles", hudRt, "A/D andar   ·   ESPAÇO pular   ·   E interagir   ·   ESC menu",
                 fonts.sans, 15, new Color(Muted.r, Muted.g, Muted.b, 0.55f), 64, 1080 - 44, 1400, 24);
             controls.characterSpacing = 6;
+
+            ui.timer = Label("Contagem", hudRt, "", fonts.sans, 60, Hex("D9453A"), 1356, 44, 500, 80);
+            ui.timer.alignment = TextAlignmentOptions.Right;
+            ui.timer.characterSpacing = 8;
 
             var toastRt = Stretch("Aviso", hudRt);
             var toastGroup = toastRt.gameObject.AddComponent<CanvasGroup>();
