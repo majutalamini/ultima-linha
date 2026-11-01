@@ -84,6 +84,7 @@ namespace UltimaLinha
         public static void Clear()
         {
             PlayerPrefs.DeleteKey(SceneKey);
+            UltimaLinha.Salas.GameFlags.ClearAll();
             PlayerPrefs.Save();
         }
     }

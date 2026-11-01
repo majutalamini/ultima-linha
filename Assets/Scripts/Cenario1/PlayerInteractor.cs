@@ -20,7 +20,7 @@ namespace UltimaLinha.Cenario1
         void Update()
         {
             Current = null;
-            if (player && player.controlEnabled && !DialogueBox.IsBusy && !LetterLockUI.IsOpen)
+            if (player && player.controlEnabled && !DialogueBox.IsBusy && !LetterLockUI.IsOpen && !UltimaLinha.Salas.Modal.IsOpen)
             {
                 var b = player.Bounds;
                 var feet = new Vector2(b.center.x, b.min.y);
