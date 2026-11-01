@@ -40,6 +40,8 @@ namespace UltimaLinha.Cenario1
 
         /// <summary>1 = olhando para a direita, -1 = para a esquerda (NPCs).</summary>
         [HideInInspector] public float facing = 1f;
+        /// <summary>Velocidade de caminhada dos NPCs em cena (cutscenes): faz as pernas andarem.</summary>
+        [HideInInspector] public float externalSpeed;
 
         float phase, walk, air, t, seed;
         float sighT = 5f, watchT = 7f, glanceT = 4f;
@@ -87,6 +89,7 @@ namespace UltimaLinha.Cenario1
                 vy = mover.velocity.y;
                 grounded = mover.IsGrounded;
             }
+            else vx = externalSpeed;
             if (flipSource) facing = flipSource.flipX ? -1f : 1f;
             transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * Mathf.Sign(facing), transform.localScale.y, 1f);
 

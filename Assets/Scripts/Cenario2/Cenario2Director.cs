@@ -48,6 +48,8 @@ namespace UltimaLinha.Cenario2
 
         [Header("Cenas")]
         public string nextScene = "Cenario3";
+        [Tooltip("Enquanto o Cenário 3 não existe, a porta leva a esta cena.")]
+        public string fallbackScene = "Cenario4";
         public string menuScene = "MainMenu";
 
         [Header("Som")]
@@ -325,6 +327,9 @@ namespace UltimaLinha.Cenario2
             if (rumble) StartCoroutine(FadeAudio(rumble, 0f, 1.2f));
             if (stationAmbience) StartCoroutine(FadeAudio(stationAmbience, 0f, 1.2f));
             if (Hud.Instance) yield return Hud.Instance.FadeScreen(1f, 1.4f);
+
+            if (!Application.CanStreamedLevelBeLoaded(scene) && scene == nextScene && Application.CanStreamedLevelBeLoaded(fallbackScene))
+                scene = fallbackScene; // o Cenário 3 ainda não existe: segue direto para a sala de controle
 
             if (!Application.CanStreamedLevelBeLoaded(scene))
             {
