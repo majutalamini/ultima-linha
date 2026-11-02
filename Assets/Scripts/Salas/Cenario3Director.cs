@@ -25,6 +25,10 @@ namespace UltimaLinha.Salas
         public int[] digits = { 5, 2, 9, 1 };
         public ExitDoor door;
         public DigitLockUI lockUI;
+        [Tooltip("Brilho fraco em cima de cada documento (mesma ordem), some quando ele é lido.")]
+        public SpriteRenderer[] docGlows = new SpriteRenderer[0];
+        [Tooltip("Com só um número faltando, o Ren entrega a folha que ele achou.")]
+        public List<DialogueLine> renGivesLast = new List<DialogueLine>();
 
         public Vector2 gravity = new Vector2(0f, -20f);
         public string nextScene = "Cenario4";
@@ -48,7 +52,7 @@ namespace UltimaLinha.Salas
         public string endSubtitle = "A sala de controle ainda está sendo construída.";
 
         Vector2 previousGravity;
-        bool introDone, leaving, unlocked;
+        bool introDone, leaving, unlocked, renHelped;
         bool[] found;
 
         void Awake()
@@ -91,6 +95,19 @@ namespace UltimaLinha.Salas
 
         void Update()
         {
+            for (int i = 0; i < docGlows.Length; i++)
+            {
+                var g = docGlows[i];
+                if (!g) continue;
+                bool show = found == null || i >= found.Length || !found[i];
+                if (g.enabled != show) g.enabled = show;
+                if (show)
+                {
+                    var c = g.color;
+                    c.a = 0.22f + 0.16f * Mathf.Sin(Time.time * 2.6f + i * 1.7f);
+                    g.color = c;
+                }
+            }
             if (!introDone || leaving) return;
             if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !Modal.IsOpen) StartCoroutine(Leave(menuScene));
         }
@@ -139,6 +156,46 @@ namespace UltimaLinha.Salas
                 Say(doorClosed);
                 return;
             }
+            if (Count() == digits.Length - 1 && !renHelped)
+            {
+                StartCoroutine(RenGivesLast());
+                return;
+            }
+            OpenLock();
+        }
+
+        /// <summary>Faltando só uma folha, o Ren aparece com ela: ele achou caída pela estação.</summary>
+        IEnumerator RenGivesLast()
+        {
+            renHelped = true;
+            if (player) player.controlEnabled = false;
+            if (ren)
+            {
+                ren.enabled = false;
+                yield return WalkTo(ren, door.transform.position.x - 1.6f, 3.0f);
+                if (ren.rig) ren.rig.facing = 1f;
+            }
+            yield return SayAndWait(renGivesLast);
+            int missing = System.Array.IndexOf(found, false);
+            if (missing >= 0)
+            {
+                found[missing] = true;
+                if (sfx && noteClip) sfx.PlayOneShot(noteClip);
+                if (Hud.Instance)
+                {
+                    Hud.Instance.Toast($"Número anotado ({Count()}/{digits.Length})");
+                    Hud.Instance.SetObjective(objectiveDoor);
+                }
+            }
+            if (ren) ren.enabled = true;
+            if (player) player.controlEnabled = true;
+            yield return new WaitForSeconds(0.3f);
+            OpenLock();
+        }
+
+        void OpenLock()
+        {
+            if (unlocked || !lockUI) return;
             lockUI.Open(Typed());
             if (lockUI.status) lockUI.status.text = Notes();
         }

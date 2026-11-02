@@ -21,13 +21,15 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario5SceneBuilder
     {
-        const int BuildVersion = 1; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario5.unity";
         const string Art5 = "Assets/Art/Cenario5";
 
         const float W = 3600f, Floor = 850f, LWall = 120f, RWall = 3540f;
         const float DoorX0 = 3250f, DoorX1 = 3430f, DoorTop = 300f;
-        const float BossDeskX = 1790f, BodyX = 2330f;
+        const float BossDeskX = 1790f, BodyX = 2355f;
+        // corpo e cabeça (sprites separados, mesmas medidas de Ferramentas/Cenarios45/cenario5.py: BODY_BOX e HEAD_BOX)
+        const float BodyCx = 2355f, BodyCy = 814f, HeadCx = 2497f, HeadCy = 809f, BodyX0 = 2150f, BodyX1 = 2560f;
         static readonly (string id, string label, float x0, float x1)[] Cabinets =
         {
             ("arquivoA", "ADMISSÕES", 1280f, 1410f),
@@ -106,7 +108,23 @@ namespace UltimaLinha.EditorTools
             var spots = new GameObject("Lugares").transform;
             spots.SetParent(core.world, false);
 
-            var body = BuildSpot(spots, "corpo", BodyX, Floor, 1.6f, 1.6f);
+            var body = BuildSpot(spots, "corpo", BodyX, Floor, 1.5f, 2.3f);
+            // o corpo e a cabeça ficam soltos do fundo: os passos grudam no sangue e a cabeça se desprende
+            SpriteObj("CorpoDoChefe", body.transform, Load(Art5, "corpo_chefe"), new Vector3(X(BodyCx), Y(BodyCy), 0f), 3);
+            var headSr = SpriteObj("CabecaDoChefe", body.transform, Load(Art5, "cabeca_chefe"), new Vector3(X(HeadCx), Y(HeadCy), 0f), 4);
+            var crossing = body.gameObject.AddComponent<BodyCrossing>();
+            crossing.player = player;
+            crossing.x0 = X(BodyX0);
+            crossing.x1 = X(BodyX1);
+            crossing.head = headSr.transform;
+            crossing.headX = X(HeadCx);
+            crossing.sfx = sfx;
+            crossing.squelch = new[] { Clip("pegajoso_1"), Clip("pegajoso_2"), Clip("pegajoso_3") };
+            crossing.headClip = Clip("cabeca_solta");
+            crossing.firstSticky = Lines(("kai", "<i>O chão gruda nos sapatos. É sangue. Ainda está mole.</i>"));
+            crossing.headLoose = Lines(
+                ("kai", "<i>A cabeça... se soltou do corpo.</i>"),
+                ("kai", "<i>Não estava presa a nada. Desde quando ele está assim?</i>"));
             body.docTitle = "JORNAL DA MANHÃ";
             body.docBody =
                 "<b>EXECUTIVO É ENCONTRADO MORTO NO PRÓPRIO ESCRITÓRIO</b>\n\n" +

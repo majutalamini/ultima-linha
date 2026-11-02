@@ -204,10 +204,13 @@ door_art('Cenario6', 'porta6', d1 - d0, db - dt, (64, 68, 72), (96, 102, 106), w
 json.dump(L6, open('out/layout6.json', 'w'))
 
 # =====================================================================  CENÁRIO 7
-W7 = 3600
-L7 = dict(W=W7, FLOOR=FLOOR, LWALL=120, RWALL=2660, SPAWN=330, REN=2250, SOUTA=2540, EDGE=2700, RAIL=898,
-          GUN=2520, TUBES=[(500, 240), (1300, 240), (2100, 240), (2900, 240)])
-c = Canvas(W7, H, (14, 15, 18))
+# A imagem é mais alta que as outras (H7): embaixo da plataforma fica a vala funda dos trilhos, para ver a queda do Ren
+# até o chão. A parte de cima (0..941) continua com as mesmas medidas; o jogo põe o fundo 5,59 unidades abaixo do zero.
+W7, H7 = 3600, 1500
+PIT = 1410                                                                   # chão da vala (trilhos)
+L7 = dict(W=W7, H=H7, FLOOR=FLOOR, LWALL=120, RWALL=2660, SPAWN=330, SOUTA=2250, REN=2540, EDGE=2700, RAIL=PIT,
+          TUBES=[(500, 240), (1300, 240), (2100, 240), (2900, 240)])
+c = Canvas(W7, H7, (14, 15, 18))
 c.grad(0, 0, W7, 600, (44, 50, 54), (34, 38, 42), 0, tex=3, seed=71)
 c.grad(0, 600, W7, FLOOR, (60, 64, 62), (42, 46, 46), 0, tex=3, seed=72)
 for x in range(120, W7, 60):
@@ -220,29 +223,44 @@ c.rect(0, CEIL - 5, W7, CEIL, (8, 8, 8))
 tubes(c, [t[0] for t in L7['TUBES']])
 c.text(1300, 230, 'ÚLTIMA LINHA', 74, (210, 196, 160), anchor='ma', alpha=0.85, spacing=20)
 c.text(1300, 326, 'PLATAFORMA ÚNICA', 20, (150, 150, 130), anchor='ma', alpha=0.8, spacing=12)
+# relógio da plataforma, parado às 4:17 (o mesmo do Cenário 4)
+c.ellipse(2000, 420, 46, 46, (20, 20, 20)); c.ellipse(2000, 420, 40, 40, (196, 190, 172), tex=3)
+c.line([(2000, 420), (2019, 435)], (20, 20, 20), 5); c.line([(2000, 420), (2037, 428)], (20, 20, 20), 3)
 for bx in (720, 1500):
     c.rect(bx, 790, bx + 260, 804, (74, 56, 42), tex=3, seed=bx)
     c.rect(bx + 16, 804, bx + 28, FLOOR, (20, 20, 20)); c.rect(bx + 232, 804, bx + 244, FLOOR, (20, 20, 20))
     c.rect(bx, 752, bx + 260, 764, (74, 56, 42), tex=3, seed=bx + 1)
-c.rect(0, FLOOR, 2700, H, (36, 38, 36), tex=3, seed=74)                      # plataforma
+# plataforma: o piso e o corpo de concreto até o fundo da vala
+c.rect(0, FLOOR, 2700, H7, (34, 36, 34), tex=3, seed=74)
+c.grad(0, FLOOR + 60, 2700, H7, (30, 32, 30), (12, 13, 12), 0, tex=3, seed=75)
 c.rect(0, FLOOR, 2700, FLOOR + 6, (130, 132, 124), alpha=0.5)
+for y in range(FLOOR + 140, H7, 140):
+    c.rect(0, y, 2700, y + 3, (8, 9, 8), alpha=0.6)
 c.rect(2600, FLOOR - 2, 2700, FLOOR + 10, (200, 170, 40))                    # faixa amarela
 for k in range(2600, 2700, 20):
     c.poly([(k, FLOOR + 10), (k + 10, FLOOR + 10), (k + 20, FLOOR - 2), (k + 10, FLOOR - 2)], (20, 20, 20), alpha=0.9)
-c.rect(2700, FLOOR, W7, H, (8, 8, 10))                                       # vala dos trilhos
-c.grad(2700, FLOOR, W7, H, (14, 14, 16), (4, 4, 6), 0)
-c.rect(2700, FLOOR, 2712, H, (50, 52, 50))
-for x in range(2720, W7, 46):
-    c.rect(x, 904, x + 28, 914, (44, 36, 28))
-c.rect(2700, 892, W7, 900, (110, 106, 98)); c.rect(2700, 892, W7, 894, (170, 168, 160), alpha=0.6)
-# túnel à direita (de onde vem o trem)
-c.rect(3180, 300, W7, 892, (4, 4, 5))
+# vala dos trilhos (funda)
+c.grad(2700, FLOOR, W7, PIT, (26, 27, 28), (12, 12, 14), 0, tex=3, seed=76)  # parede do fundo da vala
+for y in range(FLOOR + 90, PIT, 90):
+    c.rect(2700, y, W7, y + 3, (8, 8, 9), alpha=0.6)
+c.rect(2700, FLOOR, 2716, H7, (54, 56, 54))                                   # quina da plataforma
+c.rect(2716, FLOOR, 2730, H7, (6, 6, 7), alpha=0.7)
+c.line([(2760, 960), (2790, 1020), (2770, 1080)], (8, 8, 8), 3)              # rachaduras
+c.line([(3060, 1150), (3090, 1210)], (8, 8, 8), 3)
+c.rect(2700, PIT, W7, H7, (24, 22, 20), tex=6, seed=77)                       # cascalho
+c.grad(2700, PIT + 40, W7, H7, (24, 22, 20), (8, 8, 8), 0, tex=4, seed=78, alpha=0.8)
+for x in range(2720, W7, 46):                                                 # dormentes
+    c.rect(x, PIT + 4, x + 28, PIT + 16, (52, 42, 32), tex=2, seed=x)
+c.rect(2700, PIT - 8, W7, PIT, (116, 112, 104)); c.rect(2700, PIT - 8, W7, PIT - 6, (178, 176, 168), alpha=0.6)   # trilho
+# túnel à direita (de onde vem o trem), até o fundo da vala
+c.rect(3180, 300, W7, PIT - 8, (4, 4, 5))
 c.ellipse(3400, 300, 360, 150, (4, 4, 5))
-c.rect(3150, 300, 3180, 892, (30, 32, 32))
+c.rect(3150, 300, 3180, PIT - 8, (30, 32, 32))
 c.ellipse(3140, 400, 8, 8, (170, 30, 24)); c.glow(3140, 400, 70, 70, (110, 20, 14), 0.9)
 c.glow(2300, 830, 400, 40, (40, 48, 56), 0.5)
+c.glow(2950, PIT - 30, 420, 120, (34, 38, 46), 0.9)                          # luz fraca no fundo da vala
 c.grime(seed=81, amount=10)
-c.vignette(0.55)
+c.vignette(0.45)
 c.finish(grain=2.2).save('out/Art/Cenario7/cenario7_fundo.png')
 json.dump(L7, open('out/layout7.json', 'w'))
 print('ok finais')

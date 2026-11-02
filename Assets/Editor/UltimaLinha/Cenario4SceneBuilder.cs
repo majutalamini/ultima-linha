@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario4SceneBuilder
     {
-        const int BuildVersion = 1; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario4.unity";
         const string Art4 = "Assets/Art/Cenario4";
 
@@ -93,6 +93,7 @@ namespace UltimaLinha.EditorTools
             // ---------- Som ----------
             var rumble = Source(core.audioRoot, "AmbienteSala", Clip("ambiente_sala"), loop: true);
             var hum = Source(core.audioRoot, "Gerador", Clip("gerador_loop"), loop: true);
+            var heart = Source(core.audioRoot, "Coracao", Clip("coracao"), loop: true);
 
             // ---------- Luzes ----------
             BuildTubes(core.world, Tubes, 111f, i => i == 2);
@@ -131,8 +132,8 @@ namespace UltimaLinha.EditorTools
             var clock = BuildSpot(spots, "relogio", 1250f, Floor, 3.6f, 1.4f);
             clock.first = Lines(
                 ("kai", "<i>O relógio parou. Os ponteiros estão em quatro e dezessete.</i>"),
-                ("kai", "<i>Parou de propósito, ou alguém quis que eu lembrasse dessa hora.</i>"));
-            clock.again = Lines(("kai", "<i>Quatro e dezessete. O relógio parou há muito tempo.</i>"));
+                ("kai", "<i>Por que eu sinto que já vi essa hora antes?</i>"));
+            clock.again = Lines(("kai", "<i>04:17. A hora em que tudo parou.</i>"));
 
             var note = BuildSpot(spots, "bilhete", 660f, Floor, 3.3f, 1.3f);
             note.docTitle = "REGISTRO DE TURNO";
@@ -160,7 +161,7 @@ namespace UltimaLinha.EditorTools
             souta.firstTalk = Lines(
                 ("souta", "A gente precisa de energia. Sem as alavancas levantadas, essa sala é só um depósito."),
                 ("souta", "Tem uma na passarela e outra em cima do gerador. Sobe pelo caixote."));
-            souta.repeatTalk = Lines(("souta", "A senha daquela gaveta deve estar em algum lugar à vista. Esse cara era metódico."));
+            souta.repeatTalk = Lines(("souta", "A senha daquela gaveta deve estar em algum lugar à vista. Olha o relógio, o bilhete... esse cara era metódico."));
             var ren = BuildNpc("Ren", "ren", 560f, Floor, 3.3f, player.transform);
             ren.firstTalk = Lines(
                 ("ren", "Esse zumbido... parece que a sala inteira está respirando."),
@@ -206,6 +207,28 @@ namespace UltimaLinha.EditorTools
                 ("kai", "<i>Três acesas. O quarto encaixe continua escuro.</i>"),
                 ("ren", "A porta de serviço ligou, mas a trava é por chave. Procura uma, Kai."),
                 ("souta", "O supervisor guardava tudo naquela mesa. Olha a gaveta."));
+            dir.redTint = core.ui.redTint;
+            dir.heartbeat = heart;
+            dir.clockX = X(1250f);
+            dir.soutaClock = Lines(
+                ("souta", "Quatro e dezessete."),
+                ("souta", "É nessa hora, Kai. Às quatro e dezessete todos nós vamos morrer."),
+                ("souta", "Você, eu, o Ren. Ninguém sai da última plataforma. O relógio parou para avisar a gente."),
+                ("ren", "Souta...? Do que você está falando?"),
+                ("kai", "<i>Os olhos dele estão vazios. Ele nem pisca.</i>"),
+                ("souta", "Quatro e dezessete. Quatro e dezessete. Quatro e..."));
+            dir.soutaForgets = Lines(
+                ("souta", "...Hã? O que foi? Por que vocês estão me olhando assim?"),
+                ("ren", "Você acabou de dizer que a gente vai morrer, Souta."),
+                ("souta", "Eu? Eu não disse nada disso. Esse lugar está mexendo com a cabeça de vocês."),
+                ("souta", "Enfim... o relógio parou às quatro e dezessete. Deve servir para alguma coisa."),
+                ("kai", "<i>04:17. A senha da gaveta é a hora em que o relógio parou.</i>"));
+            dir.drawerNoClue = Lines(
+                ("kai", "<i>Um cadeado de quatro números. Eu não faço ideia da senha.</i>"),
+                ("kai", "<i>Tem um bilhete preso na parede. Talvez explique.</i>"));
+            dir.drawerNeedClock = Lines(
+                ("kai", "<i>O bilhete diz que a senha é a hora em que o relógio parou.</i>"),
+                ("kai", "<i>Primeiro eu preciso olhar o relógio.</i>"));
             dir.drawerOpened = Lines(
                 ("kai", "<i>Uma chave. A etiqueta diz \"SAÍDA TÉCNICA\".</i>"),
                 ("souta", "Quatro e dezessete. Quem diria que era só olhar a parede."));

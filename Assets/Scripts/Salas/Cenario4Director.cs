@@ -32,6 +32,13 @@ namespace UltimaLinha.Salas
         public DigitLockUI lockUI;
         public string code = "0417";
 
+        [Header("O relógio (04:17)")]
+        [Tooltip("Vermelho que cobre a tela enquanto o Souta fala do relógio.")]
+        public CanvasGroup redTint;
+        public AudioSource heartbeat;
+        [Tooltip("Onde o Souta para, olhando o relógio (x em unidades).")]
+        public float clockX = 12.5f;
+
         [Header("Luz da sala")]
         [Tooltip("Preto por cima da sala: some quando a energia volta.")]
         public CanvasGroup darkness;
@@ -60,12 +67,19 @@ namespace UltimaLinha.Salas
         public string objectivePower = "Reative a energia: deixe as alavancas levantadas.";
         public string objectiveKey = "Ache a chave da porta. A gaveta da mesa tem um cadeado.";
         public string objectiveDoor = "Abra a porta da sala.";
+        public string objectiveClock = "Olhe o relógio da parede: a senha é a hora em que ele parou.";
+        public string objectiveCode = "Abra a gaveta: a senha é 04:17, sem os dois pontos.";
 
         [Header("Falas")]
         public List<DialogueLine> intro = new List<DialogueLine>();
         public List<DialogueLine> leverHalf = new List<DialogueLine>();
         public List<DialogueLine> powerOn = new List<DialogueLine>();
         public List<DialogueLine> drawerOpened = new List<DialogueLine>();
+        [Tooltip("O Souta encara o relógio e diz que é a hora da morte de todos; depois esquece o que disse.")]
+        public List<DialogueLine> soutaClock = new List<DialogueLine>();
+        public List<DialogueLine> soutaForgets = new List<DialogueLine>();
+        public List<DialogueLine> drawerNoClue = new List<DialogueLine>();
+        public List<DialogueLine> drawerNeedClock = new List<DialogueLine>();
         public List<DialogueLine> doorNoPower = new List<DialogueLine>();
         public List<DialogueLine> doorNoKey = new List<DialogueLine>();
         public List<DialogueLine> doorUnlocked = new List<DialogueLine>();
@@ -75,7 +89,7 @@ namespace UltimaLinha.Salas
         public string endSubtitle = "O escritório ainda está sendo construído.";
 
         Vector2 previousGravity;
-        bool introDone, leaving, powered, hasKey, drawerDone, halfSaid;
+        bool introDone, leaving, powered, hasKey, drawerDone, halfSaid, clockSeen, noteRead, clockScene;
         int raised;
 
         void Awake()
@@ -103,6 +117,12 @@ namespace UltimaLinha.Salas
                 if (l) l.Raised += OnLeverRaised;
             if (emptySocket) emptySocket.Presented += OnSocket;
             if (drawer) drawer.Intercept = OnDrawerInteract;
+            if (clock) clock.Presented += OnClock;
+            if (note) note.Presented += (s, first) =>
+            {
+                noteRead = true;
+                if (!clockSeen && !hasKey && Hud.Instance) Hud.Instance.SetObjective(objectiveClock);
+            };
             if (lockUI) lockUI.Submitted += OnCodeSubmitted;
             if (door)
             {
@@ -191,7 +211,7 @@ namespace UltimaLinha.Salas
             yield return new WaitForSeconds(1.0f);
             yield return SayAndWait(powerOn);
             if (player) player.controlEnabled = true;
-            if (Hud.Instance) Hud.Instance.SetObjective(hasKey ? objectiveDoor : objectiveKey);
+            if (Hud.Instance) Hud.Instance.SetObjective(hasKey ? objectiveDoor : (clockSeen ? objectiveCode : objectiveKey));
         }
 
         void OnSocket(ObjectSpot spot, bool firstTime)
@@ -204,8 +224,83 @@ namespace UltimaLinha.Salas
         bool OnDrawerInteract(ObjectSpot spot)
         {
             if (drawerDone || !lockUI) return false; // já aberta: mostra a fala normal
+            if (!clockSeen)
+            {
+                // sem o relógio não há senha: ele é a peça que faz a história andar
+                Say(noteRead ? drawerNeedClock : drawerNoClue);
+                return true;
+            }
             lockUI.Open("0000");
+            if (lockUI.status) lockUI.status.text = "A hora em que o relógio parou.";
             return true;
+        }
+
+        // ---------- O relógio ----------
+
+        void OnClock(ObjectSpot spot, bool firstTime)
+        {
+            if (clockSeen || clockScene) return;
+            StartCoroutine(ClockScene());
+        }
+
+        /// <summary>
+        /// O Souta para na frente do relógio e, com a voz vazia, diz que 04:17 é a hora em que todos vão morrer.
+        /// Logo depois volta ao normal e não lembra de nada. A hora vira a senha da gaveta.
+        /// </summary>
+        IEnumerator ClockScene()
+        {
+            clockScene = true;
+            if (player) player.controlEnabled = false;
+            if (Hud.Instance) Hud.Instance.SetObjective("");
+            if (souta)
+            {
+                souta.enabled = false;
+                yield return Walk(souta, clockX + 1.6f, 2.6f);
+                if (souta.rig) souta.rig.facing = -1f;
+            }
+            yield return new WaitForSeconds(0.5f);
+            if (heartbeat)
+            {
+                heartbeat.loop = true; heartbeat.volume = 0f; heartbeat.Play();
+                StartCoroutine(FadeAudio(heartbeat, 0.5f, 1.5f));
+            }
+            if (redTint) StartCoroutine(FadeGroup(redTint, 0.22f, 1.5f));
+            if (ambience) StartCoroutine(FadeAudio(ambience, ambienceVolume * 0.3f, 1.5f));
+            if (cameraFollow) cameraFollow.Shake(0.03f, 1.2f);
+            yield return SayAndWait(soutaClock);
+
+            // ele "acorda"
+            if (redTint) StartCoroutine(FadeGroup(redTint, 0f, 0.6f));
+            if (heartbeat) StartCoroutine(FadeAudio(heartbeat, 0f, 1.0f));
+            if (ambience) StartCoroutine(FadeAudio(ambience, ambienceVolume, 2f));
+            if (souta && souta.rig) souta.rig.facing = player && player.transform.position.x < souta.transform.position.x ? -1f : 1f;
+            yield return new WaitForSeconds(0.6f);
+            yield return SayAndWait(soutaForgets);
+            if (souta) souta.enabled = true;
+
+            clockSeen = true;
+            if (Hud.Instance)
+            {
+                Hud.Instance.Toast("Senha da gaveta: 0417");
+                Hud.Instance.SetObjective(hasKey ? (powered ? objectiveDoor : objectivePower) : objectiveCode);
+            }
+            if (player) player.controlEnabled = true;
+        }
+
+        IEnumerator Walk(NpcTalk npc, float x, float speed)
+        {
+            if (!npc) yield break;
+            var rig = npc.rig;
+            while (Mathf.Abs(npc.transform.position.x - x) > 0.05f)
+            {
+                float dir = Mathf.Sign(x - npc.transform.position.x);
+                if (rig) { rig.facing = dir; rig.externalSpeed = speed; }
+                var p = npc.transform.position;
+                p.x = Mathf.MoveTowards(p.x, x, speed * Time.deltaTime);
+                npc.transform.position = p;
+                yield return null;
+            }
+            if (rig) rig.externalSpeed = 0f;
         }
 
         void OnCodeSubmitted(string typed)
@@ -256,9 +351,14 @@ namespace UltimaLinha.Salas
 
         IEnumerator UnlockDoor()
         {
+            if (player) player.controlEnabled = false;
+            if (sfx && keyClip) sfx.PlayOneShot(keyClip);
+            if (Hud.Instance) Hud.Instance.Toast("Você usou a chave.");
+            yield return new WaitForSeconds(0.6f);
             door.Unlock();
             yield return new WaitForSeconds(0.2f);
             yield return SayAndWait(doorUnlocked);
+            if (player) player.controlEnabled = true;
             if (Hud.Instance) Hud.Instance.SetObjective("");
         }
 

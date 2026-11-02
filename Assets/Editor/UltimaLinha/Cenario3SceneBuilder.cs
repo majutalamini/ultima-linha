@@ -19,7 +19,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario3SceneBuilder
     {
-        const int BuildVersion = 1; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario3.unity";
         const string Art3 = "Assets/Art/Cenario3";
 
@@ -153,6 +153,17 @@ namespace UltimaLinha.EditorTools
             dir.souta = souta;
             dir.ren = ren;
             dir.documents = new[] { d1, d2, d3, d4 };
+            // brilho fraco em cima de cada folha (some quando o Kai lê): ajuda a achar o bilhete no chão e a folha do mezanino
+            var glowSpots = new (float x, float y, float s)[] { (1010f, 470f, 1.1f), (1905f, 840f, 0.55f), (3330f, 545f, 0.8f), (4110f, 700f, 0.8f) };
+            var glows = new List<SpriteRenderer>();
+            foreach (var g in glowSpots)
+            {
+                var sr = SpriteObj("BrilhoDocumento", spots, Spr("brilho"), new Vector3(X(g.x), Y(g.y), 0f), -50);
+                sr.color = new Color(1f, 0.86f, 0.55f, 0.3f);
+                sr.transform.localScale = Vector3.one * g.s;
+                glows.Add(sr);
+            }
+            dir.docGlows = glows.ToArray();
             dir.digits = new[] { 5, 2, 9, 1 };
             dir.door = door;
             dir.lockUI = core.ui.lockUi;
@@ -164,6 +175,10 @@ namespace UltimaLinha.EditorTools
                 ("souta", "Acabou o trilho do vagão. A saída é por aquela porta, no fundo."),
                 ("ren", "Está trancada. Tem um teclado do lado."),
                 ("kai", "<i>Quatro números. Em algum lugar tem que estar escrito.</i>"));
+            dir.renGivesLast = Lines(
+                ("ren", "Kai, espera! Eu achei isso no chão, perto dos caixotes."),
+                ("ren", "Tem um número escrito. É o que está faltando?"),
+                ("kai", "<i>É a folha que eu não achei. Agora eu tenho os quatro.</i>"));
             dir.doorClosed = Lines(("kai", "<i>Um teclado de quatro números. Eu ainda não tenho nenhuma pista.</i>"));
             dir.allFound = Lines(("kai", "<i>Quatro folhas, na ordem: 5, 2, 9, 1. Agora é só digitar na porta.</i>"));
             dir.doorUnlocked = Lines(

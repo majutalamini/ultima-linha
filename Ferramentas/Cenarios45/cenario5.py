@@ -1,7 +1,7 @@
 """
 Cenário 5 — o escritório abandonado, onde está o corpo do chefe.
 Gera em out/Art/Cenario5/: cenario5_fundo.png, porta5_folha_esq.png, porta5_folha_dir.png, porta5_interior.png,
-arquivo_gaveta.png, pistola.png  e  out/layout5.json.
+arquivo_gaveta.png, pistola.png, corpo_chefe.png, cabeca_chefe.png  e  out/layout5.json.
 """
 import json, os, math
 import numpy as np
@@ -206,6 +206,8 @@ for x in range(0, W, 90):
 c.ellipse(1800, FLOOR + 50, 620, 16, (8, 9, 12), alpha=0.5, blur=6)
 
 # ---------- corpo do chefe ----------
+# O corpo e a cabeça viram sprites separados (corpo_chefe.png e cabeca_chefe.png): no jogo, quando o Kai passa por cima,
+# os passos grudam no sangue e a cabeça se desprende. No fundo ficam só a poça de sangue e a luz da janela.
 by = FLOOR - 2
 def S(pts, k=1.55):
     return [(x, by - (by - y) * k) for x, y in pts]
@@ -213,29 +215,57 @@ def S(pts, k=1.55):
 c.ellipse(2430, by + 10, 200, 18, (30, 4, 4), alpha=0.95, blur=2)
 c.ellipse(2420, by + 10, 158, 12, (74, 8, 8), alpha=0.9, blur=2)
 c.ellipse(2380, by + 7, 72, 4, (160, 44, 40), alpha=0.35, blur=2)
-# pernas
-c.poly(S([(2180, by - 22), (2330, by - 34), (2340, by - 4), (2188, by - 2)]), (70, 74, 96))
-c.poly(S([(2200, by - 8), (2340, by - 6), (2346, by + 4), (2204, by + 6)]), (46, 48, 62))
-c.poly(S([(2150, by - 20), (2186, by - 24), (2190, by - 2), (2152, by)]), (62, 42, 30))             # sapatos
-c.poly(S([(2162, by - 2), (2200, by + 2), (2204, by + 8), (2164, by + 8)]), (46, 32, 24))
-# tronco (paletó)
-c.poly(S([(2320, by - 40), (2470, by - 46), (2476, by), (2326, by + 4)]), (52, 58, 80))
-c.poly(S([(2330, by - 34), (2380, by - 36), (2384, by - 10), (2336, by - 8)]), (214, 210, 198), alpha=0.9)  # camisa
-c.line([(2350, by - 52), (2402, by - 20)], (130, 24, 24), 6)                                       # gravata
-c.rect(2402, by - 46, 2432, by - 24, (30, 34, 50))                                                 # bolso do paletó
-c.line([(2408, by - 40), (2426, by - 40)], (206, 212, 216), 3)                                     # ponta de metal saindo do bolso
-c.glow(2418, by - 40, 22, 12, (150, 156, 170), 0.7)
-# braço estendido
-c.poly(S([(2440, by - 38), (2540, by - 20), (2540, by - 6), (2436, by - 20)]), (44, 50, 70))
-c.ellipse(2550, by - 18, 14, 10, (170, 138, 120))
-# cabeça
-c.ellipse(2498, by - 34, 30, 28, (160, 128, 110))
-c.poly(S([(2474, by - 36), (2500, by - 46), (2522, by - 30), (2518, by - 24), (2476, by - 26)]), (76, 76, 82))
-c.ellipse(2498, by - 34, 30, 28, (30, 10, 10), alpha=0.3, blur=3)
-# luz fria da janela sobre o corpo (contorno)
+c.ellipse(2500, by + 2, 34, 6, (60, 6, 6), alpha=0.85, blur=2)                     # sangue embaixo da cabeça
+
+def draw_body(k, ox, oy):
+    T = lambda pts: [(x - ox, y - oy) for x, y in pts]
+    # pernas
+    k.poly(T(S([(2180, by - 22), (2330, by - 34), (2340, by - 4), (2188, by - 2)])), (70, 74, 96))
+    k.poly(T(S([(2200, by - 8), (2340, by - 6), (2346, by + 4), (2204, by + 6)])), (46, 48, 62))
+    k.poly(T(S([(2150, by - 20), (2186, by - 24), (2190, by - 2), (2152, by)])), (62, 42, 30))             # sapatos
+    k.poly(T(S([(2162, by - 2), (2200, by + 2), (2204, by + 8), (2164, by + 8)])), (46, 32, 24))
+    # tronco (paletó)
+    k.poly(T(S([(2320, by - 40), (2470, by - 46), (2476, by), (2326, by + 4)])), (52, 58, 80))
+    k.poly(T(S([(2330, by - 34), (2380, by - 36), (2384, by - 10), (2336, by - 8)])), (214, 210, 198), alpha=0.9)  # camisa
+    k.line(T([(2350, by - 52), (2402, by - 20)]), (130, 24, 24), 6)                                          # gravata
+    k.poly(T([(2402, by - 46), (2432, by - 46), (2432, by - 24), (2402, by - 24)]), (30, 34, 50))             # bolso do paletó
+    # braço estendido
+    k.poly(T(S([(2440, by - 38), (2540, by - 20), (2540, by - 6), (2436, by - 20)])), (44, 50, 70))
+    k.ellipse(2550 - ox, by - 18 - oy, 14, 10, (170, 138, 120))
+    # pescoço cortado (some atrás da cabeça enquanto ela está no lugar)
+    k.ellipse(2474 - ox, by - 30 - oy, 9, 12, (110, 20, 18))
+    # luz fria da janela (contorno)
+    k.line(T(S([(2326, by - 42), (2470, by - 48)])), (140, 160, 205), 2, alpha=0.6)
+    k.line(T(S([(2182, by - 24), (2330, by - 36)])), (110, 130, 170), 2, alpha=0.5)
+
+def draw_head(k, ox, oy):
+    T = lambda pts: [(x - ox, y - oy) for x, y in pts]
+    k.ellipse(2498 - ox, by - 34 - oy, 30, 28, (160, 128, 110))
+    k.poly(T(S([(2474, by - 36), (2500, by - 46), (2522, by - 30), (2518, by - 24), (2476, by - 26)])), (76, 76, 82))
+    k.ellipse(2498 - ox, by - 34 - oy, 30, 28, (30, 10, 10), alpha=0.3, blur=3)
+    k.ellipse(2472 - ox, by - 30 - oy, 7, 14, (96, 14, 12), alpha=0.9)                # corte do pescoço
+    k.line(T([(2482, by - 50), (2512, by - 52)]), (150, 166, 205), 2, alpha=0.45)
+
+def sprite(drawfn, box, path):
+    """Desenha a peça sobre preto e sobre branco: a diferença dá a transparência exata."""
+    x0, y0, x1, y1 = box
+    kb = Canvas(x1 - x0, y1 - y0, (0, 0, 0)); drawfn(kb, x0, y0)
+    kw = Canvas(x1 - x0, y1 - y0, (255, 255, 255)); drawfn(kw, x0, y0)
+    alpha = 1.0 - (kw.a - kb.a).mean(axis=2) / 255.0
+    alpha = np.clip(alpha, 0, 1)
+    rgb = np.where(alpha[..., None] > 0.003, kb.a / np.maximum(alpha[..., None], 0.003), 0)
+    rgb = rgb * (0.94 + 0.06 * noise(y1 - y0, x1 - x0, 0.6, 77)[..., None] * 0.5) * np.array([0.78, 0.8, 0.86])  # mesma penumbra do fundo
+    save_rgba(rgb, alpha, path)
+
+BODY_BOX = (2140, by - 82, 2570, by + 14)
+HEAD_BOX = (2460, by - 76, 2534, by - 2)
+L['BODY_BOX'] = BODY_BOX
+L['HEAD_BOX'] = HEAD_BOX
+json.dump(L, open('out/layout5.json', 'w'))
+sprite(draw_body, BODY_BOX, f'{OUT}/corpo_chefe.png')
+sprite(draw_head, HEAD_BOX, f'{OUT}/cabeca_chefe.png')
+# luz fria da janela sobre o lugar do corpo
 c.glow(2370, by - 60, 260, 70, (50, 70, 112), 0.9)
-c.line(S([(2326, by - 42), (2470, by - 48)]), (140, 160, 205), 2, alpha=0.6)
-c.line(S([(2182, by - 24), (2330, by - 36)]), (110, 130, 170), 2, alpha=0.5)
 
 # ---------- porta de saída (madeira com vidro fosco) ----------
 d0, d1, dt, db = L['DOOR']

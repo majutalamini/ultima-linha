@@ -42,6 +42,8 @@ namespace UltimaLinha.Cenario1
         [HideInInspector] public float facing = 1f;
         /// <summary>Velocidade de caminhada dos NPCs em cena (cutscenes): faz as pernas andarem.</summary>
         [HideInInspector] public float externalSpeed;
+        /// <summary>0 a 1: os dois braços esticados para a frente, segurando a arma (final do Cenário 7).</summary>
+        [HideInInspector] public float aim;
 
         float phase, walk, air, t, seed;
         float sighT = 5f, watchT = 7f, glanceT = 4f;
@@ -171,6 +173,11 @@ namespace UltimaLinha.Cenario1
             {
                 u = Mathf.Lerp(u, front ? -30f : 40f, air);
                 f = Mathf.Lerp(f, 25f, air);
+            }
+            if (aim > 0f)
+            {
+                u = Mathf.Lerp(u, front ? 86f : 80f, aim);
+                f = Mathf.Lerp(f, front ? 4f : 10f, aim);
             }
             Rot(upper, u);
             Rot(fore, f);
