@@ -20,20 +20,17 @@ namespace UltimaLinha.Salas
     public class Cenario7Director : MonoBehaviour
     {
         public PlayerController player;
-        public CharacterRig2D kaiRig;
+        public PersonagemPixel kaiRig;
         public CameraFollow2D cameraFollow;
 
         [Header("Personagens")]
         public NpcTalk souta;
-        [Tooltip("Pistola na mão do Souta (ele chega com ela).")]
-        public GameObject soutaGun;
         [Tooltip("O Ren, de costas, olhando os trilhos. Falar com ele começa o final.")]
         public ObjectSpot renSpot;
-        public CharacterRig2D renRig;
+        public PersonagemPixel renRig;
 
         [Header("Arma")]
         public GameObject gunOnFloor;
-        public GameObject kaiGun;
         public SpriteRenderer muzzleFlash;
 
         [Header("Trem")]
@@ -109,8 +106,7 @@ namespace UltimaLinha.Salas
             if (flash) flash.alpha = 0f;
             if (headlight) headlight.color = new Color(1f, 0.96f, 0.85f, 0f);
             if (gunOnFloor) gunOnFloor.SetActive(false);
-            if (kaiGun) kaiGun.SetActive(false);
-            if (soutaGun) soutaGun.SetActive(true);
+            if (souta && souta.rig) souta.rig.Tocar("arma", true); // ele chega com a arma do chefe
             if (muzzleFlash) muzzleFlash.color = new Color(1f, 0.9f, 0.6f, 0f);
         }
 
@@ -202,7 +198,7 @@ namespace UltimaLinha.Salas
             {
                 float kaiX = player ? player.transform.position.x : edgeX - 2f;
                 yield return WalkTo(souta, kaiX - 1.5f, 3.2f);
-                if (soutaGun) soutaGun.SetActive(false);
+                if (souta.rig) souta.rig.Soltar();
                 if (gunOnFloor)
                 {
                     gunOnFloor.transform.position = new Vector3(kaiX - 0.8f, floorY + 0.1f, 0f);
@@ -219,7 +215,6 @@ namespace UltimaLinha.Salas
             FaceKai(-1f);
             yield return new WaitForSeconds(0.4f);
             if (gunOnFloor) gunOnFloor.SetActive(false);
-            if (kaiGun) kaiGun.SetActive(true);
             if (sfx && cockClip) sfx.PlayOneShot(cockClip);
             yield return Aim(1f, 0.45f);
             yield return SayAndWait(pointGun);
@@ -237,7 +232,7 @@ namespace UltimaLinha.Salas
                 flash.alpha = 0.55f;
                 StartCoroutine(FadeGroup(flash, 0f, 0.35f));
             }
-            yield return Collapse(souta ? souta.rig : null, 90f);
+            yield return Collapse(souta ? souta.rig : null);
             if (sfx && bodyClip) sfx.PlayOneShot(bodyClip);
             yield return new WaitForSeconds(1.2f);
             if (flash)
@@ -300,17 +295,13 @@ namespace UltimaLinha.Salas
             if (kaiRig) kaiRig.facing = dir;
         }
 
+        /// <summary>Braços do Kai: 0 solta, menos que 1 empurra, 1 pega a arma do chão e aponta.</summary>
         IEnumerator Aim(float to, float duration)
         {
             if (!kaiRig) yield break;
-            float from = kaiRig.aim, t = 0f;
-            while (t < duration)
-            {
-                t += Time.deltaTime;
-                kaiRig.aim = Mathf.Lerp(from, to, Mathf.SmoothStep(0f, 1f, t / duration));
-                yield return null;
-            }
-            kaiRig.aim = to;
+            if (to <= 0f) kaiRig.Soltar();
+            else kaiRig.Tocar(to >= 1f ? "aponta" : "empurra", true);
+            yield return new WaitForSeconds(duration);
         }
 
         IEnumerator MuzzleFlash()
@@ -330,9 +321,10 @@ namespace UltimaLinha.Salas
         }
 
         /// <summary>O corpo desliza da beira da plataforma, cai girando até o fundo da vala e bate no chão.</summary>
-        IEnumerator FallIntoPit(CharacterRig2D rig)
+        IEnumerator FallIntoPit(PersonagemPixel rig)
         {
             if (!rig) yield break;
+            rig.Tocar("panic", true);
             var tr = rig.transform;
             Transform oldTarget = cameraFollow ? cameraFollow.target : null;
             Rect oldBounds = cameraFollow ? cameraFollow.bounds : new Rect();
@@ -396,22 +388,11 @@ namespace UltimaLinha.Salas
             cameraFollow.bounds = restoreBounds;
         }
 
-        /// <summary>Baleado, o personagem cai de costas no chão da plataforma.</summary>
-        IEnumerator Collapse(CharacterRig2D rig, float angle)
+        /// <summary>Baleado, o personagem cai no chão da plataforma.</summary>
+        IEnumerator Collapse(PersonagemPixel rig)
         {
             if (!rig) yield break;
-            var tr = rig.transform;
-            float z0 = 0f, t = 0f;
-            Vector3 p0 = tr.position;
-            while (t < 0.45f)
-            {
-                t += Time.deltaTime;
-                float k = Mathf.Clamp01(t / 0.45f);
-                k *= k;
-                tr.rotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(z0, angle, k));
-                tr.position = p0 + new Vector3(-0.25f * k, 0f, 0f);
-                yield return null;
-            }
+            yield return new WaitForSeconds(rig.Tocar("fallen", true));
         }
 
         IEnumerator TrainComes(float dur)

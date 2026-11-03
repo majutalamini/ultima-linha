@@ -47,6 +47,7 @@ namespace UltimaLinha.Salas
         public override void Interact()
         {
             if (!CanInteract) return;
+            if (PersonagemPixel.Jogador) PersonagemPixel.Jogador.Tocar("search");
             if (Intercept != null && Intercept(this)) return;
             StartCoroutine(Present());
         }

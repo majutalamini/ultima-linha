@@ -169,6 +169,7 @@ namespace UltimaLinha.EditorTools
         public class Core
         {
             public PlayerController player;
+            public PersonagemPixel kai;
             public CameraFollow2D follow;
             public Transform solids;
             public Transform world;
@@ -249,11 +250,12 @@ namespace UltimaLinha.EditorTools
                 mainSr.enabled = false;
                 PrefabUtility.RecordPrefabInstancePropertyModifications(mainSr);
             }
-            var kaiRig = BuildRig("kai", RigStyle.Kai, playerGo.transform, new Vector3(0f, -1.6f, 0f), 10, 1f);
+            var kaiRig = BuildPersonagem("kai", playerGo.transform, new Vector3(0f, -1.6f, 0f), 10);
             kaiRig.mover = player;
             kaiRig.flipSource = mainSr;
             kaiRig.strideLength = 2.3f;
             core.player = player;
+            core.kai = kaiRig;
 
             var prompt = SpriteObj("TeclaE", null, Spr("tecla_e"), Vector3.zero, 50);
             prompt.transform.localScale = Vector3.one * 0.75f;
@@ -274,10 +276,10 @@ namespace UltimaLinha.EditorTools
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 4.7f;
+            cam.orthographicSize = CameraSize;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Color.black;
-            camGo.transform.position = new Vector3(spawn.transform.position.x + 5f, 4.7f, -10f);
+            camGo.transform.position = new Vector3(spawn.transform.position.x + 5f, CameraSize, -10f);
             camGo.AddComponent<AudioListener>();
             var follow = camGo.AddComponent<CameraFollow2D>();
             follow.target = playerGo.transform;
@@ -326,10 +328,9 @@ namespace UltimaLinha.EditorTools
             root.transform.position = new Vector3(X(xPx), Y(floorPy), 0);
             var npc = root.AddComponent<NpcTalk>();
             npc.reachX = 1.7f;
-            npc.promptOffset = new Vector2(0f, height + 0.45f);
+            npc.promptOffset = new Vector2(0f, (id == "souta" ? PixelArtHeightSouta : PixelArtHeightRen) + 0.45f);
             npc.lookAt = player;
-            var style = id == "souta" ? RigStyle.Souta : RigStyle.Ren;
-            npc.rig = BuildRig(id, style, root.transform, Vector3.zero, 6, id == "souta" ? 1.02f : 0.97f);
+            npc.rig = BuildPersonagem(id, root.transform, Vector3.zero, 6);
             return npc;
         }
 

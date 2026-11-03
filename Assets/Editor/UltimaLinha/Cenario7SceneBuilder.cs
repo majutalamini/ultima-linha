@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 4; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
@@ -117,20 +117,17 @@ namespace UltimaLinha.EditorTools
                 ("souta", "O Ren quis vir até aqui. Diz que precisa ver os trilhos. Vai lá, fala com ele."));
             souta.repeatTalk = Lines(("souta", "Quatro e dezessete, Kai. Você lembra o que isso quer dizer?"));
             var pistol = Load("Assets/Art/Cenario5", "pistola");
-            var soutaGun = HandGun("PistolaSouta", souta.rig, pistol, 10);
 
-            // pistola caída e pistola nas mãos do Kai (presa ao antebraço da frente: acompanha os braços esticados)
+            // pistola caída; nas mãos ela já faz parte dos quadros dos personagens
             var gunFloor = SpriteObj("PistolaChao", core.world, pistol, new Vector3(X(SoutaX), Y(Floor) + 0.1f, 0f), 5);
             gunFloor.transform.localScale = Vector3.one * 0.5f;
             gunFloor.gameObject.SetActive(false);
-            var kaiRig = player.GetComponentInChildren<CharacterRig2D>();
-            var kaiGun = HandGun("PistolaKai", kaiRig, pistol, 14);
-            var muzzle = SpriteObj("Clarao", kaiGun.transform, Spr("brilho"), Vector3.zero, 15);
-            muzzle.transform.localPosition = new Vector3(0.32f, 0.1f, 0f);
-            muzzle.transform.localRotation = Quaternion.identity;
+            var kaiRig = core.kai;
+            // clarão na ponta da arma do quadro de mira
+            var muzzle = SpriteObj("Clarao", kaiRig.transform, Spr("brilho"), Vector3.zero, 15);
+            muzzle.transform.localPosition = new Vector3(1.40f, 3.10f, 0f);
             muzzle.transform.localScale = Vector3.one * 0.5f;
             muzzle.color = new Color(1f, 0.9f, 0.6f, 0f);
-            kaiGun.SetActive(false);
 
             // farol do trem (sai do túnel à direita)
             var head = SpriteObj("FarolDoTrem", core.world, Spr("brilho"), new Vector3(X(TunnelX), Y(560f), 0f), 60);
@@ -152,11 +149,9 @@ namespace UltimaLinha.EditorTools
             dir.kaiRig = kaiRig;
             dir.cameraFollow = core.follow;
             dir.souta = souta;
-            dir.soutaGun = soutaGun;
             dir.renSpot = renSpot;
             dir.renRig = renRig;
             dir.gunOnFloor = gunFloor.gameObject;
-            dir.kaiGun = kaiGun;
             dir.muzzleFlash = muzzle;
             dir.headlight = head;
             dir.edgeX = X(EdgeX);
@@ -244,17 +239,6 @@ namespace UltimaLinha.EditorTools
                 "Esquizofrenia tem tratamento  ·  ";
 
             SetSpeakers(core.ui.dialogue);
-        }
-
-        /// <summary>Pistola presa ao antebraço da frente do personagem, na altura da mão (o cano segue o braço).</summary>
-        static GameObject HandGun(string name, CharacterRig2D rig, Sprite pistol, int order)
-        {
-            var parent = rig && rig.foreF ? rig.foreF : (rig ? rig.transform : null);
-            var gun = SpriteObj(name, parent, pistol, Vector3.zero, order);
-            gun.transform.localPosition = new Vector3(0.06f, -0.62f, 0f);
-            gun.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            gun.transform.localScale = Vector3.one * 0.5f;
-            return gun.gameObject;
         }
 
         // ------------------------------------------------------------------ interface do final

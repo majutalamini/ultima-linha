@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario5SceneBuilder
     {
-        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 4; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario5.unity";
         const string Art5 = "Assets/Art/Cenario5";
 
@@ -204,19 +204,12 @@ namespace UltimaLinha.EditorTools
                 ("kai", "<i>Eu conheço esse escritório.</i>"));
             ren.repeatTalk = Lines(("ren", "Eu não quero ficar perto dele."));
 
-            // pistola na mão do Souta (aparece quando ele pega a arma)
-            var gun = SpriteObj("Pistola", souta.rig.transform, Load(Art5, "pistola"), Vector3.zero, 12);
-            gun.transform.localPosition = new Vector3(0.58f, 1.22f, 0f);
-            gun.transform.localScale = Vector3.one * 0.55f;
-            gun.gameObject.SetActive(false);
-
             // ---------- Diretor ----------
             var dir = new GameObject("Diretor_Cenario5").AddComponent<Cenario5Director>();
             dir.player = player;
             dir.cameraFollow = core.follow;
             dir.souta = souta;
             dir.ren = ren;
-            dir.gunProp = gun.gameObject;
             dir.body = body;
             dir.bossDesk = desk;
             dir.cabinets = cabSpots.ToArray();

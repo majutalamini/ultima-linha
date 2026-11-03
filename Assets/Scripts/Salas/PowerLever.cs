@@ -61,6 +61,7 @@ namespace UltimaLinha.Salas
         IEnumerator Pull()
         {
             moving = true;
+            if (PersonagemPixel.Jogador) PersonagemPixel.Jogador.Tocar("lever");
             if (sfx && pullClip) sfx.PlayOneShot(pullClip);
             float t = 0f, d = 0.45f;
             while (t < d)

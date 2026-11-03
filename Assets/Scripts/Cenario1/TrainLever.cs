@@ -44,6 +44,7 @@ namespace UltimaLinha.Cenario1
         IEnumerator PullRoutine()
         {
             moving = true;
+            if (PersonagemPixel.Jogador) PersonagemPixel.Jogador.Tocar("lever");
             if (sfx && pullClip) sfx.PlayOneShot(pullClip);
             yield return Rotate(upAngle, downAngle, 0.22f);
             IsDown = true;
