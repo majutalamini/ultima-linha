@@ -110,7 +110,7 @@ namespace UltimaLinha.Cenario2
 
         IEnumerator Start()
         {
-            GameSave.ContinueRequested = false;
+            GameSave.BeginScene(SceneManager.GetActiveScene().name);
             if (player) player.controlEnabled = false;
             if (cameraFollow) cameraFollow.Snap();
             foreach (var d in doors)
@@ -280,11 +280,11 @@ namespace UltimaLinha.Cenario2
 
             // o trem freia na estação
             if (sfx && brakeClip) sfx.PlayOneShot(brakeClip, 0.9f);
-            if (cameraFollow) cameraFollow.Shake(0.12f, 2.8f);
+            if (cameraFollow) cameraFollow.Shake(0.12f, 5.5f); // o freio de emergência dura uns 6 segundos até parar
             if (tunnel) tunnel.Moving = false;
             foreach (var d in doors)
                 if (d) d.StopOpen();
-            if (rumble) StartCoroutine(FadeAudio(rumble, 0f, 3f));
+            if (rumble) StartCoroutine(FadeAudio(rumble, 0f, 5f));
             yield return new WaitForSeconds(0.7f);
             yield return SayAndWait(braking);
             yield return new WaitForSeconds(1.2f);

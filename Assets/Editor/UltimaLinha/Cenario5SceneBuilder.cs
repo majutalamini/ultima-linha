@@ -21,13 +21,16 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario5SceneBuilder
     {
-        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 4; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario5.unity";
         const string Art5 = "Assets/Art/Cenario5";
 
         const float W = 3600f, Floor = 850f, LWall = 120f, RWall = 3540f;
         const float DoorX0 = 3250f, DoorX1 = 3430f, DoorTop = 300f;
-        const float BossDeskX = 1790f, BodyX = 2330f;
+        const float BossDeskX = 1790f, BodyX = 2355f;
+        // corpo e cabeça (sprites separados, mesmas medidas de Ferramentas/Cenarios45/cenario5.py: BODY_BOX e HEAD_BOX)
+        const float BodyCx = 2355f, BodyCy = 814f, HeadCx = 2497f, HeadCy = 809f, BodyX0 = 2150f, BodyX1 = 2560f;
+        const float PlateY = 526f, KeyY = 655f, DrawerY = 690f;
         static readonly (string id, string label, float x0, float x1)[] Cabinets =
         {
             ("arquivoA", "ADMISSÕES", 1280f, 1410f),
@@ -35,6 +38,8 @@ namespace UltimaLinha.EditorTools
             ("arquivoC", "DEMISSÕES", 2810f, 2940f),
             ("arquivoD", "FINANCEIRO", 2980f, 3110f),
         };
+        // placas legíveis em cima dos arquivos (Ferramentas/Cenarios45/extras5.py), na mesma ordem
+        static readonly string[] Plates = { "placa_admissoes", "placa_avaliacoes", "placa_demissoes", "placa_financeiro" };
         static readonly (float x, float w)[] Tubes = { (560f, 240f), (1300f, 240f), (2050f, 240f), (2800f, 240f), (3280f, 240f) };
 
         static string VersionKey => "UltimaLinha.Cenario5.Version:" + Application.dataPath;
@@ -106,7 +111,23 @@ namespace UltimaLinha.EditorTools
             var spots = new GameObject("Lugares").transform;
             spots.SetParent(core.world, false);
 
-            var body = BuildSpot(spots, "corpo", BodyX, Floor, 1.6f, 1.6f);
+            var body = BuildSpot(spots, "corpo", BodyX, Floor, 1.5f, 2.3f);
+            // o corpo e a cabeça ficam soltos do fundo: os passos grudam no sangue e a cabeça se desprende
+            SpriteObj("CorpoDoChefe", body.transform, Load(Art5, "corpo_chefe"), new Vector3(X(BodyCx), Y(BodyCy), 0f), 3);
+            var headSr = SpriteObj("CabecaDoChefe", body.transform, Load(Art5, "cabeca_chefe"), new Vector3(X(HeadCx), Y(HeadCy), 0f), 4);
+            var crossing = body.gameObject.AddComponent<BodyCrossing>();
+            crossing.player = player;
+            crossing.x0 = X(BodyX0);
+            crossing.x1 = X(BodyX1);
+            crossing.head = headSr.transform;
+            crossing.headX = X(HeadCx);
+            crossing.sfx = sfx;
+            crossing.squelch = new[] { Clip("pegajoso_1"), Clip("pegajoso_2"), Clip("pegajoso_3") };
+            crossing.headClip = Clip("cabeca_solta");
+            crossing.firstSticky = Lines(("kai", "<i>O chão gruda nos sapatos. É sangue. Ainda está mole.</i>"));
+            crossing.headLoose = Lines(
+                ("kai", "<i>A cabeça... se soltou do corpo.</i>"),
+                ("kai", "<i>Não estava presa a nada. Desde quando ele está assim?</i>"));
             body.docTitle = "JORNAL DA MANHÃ";
             body.docBody =
                 "<b>EXECUTIVO É ENCONTRADO MORTO NO PRÓPRIO ESCRITÓRIO</b>\n\n" +
@@ -134,12 +155,14 @@ namespace UltimaLinha.EditorTools
             desk.again = Lines(("kai", "<i>Arquivo de demissões. É lá que está a chave.</i>"));
 
             var cabSpots = new List<ObjectSpot>();
-            foreach (var cab in Cabinets)
+            for (int ci = 0; ci < Cabinets.Length; ci++)
             {
+                var cab = Cabinets[ci];
+                SpriteObj("Placa_" + cab.id, core.world, Load(Art5, Plates[ci]), new Vector3(X((cab.x0 + cab.x1) / 2f), Y(PlateY), 0f), 1);
                 var spot = BuildSpot(spots, cab.id, (cab.x0 + cab.x1) / 2f, Floor, 3.5f, 1.2f, core.sfx, Clip("gaveta_abre"));
                 spot.again = Lines(("kai", "<i>Já olhei aqui.</i>"));
                 var open = SpriteObj("GavetaAberta_" + cab.id, core.world, Load(Art5, "arquivo_gaveta"),
-                    new Vector3(X((cab.x0 + cab.x1) / 2f), Y(690f), 0f), 2);
+                    new Vector3(X((cab.x0 + cab.x1) / 2f), Y(DrawerY), 0f), 2);
                 open.gameObject.SetActive(false);
                 spot.openVisual = open.gameObject;
                 cabSpots.Add(spot);
@@ -152,10 +175,23 @@ namespace UltimaLinha.EditorTools
                 ("kai", "<i>Nenhuma chave.</i>"));
             cabSpots[2].first = Lines(
                 ("kai", "<i>Pastas de demissões. A minha está por cima: \"Kai — desligamento imediato\".</i>"),
-                ("kai", "<i>E atrás dela, presa com fita... uma chave.</i>"));
+                ("kai", "<i>E atrás dela, presa com fita... uma chave. Ficou em cima das pastas.</i>"));
             cabSpots[3].first = Lines(
                 ("kai", "<i>Planilhas, recibos. Uma pasta com o meu salário riscado de vermelho.</i>"),
                 ("kai", "<i>Nenhuma chave.</i>"));
+
+            // brilho no arquivo certo (acende depois do memorando da mesa ou da dica)
+            float keyCabX = (Cabinets[2].x0 + Cabinets[2].x1) / 2f;
+            var cabGlow = SpriteObj("BrilhoArquivo", spots, Spr("brilho"), new Vector3(X(keyCabX), Y(700f), 0f), -50);
+            cabGlow.color = new Color(1f, 0.86f, 0.55f, 0.3f);
+            cabGlow.transform.localScale = Vector3.one * 1.3f;
+
+            // a chave na gaveta aberta: aparece quando o Kai abre o arquivo de demissões; E pega
+            var keySpot = BuildSpot(spots, "chave", keyCabX, Floor, 2.75f, 1.1f);
+            var keyGlow = SpriteObj("Brilho", keySpot.transform, Spr("brilho"), new Vector3(X(keyCabX), Y(KeyY), 0f), 3);
+            keyGlow.color = new Color(1f, 0.85f, 0.5f, 0.45f);
+            keyGlow.transform.localScale = Vector3.one * 0.45f;
+            SpriteObj("Chave", keySpot.transform, Load(Art5, "chave"), new Vector3(X(keyCabX), Y(KeyY), 0f), 4);
 
             // ---------- Souta e Ren ----------
             var souta = BuildNpc("Souta", "souta", 450f, Floor, 3.55f, player.transform);
@@ -178,6 +214,9 @@ namespace UltimaLinha.EditorTools
             dir.bossDesk = desk;
             dir.cabinets = cabSpots.ToArray();
             dir.keyCabinetId = "arquivoC";
+            dir.keyPickup = keySpot;
+            dir.cabinetGlow = cabGlow;
+            dir.keyGlow = keyGlow;
             dir.door = door;
             dir.deskX = X(BossDeskX);
             dir.doorX = X((DoorX0 + DoorX1) / 2f);

@@ -22,6 +22,10 @@ namespace UltimaLinha.Salas
 
         [Header("Cena")]
         public ObjectSpot socket;
+        [Tooltip("A alavanca do chefe encaixada no painel (aparece quando o Kai a coloca).")]
+        public GameObject leverInserted;
+        public Transform leverHandle;
+        public AudioClip leverClip;
         public ExitDoor door;
         public CarDoor[] gates = new CarDoor[0];
         public float[] checkpoints = new float[0];
@@ -76,10 +80,13 @@ namespace UltimaLinha.Salas
 
         IEnumerator Start()
         {
-            GameSave.ContinueRequested = false;
+            bool continuing = GameSave.BeginScene(SceneManager.GetActiveScene().name);
             if (player) player.controlEnabled = false;
             if (cameraFollow) cameraFollow.Snap();
             if (socket) socket.Intercept = OnSocket;
+            // a alavanca veio do bolso do chefe (Cenário 5): o Kai sempre chega aqui com ela
+            if (!GameFlags.Get(GameFlags.MissingLever)) GameFlags.Set(GameFlags.MissingLever);
+            if (leverInserted) leverInserted.SetActive(false);
             if (door)
             {
                 door.onLockedInteract = () => { door.FlashLocked(); Say(doorBefore); };
@@ -92,7 +99,8 @@ namespace UltimaLinha.Salas
             }
             if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 2.0f);
             yield return new WaitForSeconds(0.5f);
-            yield return SayAndWait(intro);
+            if (!continuing) yield return SayAndWait(intro);
+            else if (Hud.Instance) Hud.Instance.Toast("Jogo carregado.");
             if (player) player.controlEnabled = true;
             if (Hud.Instance) Hud.Instance.SetObjective(objectiveSocket);
             GameSave.Save(SceneManager.GetActiveScene().name);
@@ -111,6 +119,22 @@ namespace UltimaLinha.Salas
             started = true;
             if (player) player.controlEnabled = false;
             if (Hud.Instance) Hud.Instance.SetObjective("");
+            // encaixa a alavanca e puxa para cima
+            if (leverInserted) leverInserted.SetActive(true);
+            if (sfx && leverClip) sfx.PlayOneShot(leverClip);
+            if (Hud.Instance) Hud.Instance.Toast("Alavanca encaixada.");
+            yield return new WaitForSeconds(0.5f);
+            if (leverHandle)
+            {
+                float t = 0f;
+                while (t < 0.45f)
+                {
+                    t += Time.deltaTime;
+                    leverHandle.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-38f, 38f, Mathf.SmoothStep(0f, 1f, t / 0.45f)));
+                    yield return null;
+                }
+            }
+            GameFlags.Set(GameFlags.MissingLever, false);
             yield return new WaitForSeconds(0.4f);
             if (sfx && activateClip) sfx.PlayOneShot(activateClip);
             if (cameraFollow) cameraFollow.Shake(0.09f, 3.2f);

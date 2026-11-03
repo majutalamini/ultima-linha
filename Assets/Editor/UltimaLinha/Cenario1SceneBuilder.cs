@@ -679,7 +679,7 @@ namespace UltimaLinha.EditorTools
                 };
             }
             else if (id == "souta")
-                ch.extras = new[] { Extra("gun", Clip("gun"), 6f), Extra("fallen", Clip("fallen"), 9f) };
+                ch.extras = new[] { Extra("gun", Clip("gun"), 6f), Extra("arma", Clip("gun", 3, 3), 1f), Extra("fallen", Clip("fallen"), 9f) };
             else
                 ch.extras = new[] { Extra("panic", Clip("panic"), 8f) };
 

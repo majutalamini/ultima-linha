@@ -58,6 +58,12 @@ namespace UltimaLinha.EditorTools
             AssetDatabase.SaveAssets();
         }
 
+        public static void ReconstruirERodar()
+        {
+            Reconstruir();
+            SoRodar();
+        }
+
         [MenuItem("Última Linha/Testes/Rodar os 7 cenários sem som")]
         public static void SoRodar()
         {

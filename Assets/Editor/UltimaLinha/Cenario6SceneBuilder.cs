@@ -19,7 +19,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario6SceneBuilder
     {
-        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario6.unity";
         const string Art6 = "Assets/Art/Cenario6";
 
@@ -118,13 +118,24 @@ namespace UltimaLinha.EditorTools
             // soquete do painel
             var spots = new GameObject("Lugares").transform;
             spots.SetParent(core.world, false);
-            var socket = BuildSpot(spots, "soquete", SocketX, Floor, 2.2f, 1.5f, sfx, Clip("alavanca_pega"));
+            var socket = BuildSpot(spots, "soquete", SocketX, Floor, 3.6f, 1.6f);
+            // a alavanca do chefe, encaixada no soquete do painel (desenhado no fundo em x=530, y=700)
+            var leverRoot = new GameObject("AlavancaEncaixada");
+            leverRoot.transform.SetParent(spots, false);
+            var basePos = new Vector3(X(SocketX), Y(722f), 0f);
+            leverRoot.transform.position = basePos;
+            SpriteObj("Base", leverRoot.transform, Spr("alavanca_base"), basePos, -10);
+            var handle = SpriteObj("Cabo", leverRoot.transform, Spr("alavanca_cabo"), basePos + new Vector3(0f, 0.4f, 0f), -11);
+            handle.transform.localRotation = Quaternion.Euler(0f, 0f, -38f);
             var door = BuildExitDoor(core.world, "PortaDoMetro", Art6, "porta6", DoorX0, DoorX1, DoorTop, Floor, sfx, Clip1("porta_destrava"));
 
             var dir = new GameObject("Diretor_Cenario6").AddComponent<Cenario6Director>();
             dir.player = player;
             dir.cameraFollow = core.follow;
             dir.socket = socket;
+            dir.leverInserted = leverRoot;
+            dir.leverHandle = handle.transform;
+            dir.leverClip = Clip("alavanca_pega");
             dir.door = door;
             dir.gates = gates.ToArray();
             var cps = new List<float> { X(330f) };
@@ -144,7 +155,7 @@ namespace UltimaLinha.EditorTools
 
             dir.intro = Lines(
                 ("kai", "<i>Corredor de serviço. O painel de tração, com o encaixe vazio.</i>"),
-                ("kai", "<i>A alavanca que estava no bolso dele. É isso que faltava para o trem andar.</i>"));
+                ("kai", "<i>A alavanca que estava no bolso dele ainda está comigo. É isso que faltava para o trem andar.</i>"));
             dir.inserted = Lines(
                 ("kai", "<i>O metrô está ligando. Dá para sentir no chão.</i>"),
                 ("kai", "<i>E o painel marcou um tempo. Pouco tempo.</i>"),

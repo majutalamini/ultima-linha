@@ -116,8 +116,7 @@ namespace UltimaLinha.Cenario1
             }
 
             // 1) cutscene: o diário do Kai. "Continuar" no menu pula direto para o vagão.
-            bool continuing = GameSave.ContinueRequested;
-            GameSave.ContinueRequested = false;
+            bool continuing = GameSave.BeginScene(SceneManager.GetActiveScene().name);
             if (playIntroCutscene && introCutscene && !continuing)
                 yield return introCutscene.Play();
 
