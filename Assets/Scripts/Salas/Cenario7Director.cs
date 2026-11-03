@@ -63,6 +63,8 @@ namespace UltimaLinha.Salas
         public AudioSource siren;
         public AudioClip pushClip, fallClip, hornClip, shotClip, bodyClip, gunDropClip, cockClip;
         public AudioClip ambulanceClip, policeClip;
+        [Tooltip("Freio de emergência do trem (no final em que o Kai fica nos trilhos).")]
+        public AudioClip brakeClip;
 
         [Header("Falas")]
         public List<DialogueLine> intro = new List<DialogueLine>();
@@ -116,7 +118,7 @@ namespace UltimaLinha.Salas
 
         IEnumerator Start()
         {
-            GameSave.ContinueRequested = false;
+            bool continuing = GameSave.BeginScene(SceneManager.GetActiveScene().name);
             if (player) player.controlEnabled = false;
             if (cameraFollow) cameraFollow.Snap();
             if (renSpot) renSpot.Intercept = s => { if (!finale && introDone) { s.available = false; StartCoroutine(Finale()); } return true; };
@@ -127,7 +129,8 @@ namespace UltimaLinha.Salas
             }
             if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 2.0f);
             yield return new WaitForSeconds(0.5f);
-            yield return SayAndWait(intro);
+            if (!continuing) yield return SayAndWait(intro);
+            else if (Hud.Instance) Hud.Instance.Toast("Jogo carregado.");
             if (player) player.controlEnabled = true;
             if (Hud.Instance) Hud.Instance.SetObjective("O Ren está na beira da plataforma, olhando os trilhos.");
             GameSave.Save(SceneManager.GetActiveScene().name);
@@ -265,6 +268,9 @@ namespace UltimaLinha.Salas
 
             // o trem vem; o Souta e o Ren gritam; o Kai olha para os trilhos
             if (trainRumble) { trainRumble.loop = false; trainRumble.volume = 0.9f; trainRumble.Play(); }
+            // o maquinista vê o Kai e puxa o freio de emergência: o chiado cresce e só para depois do corte
+            float brakeEnd = Time.time;
+            if (sfx && brakeClip) { sfx.PlayOneShot(brakeClip, 1f); brakeEnd = Time.time + brakeClip.length; }
             StartCoroutine(TrainComes(5.5f));
             if (souta && souta.rig) souta.rig.facing = 1f;
             yield return SayAndWait(selfLast);
@@ -278,7 +284,7 @@ namespace UltimaLinha.Salas
             if (ambience) ambience.volume = 0f;
             yield return new WaitForSeconds(1.0f);
             if (trainRumble) StartCoroutine(FadeAudio(trainRumble, 0f, 1.5f));
-            yield return new WaitForSeconds(2.2f);
+            yield return new WaitForSeconds(Mathf.Max(2.2f, brakeEnd - Time.time + 0.8f)); // o freio termina no escuro
 
             yield return Siren(ambulanceClip);
             yield return ShowNews(ambulanceChannel, ambulanceHeadline, ambulanceBody, ambulanceTicker);

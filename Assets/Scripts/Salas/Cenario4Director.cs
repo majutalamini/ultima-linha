@@ -108,10 +108,9 @@ namespace UltimaLinha.Salas
 
         IEnumerator Start()
         {
-            GameSave.ContinueRequested = false;
-            hasKey = GameFlags.Get(GameFlags.Cenario4Key);
+            bool continuing = GameSave.BeginScene(SceneManager.GetActiveScene().name);
+            hasKey = continuing && GameSave.Has("chave");
             if (player) player.controlEnabled = false;
-            if (cameraFollow) cameraFollow.Snap();
 
             foreach (var l in levers)
                 if (l) l.Raised += OnLeverRaised;
@@ -121,6 +120,7 @@ namespace UltimaLinha.Salas
             if (note) note.Presented += (s, first) =>
             {
                 noteRead = true;
+                GameSave.Mark("bilhete");
                 if (!clockSeen && !hasKey && Hud.Instance) Hud.Instance.SetObjective(objectiveClock);
             };
             if (lockUI) lockUI.Submitted += OnCodeSubmitted;
@@ -130,6 +130,21 @@ namespace UltimaLinha.Salas
                 door.onEnter = () => StartCoroutine(Leave(nextScene));
             }
 
+            // jogo continuado: volta tudo como estava quando foi salvo
+            if (continuing)
+            {
+                noteRead = GameSave.Has("bilhete");
+                clockSeen = GameSave.Has("relogio");
+                drawerDone = hasKey;
+                if (drawerDone && drawer && drawer.openVisual) drawer.openVisual.SetActive(true);
+                for (int i = 0; i < levers.Length; i++)
+                    if (levers[i] && GameSave.Has("alavanca" + i)) { levers[i].SetUpInstant(); raised++; }
+                if (levers.Length > 0 && raised >= levers.Length) PowerOnInstant();
+                halfSaid = raised > 0;
+                AutoSave.RestorePlayer(player, cameraFollow);
+            }
+            if (cameraFollow) cameraFollow.Snap();
+
             if (ambience)
             {
                 ambience.loop = true;
@@ -137,18 +152,43 @@ namespace UltimaLinha.Salas
                 ambience.Play();
                 StartCoroutine(FadeAudio(ambience, ambienceVolume, 3f));
             }
-            StartCoroutine(DimLoop());
+            if (!powered) StartCoroutine(DimLoop());
 
-            if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 2.0f);
-            if (darkness) StartCoroutine(FadeGroup(darkness, darkAlpha, 1.2f));
-            yield return new WaitForSeconds(0.6f);
+            if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, continuing ? 1.2f : 2.0f);
+            if (darkness && !powered) StartCoroutine(FadeGroup(darkness, darkAlpha, 1.2f));
+            yield return new WaitForSeconds(continuing ? 0.2f : 0.6f);
 
-            yield return SayAndWait(intro);
+            if (!continuing) yield return SayAndWait(intro);
+            else if (Hud.Instance) Hud.Instance.Toast("Jogo carregado.");
 
             if (player) player.controlEnabled = true;
-            if (Hud.Instance) Hud.Instance.SetObjective(objectivePower);
-            GameSave.Save(SceneManager.GetActiveScene().name);
+            if (Hud.Instance) Hud.Instance.SetObjective(CurrentObjective());
             introDone = true;
+        }
+
+        string CurrentObjective()
+        {
+            if (!powered) return objectivePower;
+            if (hasKey) return objectiveDoor;
+            if (clockSeen) return objectiveCode;
+            if (noteRead) return objectiveClock;
+            return objectiveKey;
+        }
+
+        /// <summary>Energia já ligada (jogo continuado): luz acesa, gerador zumbindo, porta âmbar.</summary>
+        void PowerOnInstant()
+        {
+            powered = true;
+            if (darkness) darkness.alpha = 0f;
+            foreach (var e in emergencyLights)
+                if (e) e.enabled = false;
+            if (hum)
+            {
+                hum.loop = true;
+                hum.volume = humVolume;
+                hum.Play();
+            }
+            if (door) door.SetPartial();
         }
 
         void Update()
@@ -163,6 +203,7 @@ namespace UltimaLinha.Salas
         void OnLeverRaised(PowerLever lever)
         {
             raised++;
+            GameSave.Mark("alavanca" + System.Array.IndexOf(levers, lever));
             int total = levers.Length;
             if (raised < total)
             {
@@ -279,6 +320,7 @@ namespace UltimaLinha.Salas
             if (souta) souta.enabled = true;
 
             clockSeen = true;
+            GameSave.Mark("relogio");
             if (Hud.Instance)
             {
                 Hud.Instance.Toast("Senha da gaveta: 0417");
@@ -323,6 +365,7 @@ namespace UltimaLinha.Salas
             yield return new WaitForSecondsRealtime(0.7f);
             hasKey = true;
             GameFlags.Set(GameFlags.Cenario4Key);
+            GameSave.Mark("chave");
             if (sfx && keyClip) sfx.PlayOneShot(keyClip);
             if (Hud.Instance) Hud.Instance.Toast("Chave encontrada.");
             yield return SayAndWait(drawerOpened);

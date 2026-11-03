@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
@@ -140,6 +140,7 @@ namespace UltimaLinha.EditorTools
             // interface do final: a escolha e o plantão do telejornal
             var canvas = core.ui.dialogue.transform.root;
             var choice = BuildChoice(canvas, fonts, core.voice);
+            choice.anchor = player.transform; // as opções flutuam ao lado do Kai
             var news = BuildNews(canvas, fonts, core.voice);
             var fade = canvas.Find("Fade");
             var fim = canvas.Find("Fim");
@@ -179,6 +180,7 @@ namespace UltimaLinha.EditorTools
             dir.cockClip = Clip("arma_engatilha");
             dir.ambulanceClip = Clip("sirene_ambulancia");
             dir.policeClip = Clip("sirene_policia");
+            dir.brakeClip = Clip("trem_freando");
 
             dir.intro = Lines(
                 ("kai", "<i>A última plataforma. O nome está escrito na parede: ÚLTIMA LINHA.</i>"),
@@ -192,7 +194,7 @@ namespace UltimaLinha.EditorTools
                 ("ren", "Eu só quero que isso termine. Do jeito que for."),
                 ("kai", "<i>Eles nunca vão me deixar em paz. Eles estão sempre aqui. Sempre.</i>"),
                 ("kai", "<i>Alguém tem que parar.</i>"));
-            dir.choiceTitle = "O QUE O KAI FAZ?";
+            dir.choiceTitle = "";
             dir.choiceOptions = new[] { "Acabar com eles", "Acabar comigo" };
             dir.choiceNotes = new[] { "Ninguém mais vai me acusar.", "Isso termina comigo." };
 
@@ -257,6 +259,10 @@ namespace UltimaLinha.EditorTools
 
         // ------------------------------------------------------------------ interface do final
 
+        /// <summary>
+        /// Escolha no estilo de Detroit: Become Human. Sem tela escura: um tom azul leve por cima da cena e, ao lado do Kai,
+        /// uma lista curta com um ícone de botão (△ ○) e o texto em maiúsculas. A opção escolhida ganha um traço azul embaixo.
+        /// </summary>
         static ChoiceUI BuildChoice(Transform root, Fonts fonts, AudioSource voice)
         {
             var rt = Stretch("Escolha", root);
@@ -265,50 +271,79 @@ namespace UltimaLinha.EditorTools
             group.blocksRaycasts = false;
             group.interactable = false;
             var ui = rt.gameObject.AddComponent<ChoiceUI>();
-            Img(Stretch("Escurecer", rt), new Color(0f, 0f, 0f, 0.78f));
 
-            var title = Label("Titulo", rt, "", fonts.sans, 26, Tagline, 0, 300, 1920, 40);
-            title.alignment = TextAlignmentOptions.Top;
-            title.characterSpacing = 30;
-            Img(TopLeft("Linha", rt, 900, 352, 120, 2), Rule);
+            var tintRt = Stretch("TomAzul", rt);
+            Img(tintRt, new Color(0.03f, 0.1f, 0.2f, 0.32f));
+            var tint = tintRt.gameObject.AddComponent<CanvasGroup>();
+            tint.alpha = 0f;
+            tint.blocksRaycasts = false;
 
-            var labels = new TMP_Text[2];
-            var details = new TMP_Text[2];
-            var frames = new Image[2];
-            var buttons = new Button[2];
-            for (int i = 0; i < 2; i++)
+            const int count = 2;
+            const float rowH = 64f, rowGap = 12f, width = 520f;
+            var list = new GameObject("Opcoes", typeof(RectTransform)) { layer = UILayer }.GetComponent<RectTransform>();
+            list.SetParent(rt, false);
+            list.anchorMin = list.anchorMax = new Vector2(0.5f, 0.5f);
+            list.pivot = new Vector2(0f, 0.5f);
+            list.sizeDelta = new Vector2(width, count * rowH + (count - 1) * rowGap);
+
+            var title = Label("Titulo", list, "", fonts.sans, 16, new Color(0.6f, 0.8f, 1f, 0.7f), 0, -34, width, 24);
+            title.characterSpacing = 18;
+
+            string[] iconNames = { "icone_triangulo", "icone_circulo", "icone_quadrado", "icone_xis" };
+            var rows = new RectTransform[count];
+            var icons = new Image[count];
+            var labels = new TMP_Text[count];
+            var bars = new Image[count];
+            var lines = new Image[count];
+            var buttons = new Button[count];
+            for (int i = 0; i < count; i++)
             {
-                float x = i == 0 ? 330f : 1030f;
-                var frameRt = TopLeft("Opcao" + (i + 1), rt, x, 420, 560, 230);
-                frames[i] = Img(frameRt, new Color(0.47f, 0.43f, 0.36f, 0.55f));
-                frames[i].raycastTarget = true;
-                var inner = Stretch("Fundo", frameRt);
-                inner.offsetMin = new Vector2(3f, 3f);
-                inner.offsetMax = new Vector2(-3f, -3f);
-                Img(inner, new Color(0.04f, 0.035f, 0.035f, 0.97f));
-                labels[i] = Label("Texto", frameRt, "", fonts.serif, 54, Cream, 0, 50, 560, 80);
-                labels[i].alignment = TextAlignmentOptions.Top;
-                details[i] = Label("Detalhe", frameRt, "", fonts.italic, 28, Muted, 0, 140, 560, 50);
-                details[i].alignment = TextAlignmentOptions.Top;
-                var btn = frameRt.gameObject.AddComponent<Button>();
-                btn.targetGraphic = frames[i];
+                var row = TopLeft("Opcao" + (i + 1), list, 0, i * (rowH + rowGap), width, rowH);
+                row.gameObject.AddComponent<CanvasGroup>();
+                rows[i] = row;
+
+                bars[i] = Img(TopLeft("Faixa", row, 0, 4, width - 60, rowH - 8), new Color(0.02f, 0.04f, 0.07f, 0.32f));
+                bars[i].raycastTarget = true;
+
+                var icon = Img(TopLeft("Icone", row, 10, 9, 46, 46), Color.white);
+                icon.sprite = Load(Art7, iconNames[i]);
+                icon.preserveAspect = true;
+                icons[i] = icon;
+
+                var label = Label("Texto", row, "", fonts.sans, 30, new Color(0.82f, 0.88f, 0.94f, 0.62f), 74, 11, width - 140, 40);
+                label.characterSpacing = 12;
+                labels[i] = label;
+
+                var line = Img(TopLeft("Traco", row, 74, rowH - 13, 300, 2), new Color(0.38f, 0.75f, 1f, 1f));
+                line.rectTransform.localScale = new Vector3(0f, 1f, 1f);
+                lines[i] = line;
+
+                var btn = row.gameObject.AddComponent<Button>();
+                btn.targetGraphic = bars[i];
                 btn.transition = Selectable.Transition.None;
                 btn.navigation = new Navigation { mode = Navigation.Mode.None };
                 buttons[i] = btn;
             }
-            var help = Label("Ajuda", rt, "← →  ESCOLHE   ·   ENTER OU E  CONFIRMA", fonts.sans, 16, Muted, 0, 720, 1920, 24);
-            help.alignment = TextAlignmentOptions.Top;
+            var help = Label("Ajuda", list, "↑ ↓  ESCOLHER    ·    E  CONFIRMAR", fonts.sans, 14, new Color(0.75f, 0.85f, 0.95f, 1f),
+                0, count * (rowH + rowGap) + 6, width, 22);
             help.characterSpacing = 10;
+            help.alpha = 0f;
 
             ui.group = group;
+            ui.tint = tint;
+            ui.list = list;
             ui.title = title;
+            ui.rows = rows;
+            ui.icons = icons;
             ui.labels = labels;
-            ui.details = details;
-            ui.frames = frames;
+            ui.bars = bars;
+            ui.underlines = lines;
             ui.buttons = buttons;
+            ui.hint = help;
             ui.sfx = voice;
-            ui.moveClip = Clip("cadeado_clique");
-            ui.confirmClip = Clip("coracao");
+            ui.appearClip = Clip("coracao");
+            ui.moveClip = Clip("contagem_tic");
+            ui.confirmClip = Clip("cadeado_clique");
             return ui;
         }
 

@@ -34,8 +34,17 @@ namespace UltimaLinha.Salas
 
         void Start()
         {
+            if (IsUp) return; // já levantada (jogo continuado)
             if (handle) handle.localRotation = Quaternion.Euler(0f, 0f, downAngle);
             SetLamp(offColor, 0.35f);
+        }
+
+        /// <summary>Deixa a alavanca levantada na hora, sem som nem aviso (usado ao continuar um jogo salvo).</summary>
+        public void SetUpInstant()
+        {
+            IsUp = true;
+            if (handle) handle.localRotation = Quaternion.Euler(0f, 0f, upAngle);
+            SetLamp(onColor, 0.6f);
         }
 
         void Update()

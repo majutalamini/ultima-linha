@@ -80,7 +80,7 @@ namespace UltimaLinha.Salas
 
         IEnumerator Start()
         {
-            GameSave.ContinueRequested = false;
+            bool continuing = GameSave.BeginScene(SceneManager.GetActiveScene().name);
             if (player) player.controlEnabled = false;
             if (cameraFollow) cameraFollow.Snap();
             if (socket) socket.Intercept = OnSocket;
@@ -99,7 +99,8 @@ namespace UltimaLinha.Salas
             }
             if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 2.0f);
             yield return new WaitForSeconds(0.5f);
-            yield return SayAndWait(intro);
+            if (!continuing) yield return SayAndWait(intro);
+            else if (Hud.Instance) Hud.Instance.Toast("Jogo carregado.");
             if (player) player.controlEnabled = true;
             if (Hud.Instance) Hud.Instance.SetObjective(objectiveSocket);
             GameSave.Save(SceneManager.GetActiveScene().name);

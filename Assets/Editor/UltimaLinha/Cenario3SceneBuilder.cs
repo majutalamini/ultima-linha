@@ -3,15 +3,18 @@ using System.IO;
 using UltimaLinha.Cenario1;
 using UltimaLinha.Cenario2;
 using UltimaLinha.Salas;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using static UltimaLinha.EditorTools.Cenario1SceneBuilder;
 using static UltimaLinha.EditorTools.SalasBuild;
 
 namespace UltimaLinha.EditorTools
 {
     /// <summary>
-    /// Monta a cena Assets/Scenes/Cenario3.unity (a estação: documentos espalhados, um mezanino e a porta da administração).
+    /// Monta a cena Assets/Scenes/Cenario3.unity (a estação: peças do painel de desvios escondidas atrás de papéis,
+    /// um mezanino e a porta da administração, que abre quando a linha do painel fica completa).
     /// - Roda sozinho quando o projeto recompila, se a cena não existir ou estiver numa versão antiga.
     /// - Para refazer do zero: menu  Última Linha > Recriar Cenário 3.
     /// As medidas vêm de Ferramentas/Cenarios367/cenarios_finais.py (mesmos números).
@@ -19,7 +22,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario3SceneBuilder
     {
-        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario3.unity";
         const string Art3 = "Assets/Art/Cenario3";
 
@@ -80,7 +83,7 @@ namespace UltimaLinha.EditorTools
         static void Populate(GameObject playerPrefab)
         {
             var fonts = LoadFonts();
-            var core = BuildCore(playerPrefab, Load(Art3, "cenario3_fundo"), W, Floor, LWall, RWall, 330f, withLock: true, fonts);
+            var core = BuildCore(playerPrefab, Load(Art3, "cenario3_fundo"), W, Floor, LWall, RWall, 330f, withLock: false, fonts);
             var player = core.player;
             var sfx = core.sfx;
 
@@ -103,49 +106,49 @@ namespace UltimaLinha.EditorTools
             d1.docBody =
                 "<b>ESTAÇÃO — LINHA ÚNICA</b>\n\nPartidas, todas as noites:\n22:10   ·   23:00   ·   23:50\n\n" +
                 "Depois do último trem, a estação é fechada e a administração tranca a sala de controle.\n\n" +
-                "<i>Escrito a lápis, na margem:</i>\nCódigo da administração, parte <b>1</b> de 4:  <b>5</b>";
-            d1.docFooter = "Folha 1 de 4.";
-            d1.first = Lines(("kai", "<i>Uma folha presa no quadro. \"Parte 1 de 4: 5\".</i>"), ("kai", "<i>Então o código tem quatro números. Eu preciso achar as outras folhas.</i>"));
-            d1.again = Lines(("kai", "<i>Parte 1: 5.</i>"));
+                "<i>Escrito a lápis, na margem:</i>\nTirei as peças do painel de desvios. Sem a linha completa, a porta da administração não abre.";
+            d1.docFooter = "Atrás da folha, presa com fita: uma peça de trilho.";
+            d1.first = Lines(("kai", "<i>Uma peça de trilho, do tamanho da mão. Arrancada de algum painel.</i>"),
+                ("kai", "<i>\"Sem a linha completa, a porta não abre.\" Então tem mais peças por aí.</i>"));
+            d1.again = Lines(("kai", "<i>O quadro de horários. Já peguei a peça.</i>"));
 
             var d2 = BuildSpot(spots, "bilhete", 1900f, Floor, 1.3f, 1.4f, sfx, papel);
             d2.docTitle = "BILHETE DE EMBARQUE";
             d2.docBody =
                 "<b>ÚLTIMA LINHA</b>\nDestino: plataforma final\nValidade: uma viagem, sem volta.\n\n" +
-                "<i>No verso, com a mesma letra:</i>\nparte <b>2</b> de 4:  <b>2</b>";
-            d2.docFooter = "Folha 2 de 4.";
-            d2.first = Lines(("kai", "<i>Um bilhete caído no chão, com a letra do quadro. \"Parte 2: 2\".</i>"));
-            d2.again = Lines(("kai", "<i>Parte 2: 2.</i>"));
+                "<i>No verso, com a mesma letra:</i>\nquem quiser sair vai ter que ligar a linha sozinho.";
+            d2.docFooter = "Embaixo do bilhete, no chão: outra peça de trilho.";
+            d2.first = Lines(("kai", "<i>Um bilhete caído e, embaixo dele, outra peça do painel.</i>"));
+            d2.again = Lines(("kai", "<i>O bilhete. Sem volta.</i>"));
 
             var d3 = BuildSpot(spots, "guiche", 3350f, DeckY, 2.9f, 1.8f, sfx, papel);
             d3.docTitle = "ESCALA DOS FUNCIONÁRIOS";
             d3.docBody =
                 "Turno da noite:  ninguém escalado.\nTurno da madrugada:  ninguém escalado.\n\n" +
-                "A estação está funcionando sozinha há muito tempo. Quem estiver lendo isto: não espere por ninguém.\n\n" +
-                "<i>Anotado embaixo:</i>\nparte <b>3</b> de 4:  <b>9</b>";
-            d3.docFooter = "Folha 3 de 4.";
-            d3.first = Lines(("kai", "<i>No guichê dos funcionários, no alto. \"Parte 3: 9\".</i>"), ("kai", "<i>\"Ninguém escalado.\" Então quem mantém essa estação ligada?</i>"));
-            d3.again = Lines(("kai", "<i>Parte 3: 9.</i>"));
+                "A estação está funcionando sozinha há muito tempo. Quem estiver lendo isto: não espere por ninguém.";
+            d3.docFooter = "Na gaveta do guichê, junto da escala: uma peça de trilho.";
+            d3.first = Lines(("kai", "<i>No guichê dos funcionários, lá no alto, mais uma peça.</i>"), ("kai", "<i>\"Ninguém escalado.\" Então quem mantém essa estação ligada?</i>"));
+            d3.again = Lines(("kai", "<i>Ninguém escalado. Ninguém.</i>"));
 
             var d4 = BuildSpot(spots, "recibo", 4100f, Floor, 3.6f, 1.6f, sfx, papel);
             d4.docTitle = "RECIBO DA MÁQUINA";
             d4.docBody =
                 "<b>MÁQUINA AUTOMÁTICA</b>\n1 água · 1 pacote de biscoito\nTotal: pago.\n\n" +
-                "<i>Impresso embaixo, em letras miúdas:</i>\nparte <b>4</b> de 4:  <b>1</b>";
-            d4.docFooter = "Folha 4 de 4.";
-            d4.first = Lines(("kai", "<i>O recibo saiu da máquina sozinho. \"Parte 4: 1\".</i>"), ("kai", "<i>Quatro folhas. Agora a porta.</i>"));
-            d4.again = Lines(("kai", "<i>Parte 4: 1.</i>"));
+                "<i>Impresso embaixo, em letras miúdas:</i>\ntroco: uma peça de trilho.";
+            d4.docFooter = "A peça caiu na bandeja da máquina, junto com o recibo.";
+            d4.first = Lines(("kai", "<i>A máquina cuspiu o recibo... e uma peça de trilho.</i>"));
+            d4.again = Lines(("kai", "<i>A máquina não tem mais nada.</i>"));
 
             var souta = BuildNpc("Souta", "souta", 450f, Floor, 3.55f, player.transform);
             souta.firstTalk = Lines(
-                ("souta", "A porta da administração tem um teclado de quatro números."),
-                ("souta", "Deve ter papéis espalhados com os números. Procura pela estação inteira."));
-            souta.repeatTalk = Lines(("souta", "Quatro folhas, quatro números. Ainda falta alguma?"));
+                ("souta", "Do lado da porta tem um painel com um desenho dos trilhos. Está faltando pedaço."),
+                ("souta", "Se a porta depende dele, as peças devem estar pela estação. Procura em tudo."));
+            souta.repeatTalk = Lines(("souta", "Quatro buracos no painel. Ainda falta alguma peça?"));
             var ren = BuildNpc("Ren", "ren", 540f, Floor, 3.3f, player.transform);
             ren.firstTalk = Lines(
                 ("ren", "Eu vi uma pilha de caixotes lá no fundo. Dá para subir até o mezanino."),
                 ("ren", "Os funcionários ficavam lá em cima."));
-            ren.repeatTalk = Lines(("ren", "Se faltar uma folha, olha lá em cima, nos caixotes."));
+            ren.repeatTalk = Lines(("ren", "Se faltar uma peça, olha lá em cima, subindo pelos caixotes."));
 
             var dir = new GameObject("Diretor_Cenario3").AddComponent<Cenario3Director>();
             dir.player = player;
@@ -164,28 +167,122 @@ namespace UltimaLinha.EditorTools
                 glows.Add(sr);
             }
             dir.docGlows = glows.ToArray();
-            dir.digits = new[] { 5, 2, 9, 1 };
             dir.door = door;
-            dir.lockUI = core.ui.lockUi;
+            dir.panel = BuildSwitchPanel(core.ui.dialogue.transform.root, fonts, core.voice);
             dir.ambience = ambience;
             dir.sfx = sfx;
             dir.noteClip = Clip("papel");
+            dir.pieceClip = Clip("alavanca_pega");
             dir.intro = Lines(
                 ("kai", "<i>Uma estação. Vazia, com as luzes ainda acesas.</i>"),
                 ("souta", "Acabou o trilho do vagão. A saída é por aquela porta, no fundo."),
-                ("ren", "Está trancada. Tem um teclado do lado."),
-                ("kai", "<i>Quatro números. Em algum lugar tem que estar escrito.</i>"));
+                ("ren", "Está trancada. Do lado tem um painel com um desenho dos trilhos."),
+                ("kai", "<i>Um painel de desvios. E está faltando pedaço.</i>"));
             dir.renGivesLast = Lines(
                 ("ren", "Kai, espera! Eu achei isso no chão, perto dos caixotes."),
-                ("ren", "Tem um número escrito. É o que está faltando?"),
-                ("kai", "<i>É a folha que eu não achei. Agora eu tenho os quatro.</i>"));
-            dir.doorClosed = Lines(("kai", "<i>Um teclado de quatro números. Eu ainda não tenho nenhuma pista.</i>"));
-            dir.allFound = Lines(("kai", "<i>Quatro folhas, na ordem: 5, 2, 9, 1. Agora é só digitar na porta.</i>"));
+                ("ren", "É um pedaço de trilho. É o que está faltando no painel?"),
+                ("kai", "<i>É a última peça. Agora dá para completar a linha.</i>"));
+            dir.doorClosed = Lines(
+                ("kai", "<i>O painel mostra os trilhos da estação. A luz sai da plataforma e tem que chegar até a administração.</i>"),
+                ("kai", "<i>Mas estão faltando peças. Sem elas a linha nunca fecha.</i>"));
+            dir.allFound = Lines(("kai", "<i>Quatro peças. Agora é encaixar no painel e girar os trilhos até a luz chegar na porta.</i>"));
             dir.doorUnlocked = Lines(
-                ("kai", "<i>Abriu.</i>"),
+                ("kai", "<i>A linha acendeu inteira. A porta destravou.</i>"),
                 ("souta", "Vai. A gente vem logo atrás."));
 
             SetSpeakers(core.ui.dialogue);
+        }
+        // ------------------------------------------------------------------ painel de desvios
+
+        /// <summary>
+        /// A grade do painel: 5 x 3 peças. A corrente entra pela esquerda na linha do meio e tem que sair pela direita
+        /// na linha de baixo. As peças 0 a 3 (as que o Kai acha) ficam no caminho. Solução: girar até
+        /// todas ficarem na posição de "masks" (ver a simulação em Ferramentas/Cenarios367/painel_desvios.py).
+        /// </summary>
+        static SwitchPanelUI BuildSwitchPanel(Transform root, Fonts fonts, AudioSource voice)
+        {
+            var rt = Stretch("PainelDesvios", root);
+            var fade = root.Find("Fade");
+            if (fade) rt.SetSiblingIndex(fade.GetSiblingIndex()); // acima do HUD e do diálogo, abaixo do preto
+            var group = rt.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = false;
+            group.interactable = false;
+            var ui = rt.gameObject.AddComponent<SwitchPanelUI>();
+            Img(Stretch("Escurecer", rt), new Color(0f, 0f, 0f, 0.7f));
+
+            var panel = new GameObject("Painel", typeof(RectTransform)) { layer = UILayer }.GetComponent<RectTransform>();
+            panel.SetParent(rt, false);
+            panel.anchorMin = panel.anchorMax = panel.pivot = new Vector2(0.5f, 0.5f);
+            panel.sizeDelta = new Vector2(1100f, 760f);
+            Img(panel, new Color(0.035f, 0.033f, 0.035f, 0.97f));
+            Img(TopLeft("Linha", panel, 0, 0, 1100, 2), Rule);
+
+            var title = Label("Titulo", panel, "PAINEL DE DESVIOS  ·  ESTAÇÃO", fonts.sans, 20, Tagline, 0, 34, 1100, 30);
+            title.alignment = TextAlignmentOptions.Top;
+            title.characterSpacing = 26;
+            var status = Label("Status", panel, "", fonts.italic, 28, Hex("C8B9A0"), 0, 78, 1100, 40);
+            status.alignment = TextAlignmentOptions.Top;
+
+            const float cell = 132f, gap = 10f, gx = 200f, gy = 170f;
+            var grid = TopLeft("Grade", panel, gx, gy, 5 * cell + 4 * gap, 3 * cell + 2 * gap);
+
+            // entrada (linha 1, à esquerda) e saída (linha 2, à direita)
+            float entryY = gy + 1 * (cell + gap) + cell / 2f, exitY = gy + 2 * (cell + gap) + cell / 2f;
+            var entry = TopLeft("Entrada", panel, 40, entryY - 13, gx - 40, 26);
+            Img(entry, new Color(1f, 0.68f, 0.28f, 1f));
+            var entryLabel = Label("RotuloEntrada", panel, "PLATAFORMA", fonts.sans, 18, Muted, 30, entryY - 52, 200, 26);
+            entryLabel.characterSpacing = 12;
+            float gridRight = gx + 5 * cell + 4 * gap;
+            var exit = TopLeft("Saida", panel, gridRight, exitY - 13, 1040 - gridRight, 26);
+            Img(exit, new Color(0.34f, 0.32f, 0.29f, 1f));
+            var lamp = Img(TopLeft("Lampada", panel, 1030, exitY - 24, 48, 48), new Color(0.75f, 0.12f, 0.08f, 1f));
+            var exitLabel = Label("RotuloSaida", panel, "ADMINISTRAÇÃO", fonts.sans, 18, Muted, 870, exitY + 34, 220, 26);
+            exitLabel.alignment = TextAlignmentOptions.TopRight;
+            exitLabel.characterSpacing = 12;
+
+            var help = Label("Ajuda", panel, "SETAS MOVEM   ·   E GIRA   ·   Q GIRA AO CONTRÁRIO   ·   CLIQUE GIRA   ·   ESC FECHA",
+                fonts.sans, 15, Muted, 0, 700, 1100, 24);
+            help.alignment = TextAlignmentOptions.Top;
+            help.characterSpacing = 8;
+
+            const int N = SwitchPanelUI.N, E = SwitchPanelUI.E, S = SwitchPanelUI.S, W = SwitchPanelUI.W;
+            ui.columns = 5;
+            ui.rows = 3;
+            ui.masks = new[]
+            {
+                S | E, W | E,     W | S, W | S,     N | S,
+                W | N, N | E | S, N | S, N | E | W, W | N,
+                N | E, W | E,     N | E, W | E,     W | E,
+            };
+            ui.startTurns = new[]
+            {
+                1, 1, 2, 3, 0,
+                2, 0, 1, 1, 1,
+                2, 1, 3, 1, 1,
+            };
+            ui.pieceOf = new[]
+            {
+                -1, 1, -1, -1, -1,
+                 0, -1, 2, -1, -1,
+                -1, -1, -1, 3, -1,
+            };
+            ui.entryRow = 1;
+            ui.exitRow = 2;
+            ui.group = group;
+            ui.grid = grid;
+            ui.entryMarker = entry;
+            ui.exitMarker = exit;
+            ui.exitLamp = lamp;
+            ui.status = status;
+            ui.font = fonts.sans;
+            ui.cellSize = cell;
+            ui.gap = gap;
+            ui.sfx = voice;
+            ui.turnClip = Clip("cadeado_clique");
+            ui.placeClip = Clip("vazio_encaixe");
+            ui.solvedClip = Clip("cadeado_abre");
+            return ui;
         }
     }
 }

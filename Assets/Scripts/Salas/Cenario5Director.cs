@@ -11,7 +11,8 @@ namespace UltimaLinha.Salas
     /// Cenário 5 — o escritório abandonado e o corpo do chefe (clímax).
     /// 1. O Kai examina o corpo e acha, no bolso, a alavanca que falta e um recorte de jornal: foi ele quem matou o chefe.
     /// 2. Souta e Ren leem, entram em pânico, pegam uma arma na mesa do chefe, apontam para o Kai e o trancam no escritório.
-    /// 3. O Kai vasculha os arquivos atrás da chave. Ela está no arquivo "DEMISSÕES". O bilhete na mesa do chefe diz onde.
+    /// 3. O Kai vasculha os arquivos atrás da chave. Ela está no arquivo "DEMISSÕES". O bilhete na mesa do chefe diz onde
+    ///    (depois de lido, o arquivo certo brilha). Aberto o arquivo, a chave aparece na gaveta e o Kai a pega com E.
     /// </summary>
     public class Cenario5Director : MonoBehaviour
     {
@@ -28,6 +29,12 @@ namespace UltimaLinha.Salas
         public ObjectSpot[] cabinets = new ObjectSpot[0];
         [Tooltip("Id do arquivo onde está a chave.")]
         public string keyCabinetId = "arquivoC";
+        [Tooltip("A chave na gaveta aberta (aparece quando o Kai abre o arquivo certo; E pega).")]
+        public ObjectSpot keyPickup;
+        [Tooltip("Brilho fraco no arquivo certo, depois que o Kai lê o memorando da mesa.")]
+        public SpriteRenderer cabinetGlow;
+        [Tooltip("Brilho em cima da chave, enquanto ela está na gaveta.")]
+        public SpriteRenderer keyGlow;
         public ExitDoor door;
 
         [Header("Pontos do cenário (x em unidades)")]
@@ -63,6 +70,7 @@ namespace UltimaLinha.Salas
         [Header("Objetivos")]
         public string objectiveBody = "Examine o corpo.";
         public string objectiveKey = "Ache a chave da porta. Vasculhe o escritório.";
+        public string objectiveTakeKey = "Pegue a chave na gaveta do arquivo.";
         public string objectiveDoor = "Abra a porta do escritório.";
 
         [Header("Falas")]
@@ -83,7 +91,7 @@ namespace UltimaLinha.Salas
         public string endSubtitle = "A estação ainda espera pela alavanca.";
 
         Vector2 previousGravity;
-        bool introDone, leaving, confronted, locked, hasKey, hintGiven, renSpoke, running, cutscene;
+        bool introDone, leaving, confronted, locked, hasKey, keyRevealed, memoRead, hintGiven, renSpoke, running, cutscene;
         int wrongSearches;
 
         void Awake()
@@ -94,6 +102,8 @@ namespace UltimaLinha.Salas
             Modal.Reset();
             if (redTint) redTint.alpha = 0f;
             if (gunProp) gunProp.SetActive(false);
+            if (keyPickup) { keyPickup.available = false; keyPickup.gameObject.SetActive(false); }
+            if (cabinetGlow) cabinetGlow.enabled = false;
         }
 
         void OnDestroy()
@@ -103,24 +113,32 @@ namespace UltimaLinha.Salas
 
         IEnumerator Start()
         {
-            GameSave.ContinueRequested = false;
-            hasKey = GameFlags.Get(GameFlags.Cenario5Key);
+            bool continuing = GameSave.BeginScene(SceneManager.GetActiveScene().name);
+            hasKey = continuing && GameSave.Has("chave");
             if (player) player.controlEnabled = false;
-            if (cameraFollow) cameraFollow.Snap();
 
             if (body)
             {
                 body.Intercept = OnBodyIntercept;
                 body.Presented += OnBodyPresented;
             }
-            if (bossDesk) { bossDesk.available = false; bossDesk.Presented += OnSearched; }
+            if (bossDesk) { bossDesk.available = false; bossDesk.Presented += OnDeskRead; }
             foreach (var c in cabinets)
                 if (c) { c.available = false; c.Presented += OnSearched; }
+            if (keyPickup) keyPickup.Intercept = OnKeyPickup;
             if (door)
             {
                 door.onLockedInteract = OnDoorLocked;
                 door.onEnter = () => StartCoroutine(Leave(nextScene));
             }
+
+            // jogo continuado: se a briga já aconteceu, o Kai volta trancado no escritório, com o que já tinha achado
+            if (continuing)
+            {
+                if (GameSave.Has("confronto")) RestoreLocked();
+                AutoSave.RestorePlayer(player, cameraFollow);
+            }
+            if (cameraFollow) cameraFollow.Snap();
 
             if (ambience)
             {
@@ -130,18 +148,59 @@ namespace UltimaLinha.Salas
                 StartCoroutine(FadeAudio(ambience, ambienceVolume, 3f));
             }
 
-            if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 2.2f);
-            yield return new WaitForSeconds(0.7f);
-            yield return SayAndWait(intro);
+            if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, continuing ? 1.2f : 2.2f);
+            yield return new WaitForSeconds(continuing ? 0.2f : 0.7f);
+            if (!continuing) yield return SayAndWait(intro);
+            else if (Hud.Instance) Hud.Instance.Toast("Jogo carregado.");
 
             if (player) player.controlEnabled = true;
-            if (Hud.Instance) Hud.Instance.SetObjective(objectiveBody);
-            GameSave.Save(SceneManager.GetActiveScene().name);
+            if (Hud.Instance) Hud.Instance.SetObjective(CurrentObjective());
             introDone = true;
+        }
+
+        string CurrentObjective()
+        {
+            if (!confronted) return objectiveBody;
+            if (hasKey) return objectiveDoor;
+            if (keyRevealed) return objectiveTakeKey;
+            return objectiveKey;
+        }
+
+        /// <summary>Volta ao momento depois da briga: Souta e Ren já saíram e a porta está trancada.</summary>
+        void RestoreLocked()
+        {
+            confronted = true;
+            locked = true;
+            if (souta) souta.gameObject.SetActive(false);
+            if (ren) ren.gameObject.SetActive(false);
+            if (redTint) redTint.alpha = 0.1f;
+            if (!GameFlags.Get(GameFlags.MissingLever)) GameFlags.Set(GameFlags.MissingLever);
+            renSpoke = GameSave.Has("ren_bateu");
+            memoRead = GameSave.Has("memorando");
+            if (bossDesk) bossDesk.available = true;
+            foreach (var c in cabinets)
+            {
+                if (!c) continue;
+                c.available = true;
+                if (GameSave.Has("arquivo_" + c.id) && c.openVisual) c.openVisual.SetActive(true);
+                if (c.id == keyCabinetId && GameSave.Has("arquivo_" + c.id)) c.available = false;
+            }
+            if (!hasKey && GameSave.Has("arquivo_" + keyCabinetId)) ShowKey();
         }
 
         void Update()
         {
+            if (cabinetGlow)
+            {
+                bool show = memoRead && locked && !keyRevealed && !hasKey;
+                if (cabinetGlow.enabled != show) cabinetGlow.enabled = show;
+                if (show) { var c = cabinetGlow.color; c.a = 0.2f + 0.14f * Mathf.Sin(Time.time * 2.4f); cabinetGlow.color = c; }
+            }
+            if (keyGlow && keyGlow.gameObject.activeInHierarchy)
+            {
+                var c = keyGlow.color; c.a = 0.3f + 0.25f * Mathf.Sin(Time.time * 4f); keyGlow.color = c;
+            }
+
             if (!introDone || leaving || running) return;
             if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !Modal.IsOpen)
                 StartCoroutine(Leave(menuScene));
@@ -229,29 +288,39 @@ namespace UltimaLinha.Salas
                 if (c) c.available = true;
             if (player) player.controlEnabled = true;
             if (Hud.Instance) Hud.Instance.SetObjective(objectiveKey);
-            GameSave.Save(SceneManager.GetActiveScene().name);
+            GameSave.Mark("confronto");
         }
 
         // ---------- Procurar a chave ----------
 
+        void OnDeskRead(ObjectSpot spot, bool firstTime)
+        {
+            if (!locked || memoRead) return;
+            memoRead = true;               // o arquivo de DEMISSÕES passa a brilhar
+            GameSave.Mark("memorando");
+        }
+
         void OnSearched(ObjectSpot spot, bool firstTime)
         {
-            if (!firstTime || !locked) return;
+            if (!locked) return;
+            if (firstTime) GameSave.Mark("arquivo_" + spot.id);
             if (spot.id == keyCabinetId)
             {
-                StartCoroutine(FoundKey());
+                if (!hasKey && !keyRevealed) StartCoroutine(RevealKey(spot));
                 return;
             }
-            if (spot == bossDesk) return;
+            if (!firstTime) return;
             wrongSearches++;
             if (!renSpoke)
             {
                 renSpoke = true;
+                GameSave.Mark("ren_bateu");
                 StartCoroutine(RenKnocks());
             }
             else if (!hintGiven && wrongSearches >= 2 && !hasKey)
             {
                 hintGiven = true;
+                memoRead = true;           // a dica também acende o arquivo certo
                 Say(cabinetHint);
             }
         }
@@ -264,12 +333,42 @@ namespace UltimaLinha.Salas
             yield return SayAndWait(renOutside);
         }
 
+        /// <summary>O arquivo certo foi aberto: a chave aparece na gaveta, brilhando, para o Kai pegar.</summary>
+        IEnumerator RevealKey(ObjectSpot cabinet)
+        {
+            cabinet.available = false;     // o E passa para a chave
+            ShowKey();
+            if (sfx && keyClip) sfx.PlayOneShot(keyClip, 0.45f);
+            yield return null;
+            if (Hud.Instance) Hud.Instance.SetObjective(objectiveTakeKey);
+        }
+
+        void ShowKey()
+        {
+            keyRevealed = true;
+            if (keyPickup)
+            {
+                keyPickup.gameObject.SetActive(true);
+                keyPickup.available = true;
+            }
+        }
+
+        bool OnKeyPickup(ObjectSpot spot)
+        {
+            if (hasKey) return true;
+            spot.available = false;
+            spot.gameObject.SetActive(false);
+            StartCoroutine(FoundKey());
+            return true;
+        }
+
         IEnumerator FoundKey()
         {
             hasKey = true;
             GameFlags.Set(GameFlags.Cenario5Key);
+            GameSave.Mark("chave");
             if (sfx && keyClip) sfx.PlayOneShot(keyClip);
-            if (Hud.Instance) Hud.Instance.Toast("Chave encontrada.");
+            if (Hud.Instance) Hud.Instance.Toast("Você pegou a chave.");
             yield return new WaitForSeconds(0.3f);
             yield return SayAndWait(keyFound);
             if (Hud.Instance) Hud.Instance.SetObjective(objectiveDoor);
