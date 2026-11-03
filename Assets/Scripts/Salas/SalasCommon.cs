@@ -94,6 +94,7 @@ namespace UltimaLinha.Salas
         public override void Interact()
         {
             if (!CanInteract) return;
+            if (PersonagemPixel.Jogador) PersonagemPixel.Jogador.Tocar("search");
             if (Intercept != null && Intercept(this)) return;
             StartCoroutine(Present());
         }
@@ -260,6 +261,7 @@ namespace UltimaLinha.Salas
         IEnumerator Pull()
         {
             moving = true;
+            if (PersonagemPixel.Jogador) PersonagemPixel.Jogador.Tocar("lever");
             if (sfx && pullClip) sfx.PlayOneShot(pullClip);
             float t = 0f, d = 0.45f;
             while (t < d)

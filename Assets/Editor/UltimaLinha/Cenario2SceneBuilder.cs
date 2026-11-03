@@ -32,7 +32,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario2SceneBuilder
     {
-        const int BuildVersion = 1; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
 
         const string ScenePath = "Assets/Scenes/Cenario2.unity";
         const string Art2 = "Assets/Art/Cenario2";
@@ -334,7 +334,7 @@ namespace UltimaLinha.EditorTools
                 mainSr.enabled = false;
                 PrefabUtility.RecordPrefabInstancePropertyModifications(mainSr);
             }
-            var kaiRig = BuildRig("kai", RigStyle.Kai, playerGo.transform, new Vector3(0f, -1.6f, 0f), 10, 1f);
+            var kaiRig = BuildPersonagem("kai", playerGo.transform, new Vector3(0f, -1.6f, 0f), 10);
             kaiRig.mover = player;
             kaiRig.flipSource = mainSr;
             kaiRig.strideLength = 2.3f;
@@ -370,7 +370,7 @@ namespace UltimaLinha.EditorTools
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 4.7f;
+            cam.orthographicSize = CameraSize;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Color.black;
             camGo.transform.position = new Vector3(spawn.transform.position.x + 5f, 4.7f, -10f);
@@ -519,10 +519,9 @@ namespace UltimaLinha.EditorTools
             root.transform.position = new Vector3(x, Floor, 0);
             var npc = root.AddComponent<NpcTalk>();
             npc.reachX = 1.7f;
-            npc.promptOffset = new Vector2(0f, height + 0.45f);
+            npc.promptOffset = new Vector2(0f, (id == "souta" ? PixelArtHeightSouta : PixelArtHeightRen) + 0.45f);
             npc.lookAt = player;
-            var style = id == "souta" ? RigStyle.Souta : RigStyle.Ren;
-            npc.rig = BuildRig(id, style, root.transform, Vector3.zero, 6, id == "souta" ? 1.02f : 0.97f);
+            npc.rig = BuildPersonagem(id, root.transform, Vector3.zero, 6);
             return npc;
         }
 

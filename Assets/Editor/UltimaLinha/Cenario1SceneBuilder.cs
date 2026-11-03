@@ -28,10 +28,16 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario1SceneBuilder
     {
-        const int BuildVersion = 6; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 7; // aumente para forçar a cena a ser recriada automaticamente
 
         const string ScenePath = "Assets/Scenes/Cenario1.unity";
         const string Art = "Assets/Art/Cenario1";
+        // Personagens em pixel art: 58 PPU com câmera 4,655 dá escala 2 exata em 1080p sem passar da altura dos fundos.
+        internal const float CameraSize = 540f / 2f / PixelArtImporter.Ppu;
+        internal const float PixelArtHeightKai = 222f / PixelArtImporter.Ppu, PixelArtHeightSouta = 232f / PixelArtImporter.Ppu,
+            PixelArtHeightRen = 215f / PixelArtImporter.Ppu;
+        const string PixelArt = "Assets/Art/Personagens/PixelArt";
+        const float ColliderHeight = 3.2f;
         const string CharArt = Art + "/Personagens";
         const string FinalCharArt = "Assets/Art/Personagens"; // arte definitiva (local antigo, ainda aceito)
         // onde procurar a arte definitiva dos personagens (o primeiro que existir vence)
@@ -323,7 +329,7 @@ namespace UltimaLinha.EditorTools
 
             // ---------- Jogador (Kai) ----------
             var spawn = new GameObject("SpawnPoint");
-            spawn.transform.position = new Vector3(3.6f, Y(FloorPy) + 1.62f, 0);
+            spawn.transform.position = new Vector3(3.6f, Y(FloorPy) + ColliderHeight / 2f + 0.02f, 0);
             var playerGo = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
             playerGo.name = "Kai (Player)";
             playerGo.transform.position = spawn.transform.position;
@@ -336,7 +342,7 @@ namespace UltimaLinha.EditorTools
             var box = playerGo.GetComponent<BoxCollider2D>();
             if (box)
             {
-                box.size = new Vector2(0.9f, 3.2f);
+                box.size = new Vector2(0.9f, ColliderHeight);
                 box.offset = Vector2.zero;
                 PrefabUtility.RecordPrefabInstancePropertyModifications(box);
             }
@@ -346,11 +352,12 @@ namespace UltimaLinha.EditorTools
                 mainSr.enabled = false; // o boneco do template fica escondido; o Kai é desenhado por cima
                 PrefabUtility.RecordPrefabInstancePropertyModifications(mainSr);
             }
-            // Kai articulado (partes separadas, animado pelo CharacterRig2D); pés na base do colisor
-            var kaiRig = BuildRig("kai", RigStyle.Kai, playerGo.transform, new Vector3(0f, -1.6f, 0f), 10, 1f);
+            // Kai em pixel art; pés na base do colisor
+            var kaiRig = BuildPersonagem("kai", playerGo.transform, new Vector3(0f, -ColliderHeight / 2f, 0f), 10);
             kaiRig.mover = player;
             kaiRig.flipSource = mainSr;
             kaiRig.strideLength = 2.3f;
+            kaiRig.jumpSpeed = player.jumpTakeOffSpeed * 1.5f; // jumpModifier do GameController
 
             var prompt = SpriteObj("TeclaE", null, Spr("tecla_e"), Vector3.zero, 50);
             prompt.transform.localScale = Vector3.one * 0.75f;
@@ -379,7 +386,7 @@ namespace UltimaLinha.EditorTools
             letterPuzzle.letters = LetterSpots.Select((l, i) => BuildLetter(world.transform, l.letter, l.x, l.standPy, l.markY, letterPuzzle)).ToArray();
 
             // ---------- Souta e Ren ----------
-            var souta = BuildNpc("Souta", "souta", 12.35f, 3.55f, playerGo.transform, puzzle);
+            var souta = BuildNpc("Souta", "souta", 12.35f, PixelArtHeightSouta, playerGo.transform, puzzle);
             souta.firstTalk = Lines(
                 ("souta", "Kai. Finalmente acordou."),
                 ("kai", "Souta...? Eu dormi?"),
@@ -398,7 +405,7 @@ namespace UltimaLinha.EditorTools
                 ("souta", "Viu? Quando você presta atenção, você consegue."),
                 ("kai", "<i>...Por que isso soa igual a uma bronca do chefe?</i>"));
 
-            var ren = BuildNpc("Ren", "ren", 16.85f, 3.3f, playerGo.transform, puzzle);
+            var ren = BuildNpc("Ren", "ren", 16.85f, PixelArtHeightRen, playerGo.transform, puzzle);
             souta.door = door;
             ren.door = door;
             ren.firstTalk = Lines(
@@ -421,10 +428,10 @@ namespace UltimaLinha.EditorTools
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
             cam.orthographic = true;
-            cam.orthographicSize = 4.7f;
+            cam.orthographicSize = CameraSize;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Color.black;
-            camGo.transform.position = new Vector3(spawn.transform.position.x + 5f, 4.7f, -10f);
+            camGo.transform.position = new Vector3(spawn.transform.position.x + 5f, CameraSize, -10f);
             camGo.AddComponent<AudioListener>();
             var follow = camGo.AddComponent<CameraFollow2D>();
             follow.target = playerGo.transform;
@@ -618,63 +625,71 @@ namespace UltimaLinha.EditorTools
             npc.promptOffset = new Vector2(0f, height + 0.45f);
             npc.lookAt = player;
             npc.puzzle = puzzle;
-            var style = id == "souta" ? RigStyle.Souta : RigStyle.Ren;
-            npc.rig = BuildRig(id, style, root.transform, Vector3.zero, 6, id == "souta" ? 1.02f : 0.97f);
+            npc.rig = BuildPersonagem(id, root.transform, Vector3.zero, 6);
             return npc;
         }
 
         /// <summary>
-        /// Monta o esqueleto de um personagem articulado: quadril → tronco → cabeça/braços, quadril → pernas → pés.
-        /// As partes vêm de Assets/Art/Cenario1/Rig/{id}_{parte}.png (pivô na articulação).
+        /// Monta um personagem em pixel art: um SpriteRenderer que troca de quadro (PersonagemPixel) e a sombra.
+        /// Os quadros vêm de Assets/Art/Personagens/PixelArt/{Id}/{clipe}_{nn}.png (gerados em Ferramentas/PixelArt/fatia.py).
         /// </summary>
-        internal static CharacterRig2D BuildRig(string id, RigStyle style, Transform parent, Vector3 localPos, int order, float scale)
+        internal static PersonagemPixel BuildPersonagem(string id, Transform parent, Vector3 localPos, int order)
         {
             var root = new GameObject(id + "_Corpo").transform;
             root.SetParent(parent, false);
             root.localPosition = localPos;
-            root.localScale = Vector3.one * scale;
-            var rig = root.gameObject.AddComponent<CharacterRig2D>();
-            rig.style = style;
-            rig.speakerId = id;
-            rig.hipHeight = RigLayout.HipHeight;
+            var ch = root.gameObject.AddComponent<PersonagemPixel>();
+            ch.speakerId = id;
+            ch.strideLength = id == "souta" ? 2.9f : id == "ren" ? 2.2f : 2.3f;
 
             var shadow = SpriteObj("Sombra", root, Spr("sombra_pes"), root.position, order - 12);
             shadow.transform.localPosition = new Vector3(0.05f, 0.02f, 0f);
             shadow.transform.localScale = new Vector3(0.55f, 0.5f, 1f);
             shadow.color = new Color(0f, 0f, 0f, 0.55f);
-            rig.shadow = shadow;
+            ch.shadow = shadow;
 
-            var body = new GameObject("Quadril").transform;
-            body.SetParent(root, false);
-            body.localPosition = new Vector3(0f, RigLayout.HipHeight, 0f);
-            rig.body = body;
-
-            Transform Bone(string part, Transform p, Vector2 pos, int ord)
+            string pasta = $"{PixelArt}/{char.ToUpperInvariant(id[0])}{id.Substring(1)}";
+            Sprite[] Clip(string clip, int de = 0, int ate = 99)
             {
-                var go = new GameObject(part);
-                go.transform.SetParent(p, false);
-                go.transform.localPosition = pos;
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{Art}/Rig/{id}_{part}.png");
-                if (!sr.sprite) Debug.LogWarning($"[Última Linha] Parte não encontrada: {id}_{part}");
-                sr.sortingOrder = order + ord;
-                return go.transform;
+                var list = new List<Sprite>();
+                for (int i = de; i <= ate; i++)
+                {
+                    var sp = AssetDatabase.LoadAssetAtPath<Sprite>($"{pasta}/{clip}_{i:00}.png");
+                    if (!sp) break;
+                    list.Add(sp);
+                }
+                if (list.Count == 0) Debug.LogWarning($"[Última Linha] Sem quadros de {id}/{clip}");
+                return list.ToArray();
             }
+            ClipePixel Extra(string nome, Sprite[] quadros, float fps = 8f) => new ClipePixel { nome = nome, quadros = quadros, fps = fps };
 
-            bool cardigan = style == RigStyle.Ren; // o cardigã comprido cobre a coxa da frente
-            rig.thighB = Bone("thigh_b", body, RigLayout.Hip, -2);
-            rig.shinB = Bone("shin_b", rig.thighB, new Vector2(0f, -RigLayout.Thigh), -2);
-            rig.footB = Bone("foot_b", rig.shinB, new Vector2(0f, -RigLayout.Shin), -2);
-            rig.torso = Bone("torso", body, Vector2.zero, 0);
-            rig.head = Bone("head", rig.torso, RigLayout.Neck, 1);
-            rig.upperB = Bone("upper_b", rig.torso, RigLayout.Shoulder, -4);
-            rig.foreB = Bone("fore_b", rig.upperB, new Vector2(0f, -RigLayout.Upper), -5);
-            rig.thighF = Bone("thigh_f", body, RigLayout.Hip, cardigan ? -1 : 1);
-            rig.shinF = Bone("shin_f", rig.thighF, new Vector2(0f, -RigLayout.Thigh), cardigan ? -1 : 1);
-            rig.footF = Bone("foot_f", rig.shinF, new Vector2(0f, -RigLayout.Shin), cardigan ? -1 : 1);
-            rig.upperF = Bone("upper_f", rig.torso, RigLayout.Shoulder, 2);
-            rig.foreF = Bone("fore_f", rig.upperF, new Vector2(0f, -RigLayout.Upper), 3);
-            return rig;
+            ch.idle = Clip("idle");
+            ch.walk = Clip("walk");
+            ch.talk = Clip("talk");
+            ch.act = Clip("act");
+            if (id == "kai")
+            {
+                ch.run = Clip("run");
+                ch.jump = Clip("jump", 1, 3);
+                ch.fall = Clip("jump", 4, 5);
+                ch.extras = new[]
+                {
+                    Extra("lever", Clip("lever")), Extra("search", Clip("search")),
+                    Extra("empurra", Clip("final", 0, 2), 10f), Extra("aponta", Clip("final", 3, 5), 6f),
+                };
+            }
+            else if (id == "souta")
+                ch.extras = new[] { Extra("gun", Clip("gun"), 6f), Extra("fallen", Clip("fallen"), 9f) };
+            else
+                ch.extras = new[] { Extra("panic", Clip("panic"), 8f) };
+
+            var view = new GameObject("Desenho").AddComponent<SpriteRenderer>();
+            view.transform.SetParent(root, false);
+            view.sprite = ch.idle.Length > 0 ? ch.idle[0] : null;
+            view.sortingOrder = order;
+            view.color = new Color(0.78f, 0.75f, 0.78f, 1f); // assenta o personagem nos cenários escuros
+            ch.view = view;
+            return ch;
         }
 
         static LetterPickup BuildLetter(Transform parent, char letter, float x, float standPy, float markY, LetterPuzzle puzzle)
@@ -1154,13 +1169,6 @@ namespace UltimaLinha.EditorTools
             foreach (var path in paths)
             {
                 string file = Path.GetFileNameWithoutExtension(path);
-                if (path.Contains("/Rig/"))
-                {
-                    // partes dos personagens articulados: pivô na articulação
-                    var rp = RigLayout.Pivots.TryGetValue(file, out var jp) ? jp : new Vector2(0.5f, 0.5f);
-                    ConfigureSprite(path, rp, RigLayout.PixelsPerUnit, 1024);
-                    continue;
-                }
                 var pivot = pivots.TryGetValue(file, out var p) ? p : new Vector2(0.5f, 0.5f);
                 ConfigureSprite(path, pivot, PPU, file == "cenario1_fundo" ? 8192 : 2048);
             }

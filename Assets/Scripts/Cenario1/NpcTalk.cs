@@ -10,8 +10,8 @@ namespace UltimaLinha.Cenario1
     /// </summary>
     public class NpcTalk : Interactable
     {
-        [Tooltip("Personagem articulado (o normal). Se estiver vazio, usa o sprite simples abaixo.")]
-        public CharacterRig2D rig;
+        [Tooltip("Personagem em pixel art (o normal). Se estiver vazio, usa o sprite simples abaixo.")]
+        public PersonagemPixel rig;
         public SpriteRenderer sprite;
         [Tooltip("Normalmente o Kai: o personagem vira o rosto para ele.")]
         public Transform lookAt;

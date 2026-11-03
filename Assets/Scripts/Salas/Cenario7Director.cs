@@ -20,9 +20,8 @@ namespace UltimaLinha.Salas
         public CameraFollow2D cameraFollow;
         public NpcTalk ren;
         public ObjectSpot soutaSpot;
-        public CharacterRig2D soutaRig;
+        public PersonagemPixel soutaRig;
         public GameObject gunOnFloor;
-        public GameObject kaiGun;
         public SpriteRenderer headlight;
 
         [Header("Medidas (unidades)")]
@@ -109,11 +108,6 @@ namespace UltimaLinha.Salas
         {
             var sr = player ? player.GetComponent<SpriteRenderer>() : null;
             if (sr) sr.flipX = dir < 0f;
-            if (kaiGun)
-            {
-                kaiGun.transform.localPosition = new Vector3(0.62f * dir, -0.2f, 0f);
-                kaiGun.transform.localScale = new Vector3(0.55f * dir, 0.55f, 1f);
-            }
         }
 
         IEnumerator Finale()
@@ -126,6 +120,8 @@ namespace UltimaLinha.Salas
             yield return SayAndWait(beforePush);
 
             // o empurrão
+            var kai = PersonagemPixel.Jogador;
+            if (kai) kai.Tocar("empurra", true);
             if (sfx && pushClip) sfx.PlayOneShot(pushClip);
             if (gunOnFloor)
             {
@@ -143,14 +139,15 @@ namespace UltimaLinha.Salas
             }
             StartCoroutine(TrainComes());
             if (ren && ren.rig) ren.rig.facing = 1f;
+            if (ren && ren.rig) ren.rig.Tocar("panic", true);
             yield return SayAndWait(renPanic);
             if (ren) yield return WalkTo(ren, ren.transform.position.x - 1.2f, 2.6f);
             if (ren && ren.rig) ren.rig.facing = 1f;
 
             // o Kai pega a arma e aponta para o amigo
             if (gunOnFloor) gunOnFloor.SetActive(false);
-            if (kaiGun) kaiGun.SetActive(true);
             FaceKai(-1f);
+            if (kai) kai.Tocar("aponta", true);
             yield return new WaitForSeconds(0.6f);
             yield return SayAndWait(pointGun);
 
@@ -197,6 +194,7 @@ namespace UltimaLinha.Salas
             float x0 = tr.position.x, y0 = tr.position.y;
             float endX = x0 + (edgeX - x0) + 1.3f;
             soutaRig.facing = 1f;
+            soutaRig.Tocar("fallen", true);
             float t = 0f, vy = 0f, y = y0;
             // desliza para fora da plataforma
             while (t < 0.45f)
@@ -207,18 +205,15 @@ namespace UltimaLinha.Salas
                 yield return null;
             }
             // cai nos trilhos
-            float x = edgeX + 0.2f, rot = 0f;
+            float x = edgeX + 0.2f;
             while (y > railY + 0.02f)
             {
                 vy += gravity.y * Time.deltaTime;
                 y = Mathf.Max(railY, y + vy * Time.deltaTime);
                 x = Mathf.MoveTowards(x, endX, 1.6f * Time.deltaTime);
-                rot = Mathf.MoveTowards(rot, -90f, 260f * Time.deltaTime);
                 tr.position = new Vector3(x, y, 0f);
-                tr.rotation = Quaternion.Euler(0f, 0f, rot);
                 yield return null;
             }
-            tr.rotation = Quaternion.Euler(0f, 0f, -90f);
             tr.position = new Vector3(x, railY, 0f);
             if (sfx && fallClip) sfx.PlayOneShot(fallClip);
         }

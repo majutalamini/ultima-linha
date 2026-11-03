@@ -19,7 +19,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 1; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
@@ -108,10 +108,6 @@ namespace UltimaLinha.EditorTools
             var gunFloor = SpriteObj("PistolaChao", core.world, Load("Assets/Art/Cenario5", "pistola"), new Vector3(X(SoutaX), Y(Floor) + 0.12f, 0f), 5);
             gunFloor.transform.localScale = Vector3.one * 0.55f;
             gunFloor.gameObject.SetActive(false);
-            var kaiGun = SpriteObj("PistolaKai", player.transform, Load("Assets/Art/Cenario5", "pistola"), Vector3.zero, 12);
-            kaiGun.transform.localPosition = new Vector3(0.62f, -0.2f, 0f);
-            kaiGun.transform.localScale = Vector3.one * 0.55f;
-            kaiGun.gameObject.SetActive(false);
 
             // farol do trem (sai do túnel à direita)
             var head = SpriteObj("FarolDoTrem", core.world, Spr("brilho"), new Vector3(X(TunnelX), Y(560f), 0f), 60);
@@ -125,7 +121,6 @@ namespace UltimaLinha.EditorTools
             dir.soutaSpot = soutaSpot;
             dir.soutaRig = rig;
             dir.gunOnFloor = gunFloor.gameObject;
-            dir.kaiGun = kaiGun.gameObject;
             dir.headlight = head;
             dir.edgeX = X(EdgeX);
             dir.railY = Y(895f) + 0.3f;

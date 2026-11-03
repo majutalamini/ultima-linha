@@ -48,3 +48,15 @@ __pycache__/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Animações do Mixamo: os termos de uso proíbem redistribuir os arquivos brutos (só os sprites renderizados vão para o repositório)
+/Ferramentas/Animacoes/mixamo/
+
+# Pré-visualizações geradas pelo Blender
+/Ferramentas/Blender/frames/
+/Ferramentas/Blender/frames_vrm/
+/Ferramentas/Blender/*.bak.py
+
+# Geradas pelas ferramentas de pixel art
+/Ferramentas/PixelArt/previa/
+/Ferramentas/PixelArt/__pycache__/

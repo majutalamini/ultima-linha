@@ -19,8 +19,6 @@ namespace UltimaLinha.Salas
         public CameraFollow2D cameraFollow;
         public NpcTalk souta;
         public NpcTalk ren;
-        [Tooltip("Pistola na mão do Souta (desligada até ele pegar).")]
-        public GameObject gunProp;
 
         [Header("Lugares")]
         public ObjectSpot body;
@@ -93,7 +91,6 @@ namespace UltimaLinha.Salas
             Time.timeScale = 1f;
             Modal.Reset();
             if (redTint) redTint.alpha = 0f;
-            if (gunProp) gunProp.SetActive(false);
         }
 
         void OnDestroy()
@@ -189,18 +186,20 @@ namespace UltimaLinha.Salas
             var a = StartCoroutine(Walk(souta, kaiX - 2.0f, 3.1f));
             yield return Walk(ren, kaiX - 3.4f, 2.8f);
             yield return a;
+            if (ren && ren.rig) ren.rig.Tocar("panic", true);
             yield return SayAndWait(confront1);
 
             // o Souta vai até a mesa do chefe e pega a arma
             yield return Walk(souta, deskX, 3.0f);
             if (sfx && gunTakeClip) sfx.PlayOneShot(gunTakeClip);
+            if (souta && souta.rig) souta.rig.Tocar("gun", true);
             yield return new WaitForSeconds(0.7f);
-            if (gunProp) gunProp.SetActive(true);
             if (sfx && gunCockClip) sfx.PlayOneShot(gunCockClip);
             if (cameraFollow) cameraFollow.Shake(0.05f, 0.4f);
             yield return new WaitForSeconds(0.8f);
             yield return Walk(souta, kaiX - 2.0f, 3.0f);
             FaceRight(souta);
+            if (souta && souta.rig) souta.rig.Tocar("gun", true);
             yield return SayAndWait(confront2);
 
             // saem e trancam a porta
