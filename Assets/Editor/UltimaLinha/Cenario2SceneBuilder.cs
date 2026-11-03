@@ -32,7 +32,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario2SceneBuilder
     {
-        const int BuildVersion = 2; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
 
         const string ScenePath = "Assets/Scenes/Cenario2.unity";
         const string Art2 = "Assets/Art/Cenario2";
@@ -316,7 +316,8 @@ namespace UltimaLinha.EditorTools
             playerGo.name = "Kai (Player)";
             playerGo.transform.position = spawn.transform.position;
             var player = playerGo.GetComponent<PlayerController>();
-            player.maxSpeed = 3.4f;
+            player.maxSpeed = 2.8f;
+            player.runMultiplier = 2.06f; // corrida a ~5,8 u/s
             player.jumpTakeOffSpeed = 7.2f;
             player.gravityModifier = 1.25f;
             player.jumpAudio = null;
@@ -337,7 +338,6 @@ namespace UltimaLinha.EditorTools
             var kaiRig = BuildPersonagem("kai", playerGo.transform, new Vector3(0f, -1.6f, 0f), 10);
             kaiRig.mover = player;
             kaiRig.flipSource = mainSr;
-            kaiRig.strideLength = 2.3f;
 
             var prompt = SpriteObj("TeclaE", null, Spr("tecla_e"), Vector3.zero, 50);
             prompt.transform.localScale = Vector3.one * 0.75f;
@@ -566,7 +566,7 @@ namespace UltimaLinha.EditorTools
             Img(TopLeft("Linha", objRt, 64, 70, 46, 1), Rule);
             var objText = Label("Texto", objRt, "", italic, 32, Cream, 64, 82, 1200, 60);
 
-            var controls = Label("Controles", hudRt, "A/D andar   ·   ESPAÇO pular   ·   E interagir   ·   ESC menu",
+            var controls = Label("Controles", hudRt, "A/D andar   ·   SHIFT correr   ·   ESPAÇO pular   ·   E interagir   ·   TAB diário   ·   ESC menu",
                 sans, 15, new Color(Muted.r, Muted.g, Muted.b, 0.55f), 64, 1080 - 44, 1400, 24);
             controls.characterSpacing = 6;
 
@@ -578,6 +578,7 @@ namespace UltimaLinha.EditorTools
             toast.characterSpacing = 10;
 
             var dlg = BuildDialogue(root, sans, serif, voice);
+            BuildDiario(root, sans);
 
             var endRt = Stretch("Fim", hudRt);
             var endGroup = endRt.gameObject.AddComponent<CanvasGroup>();

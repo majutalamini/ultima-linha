@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace UltimaLinha.Cenario1
@@ -23,22 +25,53 @@ namespace UltimaLinha.Cenario1
         public AudioSource sfx;
         public AudioClip pullClip;
 
+        [Header("Emperrada")]
+        [Tooltip("Emperrada: E abre o mostrador (DestravaUI); solta, vira uma alavanca normal.")]
+        public bool stuck;
+        public GameObject stuckVisual;
+        public GameObject normalVisual;
+        public List<DialogueLine> freedLines = new List<DialogueLine>();
+
         public bool IsDown { get; private set; }
+        /// <summary>Acabou de soltar (o diretor apaga a dica).</summary>
+        public event Action Freed;
 
         bool moving;
 
         public override bool CanInteract =>
-            base.CanInteract && !IsDown && !moving && puzzle && !puzzle.IsBusy && !puzzle.IsSolved;
+            base.CanInteract && !IsDown && !moving && puzzle && !puzzle.IsBusy && !puzzle.IsSolved && !DialogueBox.IsBusy;
 
         void Start()
         {
             if (handle) handle.localRotation = Quaternion.Euler(0f, 0f, upAngle);
         }
 
+        void Update()
+        {
+            // emperrada: o cabo dá uns trancos sozinho, para chamar atenção
+            if (stuck && stuckVisual)
+                stuckVisual.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.PerlinNoise(Time.time * 3f, 0f) > 0.8f ? Mathf.Sin(Time.time * 60f) * 1.5f : 0f);
+        }
+
         public override void Interact()
         {
             if (!CanInteract) return;
+            if (stuck)
+            {
+                if (DestravaUI.Instance) DestravaUI.Instance.Open(Free);
+                return;
+            }
             StartCoroutine(PullRoutine());
+        }
+
+        void Free()
+        {
+            stuck = false;
+            if (stuckVisual) stuckVisual.SetActive(false);
+            if (normalVisual) normalVisual.SetActive(true);
+            if (handle) handle.localRotation = Quaternion.Euler(0f, 0f, upAngle);
+            Freed?.Invoke();
+            if (DialogueBox.Instance && freedLines.Count > 0) DialogueBox.Instance.Play(freedLines);
         }
 
         IEnumerator PullRoutine()

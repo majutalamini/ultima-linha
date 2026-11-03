@@ -27,6 +27,13 @@ namespace Platformer.Mechanics
         /// Initial jump velocity at the start of a jump.
         /// </summary>
         public float jumpTakeOffSpeed = 7;
+        /// <summary>
+        /// Velocidade ao segurar o botão de correr (multiplica maxSpeed).
+        /// </summary>
+        public float runMultiplier = 2.06f; // a corrida fica em ~5,8 u/s (o pulo no vão da Abertura conta com isso)
+
+        /// <summary>Verdadeiro enquanto o jogador corre (segurando o botão e andando).</summary>
+        public bool Running { get; private set; }
 
         public JumpState jumpState = JumpState.Grounded;
         private bool stopJump;
@@ -34,6 +41,8 @@ namespace Platformer.Mechanics
         /*internal new*/ public AudioSource audioSource;
         public Health health;
         public bool controlEnabled = true;
+        /// <summary>Andar de cinemática (-1 a 1): usado só enquanto controlEnabled está desligado.</summary>
+        [System.NonSerialized] public float scriptedMove;
 
         bool jump;
         Vector2 move;
@@ -67,6 +76,7 @@ namespace Platformer.Mechanics
             {
                 var input = m_MoveAction.ReadValue<Vector2>();
                 move.x = input.x;
+                Running = Mathf.Abs(input.x) > 0.1f && UltimaLinha.Cenario1.InputHelper.RunHeld();
                 ignoreOneWay = input.y < -0.5f; // segurar "para baixo" desce de bancos e bagageiros
                 if (jumpState == JumpState.Grounded && m_JumpAction.WasPressedThisFrame())
                     jumpState = JumpState.PrepareToJump;
@@ -78,8 +88,9 @@ namespace Platformer.Mechanics
             }
             else
             {
-                move.x = 0;
+                move.x = scriptedMove;
                 ignoreOneWay = false;
+                Running = false;
             }
             UpdateJumpState();
             base.Update();
@@ -139,7 +150,7 @@ namespace Platformer.Mechanics
             animator.SetBool("grounded", IsGrounded);
             animator.SetFloat("velocityX", Mathf.Abs(velocity.x) / maxSpeed);
 
-            targetVelocity = move * maxSpeed;
+            targetVelocity = move * maxSpeed * (Running ? runMultiplier : 1f);
         }
 
         public enum JumpState

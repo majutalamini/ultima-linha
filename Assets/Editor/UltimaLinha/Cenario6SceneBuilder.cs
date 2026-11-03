@@ -19,7 +19,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario6SceneBuilder
     {
-        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 4; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario6.unity";
         const string Art6 = "Assets/Art/Cenario6";
 
@@ -93,7 +93,6 @@ namespace UltimaLinha.EditorTools
             var core = BuildCore(playerPrefab, Load(Art6, "cenario6_fundo"), W, Floor, LWall, RWall, 330f, withLock: false, fonts);
             var player = core.player;
             core.kai.correndo = true; // túnel: contagem regressiva
-            core.kai.strideLength = 3.4f;
             var sfx = core.sfx;
 
             var ambience = Source(core.audioRoot, "AmbienteTunel", Clip("ambiente_tunel"), loop: true);

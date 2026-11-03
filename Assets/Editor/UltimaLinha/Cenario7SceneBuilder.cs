@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 4; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 5; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
@@ -377,7 +377,7 @@ namespace UltimaLinha.EditorTools
             var ticker = Label("LetreiroTexto", strip, "", fonts.sans, 28, Hex("1A1A1A"), 0, 14, 6000, 40);
             ticker.characterSpacing = 4;
 
-            var hint = Label("Continuar", rt, "E  ›  continuar", fonts.sans, 18, Muted, 1500, 930, 300, 28);
+            var hint = Label("Continuar", rt, "ESPAÇO  ›  continuar", fonts.sans, 18, Muted, 1500, 930, 300, 28);
             hint.alignment = TextAlignmentOptions.TopRight;
 
             view.group = group;

@@ -152,7 +152,7 @@ namespace UltimaLinha.Salas
         void Update()
         {
             if (!introDone || leaving) return;
-            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !Modal.IsOpen) { StartCoroutine(Leave(menuScene)); return; }
+            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !DiarioKai.IsOpen && !Modal.IsOpen) { StartCoroutine(Leave(menuScene)); return; }
             if (!started || finished || dying) return;
             if (remaining > 0f && !DialogueBox.IsBusy && !Modal.IsOpen)
             {

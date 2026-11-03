@@ -28,16 +28,16 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario1SceneBuilder
     {
-        const int BuildVersion = 7; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 16; // aumente para forçar a cena a ser recriada automaticamente
 
         const string ScenePath = "Assets/Scenes/Cenario1.unity";
-        const string Art = "Assets/Art/Cenario1";
+        internal const string Art = "Assets/Art/Cenario1";
         // Personagens em pixel art: 58 PPU com câmera 4,655 dá escala 2 exata em 1080p sem passar da altura dos fundos.
         internal const float CameraSize = 540f / 2f / PixelArtImporter.Ppu;
         internal const float PixelArtHeightKai = 222f / PixelArtImporter.Ppu, PixelArtHeightSouta = 232f / PixelArtImporter.Ppu,
             PixelArtHeightRen = 215f / PixelArtImporter.Ppu;
         const string PixelArt = "Assets/Art/Personagens/PixelArt";
-        const float ColliderHeight = 3.2f;
+        internal const float ColliderHeight = 3.2f;
         const string CharArt = Art + "/Personagens";
         const string FinalCharArt = "Assets/Art/Personagens"; // arte definitiva (local antigo, ainda aceito)
         // onde procurar a arte definitiva dos personagens (o primeiro que existir vence)
@@ -53,18 +53,24 @@ namespace UltimaLinha.EditorTools
         // ---------- Escala e medidas do fundo ----------
         const float PPU = 100f;
         const float ImageHeight = 941f;               // imagem original
-        const float LevelWidth = 4230f, LevelHeight = 1101f; // fundo final (com teto extra)
+        internal const float LevelWidth = 4230f, LevelHeight = 1101f; // fundo final (com teto extra)
+        // O vagão pintado era grande demais para os personagens (porta 1,4x a altura do Kai). A raiz do cenário é reduzida
+        // por este fator, que deixa o vagão exatamente da altura da tela; personagens, câmera e spawn ficam fora dela.
+        internal static readonly float EscalaVagao = 2f * CameraSize * PPU / LevelHeight;
+        // fundo do vagão decrépito já reduzido e na grade dos personagens (Ferramentas/Cenario0/abertura_arte.py)
+        internal const string FundoPixel = "Assets/Art/Cenario0/vagao_antigo.png";
         static float X(float px) => px / PPU;
         static float Y(float py) => (ImageHeight - py) / PPU;
 
-        const float FloorPy = 870f;     // onde os pés pisam no chão
-        const float CushionPy = 648f;   // assento dos bancos
-        const float BackrestPy = 515f;  // topo do encosto
-        const float RackPy = 262f;      // bagageiro (onde se pisa)
-        const float LeftWallPx = 225f, RightWallPx = 4128f;
+        internal const float FloorPy = 870f;     // onde os pés pisam no chão
+        internal const float CushionPy = 648f;   // assento dos bancos
+        internal const float BackrestPy = 515f;  // topo do encosto
+        internal const float RackPy = 262f;      // bagageiro (só decoração: em pé nele o Kai passaria do teto)
+        internal const float CeilingPy = 100f;   // teto: pulando do assento o Kai ainda sobe no encosto, e não passa disso
+        internal const float LeftWallPx = 225f, RightWallPx = 4128f;
 
         // bancos: (início, fim) do assento e do encosto, em px
-        static readonly (float x0, float x1, float b0, float b1)[] Benches =
+        internal static readonly (float x0, float x1, float b0, float b1)[] Benches =
         {
             (215, 1020, 205, 1045),
             (1500, 2345, 1460, 2370),
@@ -73,12 +79,12 @@ namespace UltimaLinha.EditorTools
         static readonly float[] RackCenters = { 600, 3370 };
         const float RackWidthPx = 340f;
 
-        // alavancas, da esquerda para a direita: (x px, y py da plataforma)
-        static readonly (float x, float py, string where)[] Levers =
+        // alavancas, da esquerda para a direita: (x px, y py da plataforma, emperrada?)
+        static readonly (float x, float py, bool stuck)[] Levers =
         {
-            (600, RackPy, "bagageiro do 1º banco"),
-            (2160, BackrestPy, "encosto do 2º banco"),
-            (3370, RackPy, "bagageiro do 3º banco"),
+            (600, BackrestPy, true),   // encosto do 1º banco: emperrada, solta com o mostrador (DestravaUI)
+            (2160, BackrestPy, false), // encosto do 2º banco
+            (3370, CushionPy, false),  // assento do 3º banco
         };
         static readonly int[] LeverOrder = { 1, 0, 2 }; // meio, esquerda, direita
 
@@ -92,22 +98,22 @@ namespace UltimaLinha.EditorTools
         static readonly (char letter, float x, float standPy, float markY)[] LetterSpots =
         {
             ('R', 7.5f, FloorPy, 2.05f),    // chão, na frente do 1º banco
-            ('E', 4.9f, RackPy, 7.75f),     // no alto, em cima do 1º bagageiro
+            ('E', -0.1f, FloorPy, 3.3f),    // na porta por onde o Kai entrou, que trancou atrás dele
             ('T', 18.0f, BackrestPy, 5.45f), // no vidro da janela, subindo no encosto do 2º banco
             ('M', 25.8f, FloorPy, 3.1f),    // na 2ª porta lateral
             ('O', 29.5f, CushionPy, 5.3f),  // no vidro, em pé no assento do 3º banco
         };
 
         // porta de saída (3º trecho)
-        const float DoorX0 = 3730, DoorSplit = 3904, DoorX1 = 4080, DoorTop = 212, DoorBottom = 746;
+        internal const float DoorX0 = 3730, DoorSplit = 3904, DoorX1 = 4080, DoorTop = 212, DoorBottom = 746;
 
         // luminárias do teto: (centro px, largura px, falhando?)
-        static readonly (float cx, float w, bool broken)[] Tubes =
+        internal static readonly (float cx, float w, bool broken)[] Tubes =
         {
             (558, 225, false), (1177, 197, false), (1623, 50, false), (1883, 225, false),
             (2502, 197, false), (2948, 50, true), (3208, 225, true), (3824, 190, true),
         };
-        const float TubePy = 111f;
+        internal const float TubePy = 111f;
 
         internal static readonly Color Cream = Hex("E8E1D4");
         internal static readonly Color Muted = Hex("969A8A");
@@ -259,8 +265,8 @@ namespace UltimaLinha.EditorTools
 
             // ---------- Cenário ----------
             var world = new GameObject("Cenario");
-            var bg = SpriteObj("Fundo", world.transform, Spr("cenario1_fundo"), Vector3.zero, -100);
-            bg.transform.position = Vector3.zero; // pivô no canto inferior esquerdo; y = 0 é a base da imagem
+            var bg = SpriteObj("Fundo", world.transform, AssetDatabase.LoadAssetAtPath<Sprite>(FundoPixel), Vector3.zero, -100);
+            bg.transform.localScale = Vector3.one / EscalaVagao; // a imagem já vem reduzida; pivô no canto inferior esquerdo
 
             var lights = new GameObject("Luminarias").transform;
             lights.SetParent(world.transform, false);
@@ -288,9 +294,9 @@ namespace UltimaLinha.EditorTools
             var solids = new GameObject("Colisores").transform;
             solids.SetParent(world.transform, false);
             Box("Chao", solids, X(LevelWidth / 2), Y(FloorPy) - 0.5f, X(LevelWidth), 1f, oneWay: false);
-            Box("ParedeEsquerda", solids, X(LeftWallPx) - 0.5f, 6f, 1f, 14f, oneWay: false);
+            // a parede esquerda é a porta da ponta (BuildVao), por onde o Kai entra
             Box("ParedeDireita", solids, X(RightWallPx) + 0.5f, 6f, 1f, 14f, oneWay: false);
-            Box("Teto", solids, X(LevelWidth / 2), LevelHeight / PPU + 0.5f, X(LevelWidth), 1f, oneWay: false);
+            Box("Teto", solids, X(LevelWidth / 2), Y(CeilingPy) + 0.5f, X(LevelWidth), 1f, oneWay: false);
             for (int i = 0; i < Benches.Length; i++)
             {
                 var b = Benches[i];
@@ -299,12 +305,8 @@ namespace UltimaLinha.EditorTools
             }
             var racks = new GameObject("Bagageiros").transform;
             racks.SetParent(world.transform, false);
-            for (int i = 0; i < RackCenters.Length; i++)
-            {
-                float cx = RackCenters[i];
-                SpriteObj($"Bagageiro{i + 1}", racks, Spr("bagageiro"), new Vector3(X(cx), Y(RackPy), 0), -20);
-                Platform($"Bagageiro{i + 1}_Plataforma", solids, cx - RackWidthPx / 2 + 6, cx + RackWidthPx / 2 - 6, RackPy);
-            }
+            foreach (var cx in RackCenters)
+                SpriteObj("Bagageiro", racks, Spr("bagageiro"), new Vector3(X(cx), Y(RackPy), 0), -20);
 
             // ---------- Porta de saída ----------
             var door = BuildDoor(world.transform, sfx);
@@ -314,7 +316,7 @@ namespace UltimaLinha.EditorTools
             var puzzle = puzzleGo.AddComponent<LeverPuzzle>();
             var levers = new TrainLever[Levers.Length];
             for (int i = 0; i < Levers.Length; i++)
-                levers[i] = BuildLever(world.transform, i, Levers[i].x, Levers[i].py, puzzle, sfx);
+                levers[i] = BuildLever(world.transform, i, Levers[i].x, Levers[i].py, Levers[i].stuck, puzzle, sfx);
             var panels = PanelCenters.Select((cx, i) => BuildPanel(world.transform, i, cx)).ToArray();
             puzzle.levers = levers;
             puzzle.order = LeverOrder;
@@ -329,12 +331,13 @@ namespace UltimaLinha.EditorTools
 
             // ---------- Jogador (Kai) ----------
             var spawn = new GameObject("SpawnPoint");
-            spawn.transform.position = new Vector3(3.6f, Y(FloorPy) + ColliderHeight / 2f + 0.02f, 0);
+            spawn.transform.position = new Vector3(6.0f * EscalaVagao, Y(FloorPy) * EscalaVagao + ColliderHeight / 2f + 0.02f, 0); // chega pela porta de trás, já no quadro da conversa
             var playerGo = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
             playerGo.name = "Kai (Player)";
             playerGo.transform.position = spawn.transform.position;
             var player = playerGo.GetComponent<PlayerController>();
-            player.maxSpeed = 3.4f; // passo de quem está exausto
+            player.maxSpeed = 2.8f; // passo de quem está exausto
+            player.runMultiplier = 2.06f; // corrida a ~5,8 u/s
             player.jumpTakeOffSpeed = 7.2f;
             player.gravityModifier = 1.25f;
             player.jumpAudio = null; // o pulo "cartoon" do template não combina com o clima
@@ -356,8 +359,8 @@ namespace UltimaLinha.EditorTools
             var kaiRig = BuildPersonagem("kai", playerGo.transform, new Vector3(0f, -ColliderHeight / 2f, 0f), 10);
             kaiRig.mover = player;
             kaiRig.flipSource = mainSr;
-            kaiRig.strideLength = 2.3f;
             kaiRig.jumpSpeed = player.jumpTakeOffSpeed * 1.5f; // jumpModifier do GameController
+            NoVagao(kaiRig);
 
             var prompt = SpriteObj("TeclaE", null, Spr("tecla_e"), Vector3.zero, 50);
             prompt.transform.localScale = Vector3.one * 0.75f;
@@ -384,13 +387,22 @@ namespace UltimaLinha.EditorTools
             letterPuzzle.blackoutClip = Clip("apagao");
             letterPuzzle.pickupClip = Clip("letra_encontrada");
             letterPuzzle.letters = LetterSpots.Select((l, i) => BuildLetter(world.transform, l.letter, l.x, l.standPy, l.markY, letterPuzzle)).ToArray();
+            world.transform.localScale = Vector3.one * EscalaVagao; // tudo do cenário já foi montado em px do fundo
+
+            // ---------- Entrada: o vão e o vagão de trás (a Abertura), exatamente como a Abertura monta ----------
+            var vao = BuildVao(XFimVagao - Deslocamento, sfx);
+            vao.tras.AbertaJa(); // a porta do vagão de trás ficou aberta: o Kai acabou de sair por ela
+            vao.tras.enabled = false;
+            SpriteObj("VagaoDeTras", vao.tras.transform.root, AssetDatabase.LoadAssetAtPath<Sprite>(FundoPixel), new Vector3(-Deslocamento, 0f, 0f), -100);
+            levers[0].freedLines = Lines(
+                ("kai", "<i>Soltou. Agora ela desce como as outras.</i>"));
 
             // ---------- Souta e Ren ----------
             var souta = BuildNpc("Souta", "souta", 12.35f, PixelArtHeightSouta, playerGo.transform, puzzle);
             souta.firstTalk = Lines(
-                ("souta", "Kai. Finalmente acordou."),
-                ("kai", "Souta...? Eu dormi?"),
-                ("souta", "Assim que sentou. O trem parou faz uns vinte minutos e não andou mais."),
+                ("souta", "Kai. Você estava no vagão de trás?"),
+                ("kai", "Acordei lá. Sozinho. O vagão estava cheio quando eu dormi."),
+                ("souta", "Cheio? Estamos só nós três aqui desde a estação. O trem parou faz uns vinte minutos e não andou mais."),
                 ("souta", "As portas laterais não abrem. A do fundo do vagão tem uma trava ligada a três alavancas."),
                 ("souta", "Repara no letreiro em cima das portas. Ele acende numa ordem e depois apaga. Não é defeito."),
                 ("kai", "<i>Claro que ele já descobriu tudo. Como sempre.</i>"));
@@ -414,13 +426,27 @@ namespace UltimaLinha.EditorTools
                 ("ren", "Ren. Eu trabalho com vocês dois... no mesmo andar. Você não lembra de mim?"),
                 ("kai", "...Não."),
                 ("ren", "Tudo bem. Ninguém lembra."),
-                ("ren", "Tem uma alavanca em cima do encosto daquele banco. E outras lá no alto, nos bagageiros. Eu não tive coragem de mexer."));
+                ("ren", "Tem três alavancas: em cima dos encostos e no assento do último banco. A da ponta está emperrada. Eu não tive coragem de forçar."));
             ren.repeatTalk = Lines(
                 ("ren", "Se errar a ordem, a porta trava de novo. Eu ouvi esse barulho... duas vezes. Antes de você acordar."),
-                ("ren", "Dá pra subir nos bancos. E do encosto dá pra alcançar os bagageiros."));
+                ("ren", "Dá pra subir nos bancos. Do assento você alcança o encosto."));
             ren.afterSolved = Lines(
                 ("ren", "E-essas letras... estavam aí antes? Eu juro que não estavam."),
-                ("ren", "Tem uma lá no alto, no bagageiro. Outra no vidro da janela. Eu não vou chegar perto delas."));
+                ("ren", "Tem uma na porta por onde você entrou. Outra no vidro da janela. Eu não vou chegar perto delas."));
+            souta.hintLevers = Lines(
+                ("souta", "Kai. Para de puxar no chute."),
+                ("souta", "O letreiro acende primeiro o MEIO, depois a ESQUERDA, depois a DIREITA. É essa a ordem."),
+                ("souta", "E a da esquerda está emperrada. Solta ela antes de começar."));
+            ren.hintLevers = Lines(
+                ("ren", "A-aquela emperrada... tem um mostrador do lado. Eu vi o ponteiro balançando."),
+                ("ren", "Talvez se você der o tranco quando o ponteiro passar no verde...?"));
+            souta.hintLetters = Lines(
+                ("souta", "Procura onde você ainda não olhou. Chão, janelas, portas."),
+                ("souta", "Uma está na porta por onde você entrou. Outra no vidro, alto: sobe no encosto."));
+            ren.hintLetters = Lines(
+                ("ren", "Eu vi uma no chão, na frente do primeiro banco... e outra na porta do meio."),
+                ("ren", "Junta as letras e pensa numa palavra. Uma palavra... ruim."));
+            foreach (var npc in new[] { souta, ren }) npc.balao = BalaoDica(npc.transform, npc.promptOffset.y + 0.1f);
             ren.afterDoor = Lines(
                 ("ren", "Abriu...? Você vai na frente, né?"));
 
@@ -431,11 +457,12 @@ namespace UltimaLinha.EditorTools
             cam.orthographicSize = CameraSize;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Color.black;
-            camGo.transform.position = new Vector3(spawn.transform.position.x + 5f, CameraSize, -10f);
+            camGo.transform.position = new Vector3(spawn.transform.position.x + 5f * EscalaVagao, CameraSize, -10f);
             camGo.AddComponent<AudioListener>();
             var follow = camGo.AddComponent<CameraFollow2D>();
             follow.target = playerGo.transform;
-            follow.bounds = new Rect(0f, 0f, X(LevelWidth) - 0.6f, LevelHeight / PPU);
+            follow.bounds = new Rect(0f, 0f, (X(LevelWidth) - 0.6f) * EscalaVagao, LevelHeight / PPU * EscalaVagao);
+            float altura = LevelHeight / PPU * EscalaVagao;
 
             // ---------- Interface ----------
             var ui = BuildUI(fonts.sans, fonts.serif, fonts.italic, voice);
@@ -446,6 +473,11 @@ namespace UltimaLinha.EditorTools
             ui.letterLock.typeClip = Clip("tecla_painel");
             ui.letterLock.wrongClip = Clip("erro_porta_trava");
             ui.letterLock.okClip = Clip("acerto");
+            var destrava = BuildDestrava(ui.dialogue.GetComponentInParent<Canvas>().transform, fonts.sans);
+            destrava.sfx = sfx;
+            destrava.acertoClip = Clip("alavanca");
+            destrava.erroClip = Clip("erro_porta_trava");
+            destrava.soltaClip = Clip("acerto");
             var es = new GameObject("EventSystem");
             es.AddComponent<EventSystem>();
             es.AddComponent<InputSystemUIInputModule>().AssignDefaultActions();
@@ -460,8 +492,19 @@ namespace UltimaLinha.EditorTools
             dir.souta = souta;
             dir.ren = ren;
             dir.letterPuzzle = letterPuzzle;
+            dir.emperrada = levers[0];
+            dir.portaEntrada = vao.frente;
+            dir.entradaInicio = new Vector3(vao.bordaFrente + DescansoNoEngate, ChaoMundo + ColliderHeight / 2f + 0.02f, 0f);
+            dir.entradaDentro = XIniVagao + 1.6f;
+            dir.conversaX = souta.transform.position.x - 2.2f;
+            dir.boundsEntrada = Rect.MinMaxRect(vao.bordaTras - 20f, 0f, XIniVagao + FolgaCameraEngate, altura);
+            dir.boundsVagao = Rect.MinMaxRect(XIniVagao - U(AntW), 0f, follow.bounds.xMax, altura);
+            dir.entradaTrancada = Lines(
+                ("kai", "<i>Trancou atrás de mim.</i>"),
+                ("kai", "<i>Não tem volta.</i>"));
             dir.ambience = ambience;
             dir.introCutscene = ui.cutscene;
+            dir.playIntroCutscene = false; // o diário agora abre a Abertura (Cenário 0)
             // no diário só se ouve a caneta: sem drone, sem página, sem trem
             ui.cutscene.drone = null;
             ui.cutscene.sfx = introSfx;
@@ -469,25 +512,15 @@ namespace UltimaLinha.EditorTools
             ui.cutscene.pageClip = null;
             ui.cutscene.trainSeconds = 1.6f;
             ui.cutscene.penLoop = penLoop;
-            ui.cutscene.pages = new List<CutscenePage>
-            {
-                Page("Dia 20 de outubro.", title: true),
-                Page("Mais um dia exaustivo no trabalho."),
-                Page("Eu já nem lembro da última vez que cheguei em casa sem sentir o corpo pesado."),
-                Page("Meu nome é Kai."),
-                Page("Faço o suficiente para não ser demitido.\nE pouco o bastante para ninguém me notar."),
-                Page("O Souta entrou na empresa no mesmo dia que eu.\nMesma sala de espera. Mesmo nervosismo. Mesmo sonho."),
-                Page("Hoje ele tem sala própria, reconhecimento, um futuro.\nEu tenho a mesma mesa de sempre."),
-                Page("Ele nunca me tratou diferente por isso.\nTalvez seja essa a parte que mais pesa."),
-                Page("Hoje, antes de sair, ele me esperou na porta.\n“Vamos juntos, Kai. Ainda dá tempo de pegar o último trem.”"),
-                Page("Eu disse que sim.\nNão tinha forças para dizer não."),
-                Page("O último trem da noite.\nEu só queria fechar os olhos por um minuto..."),
-            };
+            // o Kai chega do vagão de trás e encontra os dois conversando
             dir.intro = Lines(
-                ("kai", "<i>...</i>"),
-                ("kai", "<i>Peguei no sono no trem de novo.</i>"),
-                ("kai", "<i>Parado no meio do túnel. E essas luzes...</i>"),
-                ("kai", "<i>\"Próxima parada: terminal.\" Que horas são?</i>"));
+                ("ren", "E se a gente nunca mais sair daqui?"),
+                ("souta", "A gente sai. Tudo tem um mecanismo. É só entender a lógica."),
+                ("ren", "Você fala isso até no escritório."),
+                ("souta", "E sempre funciona."),
+                ("ren", "...Ouviu isso? A porta lá de trás bateu."),
+                ("souta", "Kai?"),
+                ("kai", "<i>Souta. E... quem é o outro?</i>"));
             dir.doorLocked = Lines(
                 ("kai", "<i>Trancada. A luz vermelha em cima dela não apaga.</i>"));
             dir.firstFail = Lines(
@@ -511,17 +544,35 @@ namespace UltimaLinha.EditorTools
                 ("kai", "<i>Abriu.</i>"),
                 ("kai", "<i>O próximo vagão está escuro...</i>"));
 
-            ui.dialogue.speakers = new List<Speaker>
-            {
-                new Speaker { id = "kai", displayName = "Kai", portrait = Portrait("kai"), nameColor = Hex("C9BFAE") },
-                new Speaker { id = "souta", displayName = "Souta", portrait = Portrait("souta"), nameColor = Hex("A9B8C9") },
-                new Speaker { id = "ren", displayName = "Ren", portrait = Portrait("ren"), nameColor = Hex("CBB98E") },
-            };
+            ui.dialogue.speakers = Falantes();
         }
 
         // ---------- Peças do cenário ----------
 
-        static ExitDoor BuildDoor(Transform parent, AudioSource sfx)
+        /// <summary>O diário escrito à mão que abre o jogo (agora na Abertura, antes do trem).</summary>
+        internal static List<CutscenePage> PaginasAbertura() => new List<CutscenePage>
+        {
+            Page("Dia 20 de outubro.", title: true),
+            Page("Mais um dia exaustivo no trabalho."),
+            Page("Eu já nem lembro da última vez que cheguei em casa sem sentir o corpo pesado."),
+            Page("Meu nome é Kai."),
+            Page("Faço o suficiente para não ser demitido.\nE pouco o bastante para ninguém me notar."),
+            Page("O Souta entrou na empresa no mesmo dia que eu.\nMesma sala de espera. Mesmo nervosismo. Mesmo sonho."),
+            Page("Hoje ele tem sala própria, reconhecimento, um futuro.\nEu tenho a mesma mesa de sempre."),
+            Page("Ele nunca me tratou diferente por isso.\nTalvez seja essa a parte que mais pesa."),
+            Page("Hoje, antes de sair, ele me esperou na porta.\n“Vamos juntos, Kai. Ainda dá tempo de pegar o último trem.”"),
+            Page("Eu disse que sim.\nNão tinha forças para dizer não."),
+            Page("O último trem da noite.\nEu só queria fechar os olhos por um minuto..."),
+        };
+
+        internal static List<Speaker> Falantes() => new List<Speaker>
+        {
+            new Speaker { id = "kai", displayName = "Kai", portrait = Portrait("kai"), nameColor = Hex("C9BFAE") },
+            new Speaker { id = "souta", displayName = "Souta", portrait = Portrait("souta"), nameColor = Hex("A9B8C9") },
+            new Speaker { id = "ren", displayName = "Ren", portrait = Portrait("ren"), nameColor = Hex("CBB98E") },
+        };
+
+        internal static ExitDoor BuildDoor(Transform parent, AudioSource sfx)
         {
             float cx = X((DoorX0 + DoorX1) / 2f), cy = Y((DoorTop + DoorBottom) / 2f);
             float w = X(DoorX1 - DoorX0), h = (DoorBottom - DoorTop) / PPU;
@@ -564,7 +615,7 @@ namespace UltimaLinha.EditorTools
             return door;
         }
 
-        static TrainLever BuildLever(Transform parent, int index, float xPx, float surfacePy, LeverPuzzle puzzle, AudioSource sfx)
+        static TrainLever BuildLever(Transform parent, int index, float xPx, float surfacePy, bool stuck, LeverPuzzle puzzle, AudioSource sfx)
         {
             var root = new GameObject($"Alavanca{index + 1}");
             root.transform.SetParent(parent, false);
@@ -579,19 +630,185 @@ namespace UltimaLinha.EditorTools
             lever.pullClip = Clip("alavanca");
 
             var p = root.transform.position;
-            SpriteObj("Base", root.transform, Spr("alavanca_base"), p, -10);
-            var handle = SpriteObj("Cabo", root.transform, Spr("alavanca_cabo"), p + new Vector3(0f, 0.4f, 0f), -11);
+            var normal = new GameObject("Normal").transform;
+            normal.SetParent(root.transform, false);
+            ObjVagao("Base", normal, "alavanca_base", p, -10);
+            var handle = ObjVagao("Cabo", normal, "alavanca_cabo", p + new Vector3(0f, PxV(27f), 0f), -11);
             lever.handle = handle.transform;
+            if (stuck)
+            {
+                lever.stuck = true;
+                lever.normalVisual = normal.gameObject;
+                lever.stuckVisual = ObjVagao("Emperrada", root.transform, "alavanca_emperrada", p, -10).gameObject;
+                normal.gameObject.SetActive(false);
+            }
 
-            var lampPos = p + new Vector3(0f, 1.05f, 0f);
-            SpriteObj("Soquete", root.transform, Spr("lampada_soquete"), lampPos + new Vector3(0f, 0.13f, 0f), -12);
-            var lamp = SpriteObj("Lampada", root.transform, Spr("lampada"), lampPos, -10);
+            var lampPos = p + new Vector3(0f, PxV(62f), 0f);
+            ObjVagao("Suporte", root.transform, "lampada_suporte", lampPos + new Vector3(0f, PxV(9f), 0f), -12);
+            var lamp = ObjVagao("Lampada", root.transform, "lampada", lampPos, -10);
             var glow = SpriteObj("Lampada_Halo", root.transform, Spr("brilho"), lampPos, -9);
             glow.transform.localScale = Vector3.one * 0.55f;
             glow.color = new Color(1f, 1f, 1f, 0f);
             lever.lamp = lamp;
             lever.lampGlow = glow;
             return lever;
+        }
+
+        // ---------- Pontas do vagão e o vão entre eles (Cenários 0 e 1) ----------
+        // O trem é visto em corte até o fim: cada ponta tem uma antepara com porta e, do lado de fora, a plataforma do
+        // engate, no mesmo chão. Entre dois vagões, o túnel. Medidas da antepara em px da arte (Objetos/medidas.json).
+        const float AntW = 302f, AntH = 569f, AntChao = 429f, AntPilar = 183f;
+        const float AntPortaX0 = 83f, AntPortaX1 = 150f, AntPortaTopo = 154f, AntPortaBase = 404f; // y a partir do topo
+        internal const float VaoLargura = 4.4f; // andando não dá, correndo dá (corrida ~5,8 u/s)
+        static float U(float px) => px / PixelArtImporter.Ppu;
+        /// <summary>Paredes do fim e do começo do vagão e o chão, em unidades do mundo.</summary>
+        internal static float XFimVagao => X(RightWallPx) * EscalaVagao;
+        internal static float XIniVagao => X(LeftWallPx) * EscalaVagao;
+        internal static float ChaoMundo => Y(FloorPy) * EscalaVagao;
+        /// <summary>Do vagão de trás (Cenário 0) para o da frente (Cenário 1): mesma arte, mesma origem dentro de cada cena.</summary>
+        internal static float Deslocamento => XFimVagao + 2f * U(AntW) + VaoLargura - XIniVagao;
+
+        // a Abertura acaba com o Kai parado aqui (depois da beirada da plataforma da frente) e a câmera presa até
+        // FolgaCameraEngate depois da parede do vagão da frente: o Cenário 1 começa no mesmo quadro, sem corte
+        internal const float DescansoNoEngate = 1.0f, FolgaCameraEngate = 1.3f;
+
+        internal class VaoRefs
+        {
+            public PortaPonta tras, frente;
+            public float bordaTras, bordaFrente; // beiradas das plataformas, de cada lado do vão
+            public float pilarTras;              // fim do pilar da ponta de trás: daí para a direita é a plataforma
+            public Vector3 painel;               // painel de emergência na ponta de trás (o chão embaixo dele)
+            public float quedaY;
+        }
+
+        /// <summary>A partir de xTras (fim do vagão de trás): a porta dele, as duas plataformas, o túnel e a porta do vagão da
+        /// frente, que começa em xTras + Deslocamento - (XFimVagao - XIniVagao). Fora da raiz reduzida: unidades do mundo.</summary>
+        internal static VaoRefs BuildVao(float xTras, AudioSource sfx)
+        {
+            var root = new GameObject("Vao").transform;
+            float chao = ChaoMundo;
+            var r = new VaoRefs();
+            r.bordaTras = xTras + U(AntW);
+            r.pilarTras = xTras + U(AntPilar);
+            r.bordaFrente = r.bordaTras + VaoLargura;
+            r.quedaY = chao - 2.5f;
+            SpriteObj("Tunel", root, Obj("tunel"), new Vector3((r.bordaTras + r.bordaFrente) / 2f, -150f / PixelArtImporter.Ppu, 0f), -130);
+            r.tras = BuildPortaPonta(root, xTras, false, sfx);
+            // o painel que abre a porta de trás (na Abertura ele funciona; no Cenário 1 é só o que ficou para trás)
+            r.painel = new Vector3(xTras + U(40f), chao, 0f);
+            SpriteObj("PainelEmergencia", root, Obj("painel_emergencia"), r.painel + new Vector3(0f, 1.9f, 0f), -10);
+            r.frente = BuildPortaPonta(root, r.bordaFrente + U(AntW), true, sfx);
+            Box("PisoTras", root, (xTras - 1f + r.bordaTras) / 2f, chao - 0.5f, r.bordaTras - xTras + 1f, 1f, oneWay: false);
+            Box("PisoFrente", root, r.bordaFrente + (U(AntW) + 1f) / 2f, chao - 0.5f, U(AntW) + 1f, 1f, oneWay: false);
+            return r;
+        }
+
+        /// <summary>Antepara de uma ponta do vagão, com a porta de dobradiça. xParede: onde o interior do vagão termina
+        /// (espelhada = ponta esquerda do vagão: a plataforma fica à esquerda).</summary>
+        internal static PortaPonta BuildPortaPonta(Transform parent, float xParede, bool espelhada, AudioSource sfx)
+        {
+            var root = new GameObject(espelhada ? "PontaEsquerda" : "PontaDireita").transform;
+            root.SetParent(parent, false);
+            root.position = new Vector3(xParede, 0f, 0f);
+            root.localScale = new Vector3(espelhada ? -1f : 1f, 1f, 1f);
+            float chao = ChaoMundo, baseY = chao - U(AntH - AntChao);
+            SpriteRenderer Peca(string nome, Sprite spr, float x, float y, int order)
+            {
+                var sr = SpriteObj(nome, root, spr, Vector3.zero, order);
+                sr.transform.localPosition = new Vector3(x, y, 0f);
+                return sr;
+            }
+            Peca("Antepara", Obj("antepara"), 0f, baseY, -95);
+            float px0 = U(AntPortaX0), px1 = U(AntPortaX1), py0 = baseY + U(AntH - AntPortaBase), py1 = baseY + U(AntH - AntPortaTopo);
+            var escuro = Peca("VaoDaPorta", Spr("pixel"), (px0 + px1) / 2f, (py0 + py1) / 2f, -97);
+            escuro.transform.localScale = new Vector3((px1 - px0) / 0.08f, (py1 - py0) / 0.08f, 1f); // "pixel" = 8 px a 100 px/u
+            escuro.color = new Color(0.02f, 0.02f, 0.025f, 1f);
+            var folha = Peca("Folha", Obj("porta_ponta"), px0 - U(2f), py0, -96);
+
+            var porta = new GameObject("Porta");
+            porta.transform.SetParent(root, false);
+            porta.transform.localPosition = new Vector3((px0 + px1) / 2f, chao, 0f);
+            var pp = porta.AddComponent<PortaPonta>();
+            pp.reachX = 1.3f;
+            pp.promptOffset = new Vector2(0f, py1 - chao + 0.5f);
+            pp.folha = folha.transform;
+            float sx = (px0 + px1) / 2f, sy = py1 + U(9f);
+            Peca("SinalTrava", Obj("sinal_porta"), sx, sy, -45);
+            pp.luz = Peca("SinalTrava_Luz", Spr("ponto"), sx, sy, -44);
+            pp.luz.transform.localScale = new Vector3(0.6f, 0.45f, 1f);
+            pp.halo = Peca("SinalTrava_Halo", Spr("brilho"), sx, sy, -43);
+            pp.halo.transform.localScale = Vector3.one * 0.3f;
+            pp.luz.color = pp.travada;
+            pp.halo.color = new Color(pp.travada.r, pp.travada.g, pp.travada.b, 0.4f);
+            pp.sfx = sfx;
+            pp.abreClip = Clip("porta_destrava");
+            pp.fechaClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Salas/porta_batida.wav");
+
+            // fechada, segura o Kai no pilar da ponta
+            var bloqueio = new GameObject("Bloqueio");
+            bloqueio.transform.SetParent(root, false);
+            bloqueio.transform.localPosition = new Vector3(U(AntPilar) - 0.3f, chao + 3f, 0f);
+            var c = bloqueio.AddComponent<BoxCollider2D>();
+            c.size = new Vector2(0.6f, 6f);
+            pp.bloqueio = c;
+            return pp;
+        }
+
+        /// <summary>Três pontinhos em cima da cabeça do Souta/Ren quando eles têm uma dica (NpcTalk.balao).</summary>
+        static SpriteRenderer[] BalaoDica(Transform npc, float altura)
+        {
+            var r = new SpriteRenderer[3];
+            for (int i = 0; i < 3; i++)
+            {
+                r[i] = SpriteObj("Dica" + (i + 1), npc, Spr("ponto"), npc.position + new Vector3((i - 1) * 0.22f, altura, 0f), 40);
+                r[i].color = new Color(Cream.r, Cream.g, Cream.b, 0f);
+                r[i].transform.localScale = Vector3.one * 1.3f;
+            }
+            return r;
+        }
+
+        /// <summary>Mostrador da alavanca emperrada (DestravaUI), por cima de tudo.</summary>
+        static DestravaUI BuildDestrava(Transform canvas, TMP_FontAsset sans)
+        {
+            var rt = Stretch("Destrava", canvas);
+            var group = rt.gameObject.AddComponent<CanvasGroup>();
+            var ui = rt.gameObject.AddComponent<DestravaUI>();
+            ui.group = group;
+            Img(Stretch("Veu", rt), new Color(0f, 0f, 0f, 0.72f));
+
+            RectTransform Centro(string nome, Transform pai, Vector2 pos, Vector2 tam)
+            {
+                var r = new GameObject(nome, typeof(RectTransform)) { layer = UILayer }.GetComponent<RectTransform>();
+                r.SetParent(pai, false);
+                r.anchorMin = r.anchorMax = r.pivot = new Vector2(0.5f, 0.5f);
+                r.anchoredPosition = pos;
+                r.sizeDelta = tam;
+                return r;
+            }
+            var painel = Centro("Painel", rt, new Vector2(0f, 20f), new Vector2(620f, 760f));
+            ui.painel = painel;
+            var titulo = Label("Titulo", painel, "ALAVANCA EMPERRADA", sans, 26, Cream, 0, 0, 620, 40);
+            titulo.alignment = TextAlignmentOptions.Top;
+            titulo.characterSpacing = 12;
+
+            // mostrador a 3x; o eixo do ponteiro fica no miolo do disco (44,5% da altura, de baixo)
+            var disco = Centro("Mostrador", painel, new Vector2(0f, 10f), new Vector2(459f, 480f));
+            var img = disco.gameObject.AddComponent<Image>();
+            img.sprite = Obj("mostrador");
+            img.raycastTarget = false;
+            var ponteiro = Centro("Ponteiro", disco, new Vector2(0f, (0.445f - 0.5f) * 480f), new Vector2(168f, 210f));
+            ponteiro.pivot = new Vector2(0.19f, 0.164f);
+            var pi = ponteiro.gameObject.AddComponent<Image>();
+            pi.sprite = Obj("ponteiro");
+            pi.raycastTarget = false;
+            ui.ponteiro = ponteiro;
+
+            ui.passos = new Image[3];
+            for (int i = 0; i < 3; i++)
+                ui.passos[i] = Img(Centro("Passo" + (i + 1), painel, new Vector2((i - 1) * 46f, -270f), new Vector2(28f, 12f)), Color.gray);
+            ui.status = Label("Status", painel, "", sans, 20, Muted, 0, 690, 620, 30);
+            ui.status.alignment = TextAlignmentOptions.Top;
+            return ui;
         }
 
         static SequencePanel BuildPanel(Transform parent, int index, float cxPx)
@@ -619,13 +836,14 @@ namespace UltimaLinha.EditorTools
         static NpcTalk BuildNpc(string name, string id, float x, float height, Transform player, LeverPuzzle puzzle)
         {
             var root = new GameObject(name);
-            root.transform.position = new Vector3(x, Y(FloorPy), 0);
+            root.transform.position = new Vector3(x, Y(FloorPy), 0) * EscalaVagao; // fora da raiz reduzida do cenário
             var npc = root.AddComponent<NpcTalk>();
             npc.reachX = 1.7f;
             npc.promptOffset = new Vector2(0f, height + 0.45f);
             npc.lookAt = player;
             npc.puzzle = puzzle;
             npc.rig = BuildPersonagem(id, root.transform, Vector3.zero, 6);
+            NoVagao(npc.rig);
             return npc;
         }
 
@@ -633,6 +851,49 @@ namespace UltimaLinha.EditorTools
         /// Monta um personagem em pixel art: um SpriteRenderer que troca de quadro (PersonagemPixel) e a sombra.
         /// Os quadros vêm de Assets/Art/Personagens/PixelArt/{Id}/{clipe}_{nn}.png (gerados em Ferramentas/PixelArt/fatia.py).
         /// </summary>
+        // chão encerado/molhado dos vagões: sombra mais escura nos pés e reflexo, para ninguém parecer colado por cima
+        internal const float AlfaSombraVagao = 0.9f, AlfaReflexo = 0.22f;
+        // sombra_pes no vagão: menor e com o centro um pouco abaixo da sola, para aparecer por baixo dos sapatos
+        internal const float EscalaSombraVagao = 0.6f, DesceSombraVagao = 0.05f;
+        const string SombraContato = PixelArt + "/sombra_contato.png"; // gerada em Ferramentas/Cenario0/abertura_arte.py
+
+        /// <summary>Sombras dos pés no vagão: a sombra macia (sombra_pes) e a de contato, de borda dura, sob as solas.
+        /// alturaPes = quanto os pés ficam acima do pivô (sentado).</summary>
+        internal static (SpriteRenderer sombra, SpriteRenderer contato) SombrasVagao(Transform pes, int order, float alturaPes = 0f)
+        {
+            var sombra = SpriteObj("Sombra", pes, Spr("sombra_pes"), pes.position, order - 1);
+            sombra.transform.localPosition = new Vector3(0.05f, alturaPes - DesceSombraVagao, 0f);
+            sombra.transform.localScale = new Vector3(EscalaSombraVagao, EscalaSombraVagao, 1f);
+            sombra.color = new Color(0f, 0f, 0f, AlfaSombraVagao);
+            var contato = SpriteObj("Contato", pes, AssetDatabase.LoadAssetAtPath<Sprite>(SombraContato), pes.position, order);
+            contato.transform.localPosition = new Vector3(0f, alturaPes - 4f / PixelArtImporter.Ppu, 0f);
+            return (sombra, contato);
+        }
+
+        /// <summary>Reflexo no chão: o mesmo quadro de cabeça para baixo, espelhado no pivô (pés). alturaPes sobe o eixo
+        /// de quem tem os pés acima da base do quadro (sentado).</summary>
+        internal static SpriteRenderer Reflexo(Transform pes, Sprite sprite, int order, float alturaPes = 0f)
+        {
+            var r = SpriteObj("Reflexo", pes, sprite, pes.position, order);
+            r.transform.localPosition = new Vector3(0f, 2f * alturaPes, 0f);
+            r.transform.localScale = new Vector3(1f, -1f, 1f);
+            r.color = new Color(1f, 1f, 1f, AlfaReflexo);
+            return r;
+        }
+
+        /// <summary>Personagem andando no vagão: sombra mais escura e reflexo que acompanha a animação.</summary>
+        internal static void NoVagao(PersonagemPixel ch)
+        {
+            UnityEngine.Object.DestroyImmediate(ch.shadow.gameObject); // troca pela sombra do vagão
+            var s = SombrasVagao(ch.transform, ch.view.sortingOrder - 11);
+            ch.shadow = s.sombra;
+            ch.contato = s.contato;
+            ch.alfaSombra = AlfaSombraVagao;
+            ch.alfaReflexo = AlfaReflexo;
+            ch.reflexo = Reflexo(ch.transform, ch.view.sprite, ch.view.sortingOrder - 13);
+            ch.chaoReflexo = Y(FloorPy) * EscalaVagao;
+        }
+
         internal static PersonagemPixel BuildPersonagem(string id, Transform parent, Vector3 localPos, int order)
         {
             var root = new GameObject(id + "_Corpo").transform;
@@ -640,7 +901,7 @@ namespace UltimaLinha.EditorTools
             root.localPosition = localPos;
             var ch = root.gameObject.AddComponent<PersonagemPixel>();
             ch.speakerId = id;
-            ch.strideLength = id == "souta" ? 2.9f : id == "ren" ? 2.2f : 2.3f;
+            ch.strideLength = id == "souta" ? 3.4f : id == "ren" ? 2.6f : 2.9f; // passo mais longo = pernas mais calmas
 
             var shadow = SpriteObj("Sombra", root, Spr("sombra_pes"), root.position, order - 12);
             shadow.transform.localPosition = new Vector3(0.05f, 0.02f, 0f);
@@ -661,7 +922,7 @@ namespace UltimaLinha.EditorTools
                 if (list.Count == 0) Debug.LogWarning($"[Última Linha] Sem quadros de {id}/{clip}");
                 return list.ToArray();
             }
-            ClipePixel Extra(string nome, Sprite[] quadros, float fps = 8f) => new ClipePixel { nome = nome, quadros = quadros, fps = fps };
+            ClipePixel Extra(string nome, Sprite[] quadros, float fps = 5f) => new ClipePixel { nome = nome, quadros = quadros, fps = fps };
 
             ch.idle = Clip("idle");
             ch.walk = Clip("walk");
@@ -674,14 +935,14 @@ namespace UltimaLinha.EditorTools
                 ch.fall = Clip("jump", 4, 5);
                 ch.extras = new[]
                 {
-                    Extra("lever", Clip("lever")), Extra("search", Clip("search")),
-                    Extra("empurra", Clip("final", 0, 2), 10f), Extra("aponta", Clip("final", 3, 5), 6f),
+                    Extra("lever", Clip("lever")), Extra("search", Clip("search")), Extra("dorme", Clip("acorda", 0, 0), 1f), Extra("dormeLimpo", Clip("dormelimpo", 0, 0), 1f), Extra("acorda", Clip("acorda", 1, 9), 2.2f),
+                    Extra("empurra", Clip("final", 0, 2), 7f), Extra("aponta", Clip("final", 3, 5), 4f),
                 };
             }
             else if (id == "souta")
-                ch.extras = new[] { Extra("gun", Clip("gun"), 6f), Extra("arma", Clip("gun", 3, 3), 1f), Extra("fallen", Clip("fallen"), 9f) };
+                ch.extras = new[] { Extra("gun", Clip("gun"), 4f), Extra("arma", Clip("gun", 3, 3), 1f), Extra("fallen", Clip("fallen"), 6f) };
             else
-                ch.extras = new[] { Extra("panic", Clip("panic"), 8f) };
+                ch.extras = new[] { Extra("panic", Clip("panic"), 5f) };
 
             var view = new GameObject("Desenho").AddComponent<SpriteRenderer>();
             view.transform.SetParent(root, false);
@@ -788,7 +1049,7 @@ namespace UltimaLinha.EditorTools
             return ui;
         }
 
-        static void Platform(string name, Transform parent, float x0Px, float x1Px, float py)
+        internal static void Platform(string name, Transform parent, float x0Px, float x1Px, float py)
         {
             Box(name, parent, X((x0Px + x1Px) / 2f), Y(py) - 0.1f, X(x1Px - x0Px), 0.2f, oneWay: true);
         }
@@ -805,7 +1066,7 @@ namespace UltimaLinha.EditorTools
 
         // ---------- Interface ----------
 
-        class UIRefs
+        internal class UIRefs
         {
             public DialogueBox dialogue;
             public IntroCutscene cutscene;
@@ -814,7 +1075,7 @@ namespace UltimaLinha.EditorTools
             public TMP_Text lettersHudText;
         }
 
-        static UIRefs BuildUI(TMP_FontAsset sans, TMP_FontAsset serif, TMP_FontAsset italic, AudioSource voice)
+        internal static UIRefs BuildUI(TMP_FontAsset sans, TMP_FontAsset serif, TMP_FontAsset italic, AudioSource voice)
         {
             var canvasGo = new GameObject("Interface") { layer = UILayer };
             var canvas = canvasGo.AddComponent<Canvas>();
@@ -842,7 +1103,7 @@ namespace UltimaLinha.EditorTools
             var objText = Label("Texto", objRt, "", italic, 32, Cream, 64, 82, 1000, 60);
 
             // dicas de controle
-            var controls = Label("Controles", hudRt, "A/D andar   ·   ESPAÇO pular   ·   S descer   ·   E interagir   ·   ESC menu",
+            var controls = Label("Controles", hudRt, "A/D andar   ·   SHIFT correr   ·   ESPAÇO pular   ·   S descer   ·   E interagir   ·   TAB diário   ·   ESC menu",
                 sans, 15, new Color(Muted.r, Muted.g, Muted.b, 0.55f), 64, 1080 - 44, 1400, 24);
             controls.characterSpacing = 6;
 
@@ -867,6 +1128,7 @@ namespace UltimaLinha.EditorTools
             // diálogo
             var dlg = BuildDialogue(root, sans, serif, voice);
             var letterLock = BuildLetterLock(root, sans, serif, italic);
+            BuildDiario(root, sans);
 
             // fim do cenário
             var endRt = Stretch("Fim", hudRt);
@@ -900,7 +1162,7 @@ namespace UltimaLinha.EditorTools
             return new UIRefs { dialogue = dlg, cutscene = cutscene, letterLock = letterLock, lettersHud = lettersHud, lettersHudText = lettersText };
         }
 
-        static CutscenePage Page(string text, bool title = false) => new CutscenePage { text = text, isTitle = title };
+        internal static CutscenePage Page(string text, bool title = false) => new CutscenePage { text = text, isTitle = title };
 
         /// <summary>
         /// Cutscene em forma de diário: o caderno aberto sobre o preto, com a letra do Kai escrita à mão
@@ -955,7 +1217,7 @@ namespace UltimaLinha.EditorTools
             slip.fillOrigin = 0;
             slip.fillAmount = 0f;
 
-            var hint = Label("Continuar", rt, "E  ›", sans, 20, Muted, 0, 0, 200, 30);
+            var hint = Label("Continuar", rt, "ESPAÇO  ›", sans, 20, Muted, 0, 0, 200, 30);
             var hrt = hint.rectTransform;
             hrt.anchorMin = hrt.anchorMax = new Vector2(1, 0);
             hrt.pivot = new Vector2(1, 0);
@@ -1014,6 +1276,62 @@ namespace UltimaLinha.EditorTools
             return asset;
         }
 
+        /// <summary>Páginas do diário do Kai (Tab). As de Souta e Ren têm detalhes que não fecham: pistas de que eles não existem.</summary>
+        internal static readonly (string titulo, string texto)[] PaginasDiario =
+        {
+            ("Lembretes",
+             "Relatório trimestral: sexta-feira. De novo.\nReunião com o chefe na sala 704, às 9h.\n\nO prédio tem sete andares. Eu contei.\n\nRemédio: 8h e 20h.\n(Parei há três semanas. Estou bem.)"),
+            ("Trabalho",
+             "O chefe me chamou depois do expediente.\nDisse que meus números não fecham.\nDisse que vai falar com o RH.\n\nAnotei a hora para não esquecer: 04:17.\n\nNão lembro de ter voltado para casa."),
+            ("Kai",
+             "Kai. 27 anos.\nAnalista há seis anos. Mesa 12, perto da janela que não abre.\n\nDurmo pouco. Esqueço coisas.\n\nO Dr. Mori diz que eu não posso parar o remédio.\nO Dr. Mori não sabe de tudo."),
+            ("Souta",
+             "Souta. 27 anos.\nEntramos na empresa no mesmo dia, 12 de março.\nHoje é gerente, com sala própria no 9º andar.\n\nFaz aniversário em 20 de outubro. Igual a mim.\n\nDiz que odeia trem.\nMesmo assim, está sempre no vagão comigo."),
+            ("Ren",
+             "Ren. Trabalha no meu andar, eu acho.\nPerguntei dele na recepção. Ninguém conhece.\n\nO crachá dele tem o meu número: 0417.\n\nUsa óculos redondos, iguais aos que eu usava na escola.\nPede desculpas antes de eu dizer qualquer coisa."),
+            ("20 de outubro",
+             "Peguei o último trem com o Souta.\n\n...\n\nOu peguei sozinho?\nNão lembro dele entrando."),
+        };
+
+        /// <summary>Diário do Kai sobre a tela (Tab): o mesmo caderno da abertura, com a letra dele.</summary>
+        internal static DiarioKai BuildDiario(Transform root, TMP_FontAsset sans)
+        {
+            var hand = EnsureHandwritingFont();
+            var rt = Stretch("Diario", root);
+            Img(rt, new Color(0f, 0f, 0f, 0.82f)).raycastTarget = true;
+            var group = rt.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = false;
+            var diario = rt.gameObject.AddComponent<DiarioKai>();
+
+            const float dw = 1560f, dh = 878f;
+            var book = new GameObject("Caderno", typeof(RectTransform)) { layer = UILayer }.GetComponent<RectTransform>();
+            book.SetParent(rt, false);
+            book.anchorMin = book.anchorMax = new Vector2(0.5f, 0.5f);
+            book.pivot = new Vector2(0.5f, 0.5f);
+            book.sizeDelta = new Vector2(dw, dh);
+            book.anchoredPosition = new Vector2(0f, 10f);
+            book.localRotation = Quaternion.Euler(0f, 0f, -0.6f);
+            Img(book, new Color(0.9f, 0.88f, 0.85f, 1f)).sprite = Spr("diario_aberto");
+
+            var ink = new Color(0.125f, 0.133f, 0.196f, 1f);
+            var titulo = Label("Titulo", book, "", hand, 58, ink, 165, 90, 560, 80);
+            var texto = Label("Texto", book, "", hand, 36, ink, dw / 2f + 85f, 90, 560, 720);
+            texto.textWrappingMode = TextWrappingModes.Normal;
+            texto.lineSpacing = -6f;
+            var numero = Label("Numero", book, "", hand, 30, new Color(ink.r, ink.g, ink.b, 0.6f), 165, dh - 150, 300, 50);
+            var dica = Label("Dica", rt, "A / D  virar a página      ·      TAB  fechar", sans, 18, Muted, 0, 1080 - 70, 1920, 30);
+            dica.alignment = TextAlignmentOptions.Center;
+            dica.characterSpacing = 8;
+
+            diario.group = group;
+            diario.titulo = titulo;
+            diario.texto = texto;
+            diario.numero = numero;
+            diario.paginas = PaginasDiario.Select(p => new PaginaDiario { titulo = p.titulo, texto = p.texto }).ToList();
+            return diario;
+        }
+
         internal static DialogueBox BuildDialogue(Transform root, TMP_FontAsset sans, TMP_FontAsset serif, AudioSource voice)
         {
             var rt = Stretch("Dialogo", root);
@@ -1055,7 +1373,7 @@ namespace UltimaLinha.EditorTools
             body.textWrappingMode = TextWrappingModes.Normal;
             body.overflowMode = TextOverflowModes.Overflow;
             body.alignment = TextAlignmentOptions.TopLeft;
-            var hint = Label("Continuar", panel, "E  ›", sans, 20, Muted, 0, 0, 200, 30);
+            var hint = Label("Continuar", panel, "ESPAÇO  ›", sans, 20, Muted, 0, 0, 200, 30);
             var hrt = hint.rectTransform;
             hrt.anchorMin = hrt.anchorMax = new Vector2(1, 0);
             hrt.pivot = new Vector2(1, 0);
@@ -1166,12 +1484,16 @@ namespace UltimaLinha.EditorTools
                 { "ren_cena", new Vector2(0.5f, 0f) },
             };
             var paths = AssetDatabase.FindAssets("t:Texture2D", new[] { Art }).Select(AssetDatabase.GUIDToAssetPath).ToList();
-            foreach (var path in paths)
+            foreach (var path in paths.Where(p => p.StartsWith(Objetos)))
+                ConfigureSprite(path, PivosObjetos.TryGetValue(Path.GetFileNameWithoutExtension(path), out var po) ? po : new Vector2(0.5f, 0.5f),
+                    PixelArtImporter.Ppu, 4096, FilterMode.Point);
+            foreach (var path in paths.Where(p => !p.StartsWith(Objetos)))
             {
                 string file = Path.GetFileNameWithoutExtension(path);
                 var pivot = pivots.TryGetValue(file, out var p) ? p : new Vector2(0.5f, 0.5f);
                 ConfigureSprite(path, pivot, PPU, file == "cenario1_fundo" ? 8192 : 2048);
             }
+            ConfigureSprite(FundoPixel, Vector2.zero, PixelArtImporter.Ppu, 8192, FilterMode.Point);
             // arte definitiva dos personagens: pivô exatamente nos pés (ignora a margem transparente)
             visiblePx.Clear();
             foreach (var id in new[] { "kai", "souta", "ren" })
@@ -1234,7 +1556,7 @@ namespace UltimaLinha.EditorTools
             }
         }
 
-        internal static void ConfigureSprite(string path, Vector2 pivot, float ppu, int maxSize)
+        internal static void ConfigureSprite(string path, Vector2 pivot, float ppu, int maxSize, FilterMode filtro = FilterMode.Bilinear)
         {
             var imp = AssetImporter.GetAtPath(path) as TextureImporter;
             if (imp == null) return;
@@ -1248,7 +1570,7 @@ namespace UltimaLinha.EditorTools
                            || imp.maxTextureSize != maxSize
                            || imp.textureCompression != TextureImporterCompression.Uncompressed
                            || imp.mipmapEnabled
-                           || imp.filterMode != FilterMode.Bilinear;
+                           || imp.filterMode != filtro;
             if (!changed) return;
 
             imp.textureType = TextureImporterType.Sprite;
@@ -1262,10 +1584,43 @@ namespace UltimaLinha.EditorTools
             imp.alphaIsTransparency = true;
             imp.mipmapEnabled = false;
             imp.wrapMode = TextureWrapMode.Clamp;
-            imp.filterMode = FilterMode.Bilinear;
+            imp.filterMode = filtro;
             imp.maxTextureSize = maxSize;
             imp.textureCompression = TextureImporterCompression.Uncompressed;
             imp.SaveAndReimport();
+        }
+
+        // botões, alavancas, portas de ponta e túnel: Ferramentas/Cenario1/objetos_arte.py, na grade dos personagens (58 px/u)
+        internal const string Objetos = Art + "/Objetos/";
+        static readonly Dictionary<string, Vector2> PivosObjetos = new Dictionary<string, Vector2>
+        {
+            { "alavanca_base", new Vector2(0.5f, 0f) },
+            { "alavanca_cabo", new Vector2(0.5f, 0.09f) }, // eixo: o anel de baixo
+            { "alavanca_emperrada", new Vector2(0.5f, 0f) },
+            { "lampada_suporte", new Vector2(0.5f, 0f) },
+            { "painel_emergencia", new Vector2(0.5f, 0f) },
+            { "antepara", Vector2.zero },
+            { "porta_ponta", Vector2.zero },              // dobradiça à esquerda: a folha gira em volta dela
+            { "tunel", new Vector2(0.5f, 0f) },
+            { "ponteiro", new Vector2(0.19f, 0.164f) },     // eixo do ponteiro: o anel
+        };
+
+        internal static Sprite Obj(string name)
+        {
+            var s = AssetDatabase.LoadAssetAtPath<Sprite>(Objetos + name + ".png");
+            if (!s) Debug.LogWarning("[Última Linha] Objeto não encontrado: " + name + " (rode Ferramentas/Cenario1/objetos_arte.py)");
+            return s;
+        }
+
+        /// <summary>Px da arte dos objetos (58 por unidade) em unidades de dentro da raiz reduzida do vagão.</summary>
+        internal static float PxV(float px) => px / (PixelArtImporter.Ppu * EscalaVagao);
+
+        /// <summary>Objeto em pixel art dentro da raiz reduzida do vagão: desfaz a redução para ficar na grade dos personagens.</summary>
+        internal static SpriteRenderer ObjVagao(string name, Transform parent, string sprite, Vector3 pos, int order)
+        {
+            var sr = SpriteObj(name, parent, Obj(sprite), pos, order);
+            sr.transform.localScale = Vector3.one / EscalaVagao;
+            return sr;
         }
 
         internal static Sprite Spr(string name)

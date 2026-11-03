@@ -199,7 +199,7 @@ namespace UltimaLinha.Salas
             }
 
             if (!introDone || leaving || running) return;
-            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !Modal.IsOpen)
+            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !DiarioKai.IsOpen && !Modal.IsOpen)
                 StartCoroutine(Leave(menuScene));
         }
 

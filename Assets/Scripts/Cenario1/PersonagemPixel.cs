@@ -30,11 +30,18 @@ namespace UltimaLinha.Cenario1
         [Header("Desenho")]
         public SpriteRenderer view;
         public SpriteRenderer shadow;
+        [Tooltip("Reflexo no chão encerado/molhado (opcional): repete o quadro do desenho, de cabeça para baixo.")]
+        public SpriteRenderer reflexo;
+        [Tooltip("Sombra de contato (opcional): pequena e de borda dura, logo abaixo das solas.")]
+        public SpriteRenderer contato;
+        public float alfaSombra = 0.55f, alfaReflexo = 0.2f;
+        [Tooltip("Altura (mundo) do chão que reflete; fora dele o reflexo some.")]
+        public float chaoReflexo;
         public Sprite[] idle, walk, run, jump, fall, talk, act;
         public ClipePixel[] extras;
-        public float idleFps = 4f, talkFps = 7f;
+        public float idleFps = 3f, talkFps = 5f;
         [Tooltip("Velocidade do gesto próprio (suspiro, relógio, olhar para trás).")]
-        public float gestoFps = 4f;
+        public float gestoFps = 3f;
         [Tooltip("Intervalo em segundos entre um gesto e outro (mínimo, máximo).")]
         public Vector2 pausaGesto = new Vector2(18f, 32f);
 
@@ -49,6 +56,8 @@ namespace UltimaLinha.Cenario1
         public float jumpSpeed = 10.8f;
         [Tooltip("Usa a corrida no lugar da caminhada.")]
         public bool correndo;
+        [Tooltip("Distância (unidades) de um ciclo de passos correndo.")]
+        public float strideCorrida = 4.2f;
 
         /// <summary>1 = olhando para a direita, -1 = para a esquerda.</summary>
         [HideInInspector] public float facing = 1f;
@@ -116,8 +125,9 @@ namespace UltimaLinha.Cenario1
             }
             else if (walking)
             {
-                var ciclo = correndo && Len(run) > 0 ? run : walk;
-                cicloPasso += dt * speed / Mathf.Max(0.5f, strideLength);
+                bool corre = (correndo || (mover is PlayerController pc && pc.Running)) && Len(run) > 0;
+                var ciclo = corre ? run : walk;
+                cicloPasso += dt * speed / Mathf.Max(0.5f, corre ? strideCorrida : strideLength);
                 cicloPasso -= Mathf.Floor(cicloPasso);
                 frame = Pick(ciclo, Mathf.FloorToInt(cicloPasso * Len(ciclo)));
                 actPlayed = -1f;
@@ -138,8 +148,23 @@ namespace UltimaLinha.Cenario1
             if (shadow)
             {
                 var c = shadow.color;
-                c.a = Mathf.Lerp(0.55f, 0.15f, air);
+                c.a = Mathf.Lerp(alfaSombra, 0.15f, air);
                 shadow.color = c;
+            }
+            if (contato)
+            {
+                var c = contato.color;
+                c.a = 1f - air;
+                contato.color = c;
+            }
+            if (reflexo && view)
+            {
+                reflexo.sprite = view.sprite;
+                var c = view.color;
+                // só o chão do vagão reflete: em cima de banco ou bagageiro o reflexo some
+                float noChao = Mathf.Clamp01(1f - Mathf.Abs(transform.position.y - chaoReflexo) / 0.3f);
+                c.a *= alfaReflexo * (1f - air) * noChao;
+                reflexo.color = c;
             }
         }
 

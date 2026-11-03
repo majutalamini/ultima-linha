@@ -155,7 +155,7 @@ namespace UltimaLinha.Cenario2
         {
             if (!introDone || leaving || dying || !player) return;
 
-            if (InputHelper.BackPressed() && !DialogueBox.IsBusy)
+            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !DiarioKai.IsOpen)
             {
                 StartCoroutine(Leave(menuScene));
                 return;
