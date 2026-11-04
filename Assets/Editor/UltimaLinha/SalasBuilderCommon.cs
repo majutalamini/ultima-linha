@@ -436,7 +436,7 @@ namespace UltimaLinha.EditorTools
 
         // ---------- Interface ----------
 
-        static Ui BuildUi(Fonts fonts, AudioSource voice, bool withLock)
+        internal static Ui BuildUi(Fonts fonts, AudioSource voice, bool withLock)
         {
             var ui = new Ui();
             var canvasGo = new GameObject("Interface") { layer = UILayer };

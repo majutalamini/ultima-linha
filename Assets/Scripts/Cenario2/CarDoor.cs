@@ -8,12 +8,18 @@ namespace UltimaLinha.Cenario2
     /// aberta → pisca (aviso) → bate (desce rápido) → fechada → sobe devagar → aberta...
     /// A folha desce do alto da passagem; enquanto está baixa, um colisor impede a passagem.
     /// Quem estiver embaixo quando ela bate é esmagado (o Cenario2Director confere com IsCrushing).
+    /// Com "porta" ligada, em vez da folha que desce é a porta de dobradiça da ponta do vagão (a dos Cenários 0 e 1)
+    /// que gira e bate; o colisor e a luz passam a ser os dela.
     /// </summary>
     public class CarDoor : MonoBehaviour
     {
         public enum State { Open, Warning, Closing, Closed, Opening }
 
         [Header("Peças")]
+        [Tooltip("Porta de dobradiça da ponta do vagão (fica desligada: quem a move é esta porta).")]
+        public UltimaLinha.Cenario1.PortaPonta porta;
+        [Tooltip("Sem energia: a luz de aviso fica apagada.")]
+        public bool lampOff;
         [Tooltip("Folha da porta (pivô na ponta de baixo).")]
         public Transform panel;
         [Tooltip("Colisor sólido que acompanha a folha.")]
@@ -62,6 +68,7 @@ namespace UltimaLinha.Cenario2
         float timer;
         int patternIndex;
         bool held;
+        float extraOpen; // HoldOpen: a próxima abertura dura mais
 
         public float BottomY => transform.position.y + (1f - Closure) * doorwayHeight;
         public float CenterX => transform.position.x;
@@ -111,7 +118,7 @@ namespace UltimaLinha.Cenario2
             switch (s)
             {
                 case State.Open:
-                    return openPattern != null && openPattern.Length > 0 ? openPattern[patternIndex % openPattern.Length] : openTime;
+                    return extraOpen + (openPattern != null && openPattern.Length > 0 ? openPattern[patternIndex % openPattern.Length] : openTime);
                 case State.Warning: return warnTime;
                 case State.Closing: return closeTime;
                 case State.Closed: return closedTime;
@@ -126,6 +133,7 @@ namespace UltimaLinha.Cenario2
             {
                 case State.Open:
                     Current = State.Warning;
+                    extraOpen = 0f;
                     if (!silent) Play(warnClip, 0.7f);
                     break;
                 case State.Warning:
@@ -164,6 +172,11 @@ namespace UltimaLinha.Cenario2
                 default: Closure = 1f - Mathf.SmoothStep(0f, 1f, k); break;
             }
             if (panel) panel.localPosition = new Vector3(0f, (1f - Closure) * doorwayHeight, 0f);
+            if (porta)
+            {
+                porta.Quadro(1f - Closure);
+                if (porta.bloqueio) porta.bloqueio.enabled = Closure > 0.5f;
+            }
 
             if (blocker)
             {
@@ -174,7 +187,12 @@ namespace UltimaLinha.Cenario2
                 blocker.offset = new Vector2(0f, bottom + h * 0.5f);
             }
 
-            if (lamp)
+            if (lamp && lampOff)
+            {
+                lamp.color = new Color(0.12f, 0.1f, 0.1f, 1f);
+                if (lampGlow) lampGlow.color = Color.clear;
+            }
+            else if (lamp)
             {
                 Color c; float glow;
                 switch (Current)
@@ -234,6 +252,24 @@ namespace UltimaLinha.Cenario2
             Current = State.Opening;
             timer = 0f;
             Play(openClip, 0.8f);
+        }
+
+        /// <summary>Uma porta parada começa a abrir e bater no ritmo.</summary>
+        public void StartCycling()
+        {
+            cycling = true;
+            held = false;
+        }
+
+        /// <summary>A próxima abertura (ou a atual) dura mais "seconds" (alavanca de retenção).</summary>
+        public void HoldOpen(float seconds)
+        {
+            extraOpen = seconds;
+            if (Current == State.Open || Current == State.Warning) { Current = State.Open; timer = 0f; return; }
+            if (Current == State.Opening) return;
+            Current = State.Opening; // batendo ou fechada: volta a abrir já
+            timer = 0f;
+            Play(openClip, 0.6f);
         }
 
         public bool IsOpen => Current == State.Open || Current == State.Warning;

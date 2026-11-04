@@ -5,17 +5,18 @@ using UnityEngine;
 namespace UltimaLinha.Cenario1
 {
     /// <summary>
-    /// Porta da ponta do vagão (para o vão entre os vagões). É de dobradiça: aberta, a folha gira e quase some
-    /// (escala X com o pivô na dobradiça). Fechada, um colisor no pilar da ponta segura o Kai.
+    /// Porta da ponta do vagão (para o vão entre os vagões), na linha do pilar da ponta. É de dobradiça e abre para fora:
+    /// fechada, aparece de perfil (uma lâmina); aberta, gira e fica de frente, no fundo, atrás da plataforma. A animação é
+    /// a troca de quadros (todos do mesmo tamanho, com a dobradiça no pivô). Fechada, um colisor no pilar segura o Kai.
     /// Não se atravessa com E: aberta, passa andando. Trancada, E chama onLockedInteract.
     /// </summary>
     public class PortaPonta : Interactable
     {
-        public Transform folha;
+        public SpriteRenderer folha;
+        [Tooltip("Do primeiro (fechada, de perfil) ao último (aberta, de frente).")]
+        public Sprite[] quadros;
         public Collider2D bloqueio;
         public float tempo = 0.7f;
-        [Tooltip("Quanto da folha fica visível aberta (de lado).")]
-        public float abertaX = 0.12f;
 
         [Header("Luz de trava")]
         public SpriteRenderer luz;
@@ -32,12 +33,6 @@ namespace UltimaLinha.Cenario1
 
         public bool IsOpen { get; private set; }
         bool movendo;
-        float escala0 = 1f;
-
-        void Awake()
-        {
-            if (folha) escala0 = folha.localScale.x;
-        }
 
         // desligada (porta só de cenário), fica com a cor com que foi montada
         void Start()
@@ -70,7 +65,7 @@ namespace UltimaLinha.Cenario1
         public void AbertaJa()
         {
             IsOpen = true;
-            if (folha) folha.localScale = new Vector3(escala0 * abertaX, folha.localScale.y, 1f);
+            Quadro(1f);
             if (bloqueio) bloqueio.enabled = false;
             Luz(livre, 0.6f);
         }
@@ -84,14 +79,15 @@ namespace UltimaLinha.Cenario1
                 if (sfx && abreClip) sfx.PlayOneShot(abreClip);
                 yield return new WaitForSeconds(0.3f);
             }
-            float de = abrir ? 1f : abertaX, para = abrir ? abertaX : 1f, t = 0f;
+            float t = 0f;
             while (t < tempo)
             {
                 t += Time.deltaTime;
-                float k = abrir ? Mathf.SmoothStep(0f, 1f, t / tempo) : (t / tempo) * (t / tempo); // fecha acelerando: bate
-                if (folha) folha.localScale = new Vector3(escala0 * Mathf.Lerp(de, para, k), folha.localScale.y, 1f);
+                float k = abrir ? Mathf.SmoothStep(0f, 1f, t / tempo) : 1f - (t / tempo) * (t / tempo); // fecha acelerando: bate
+                Quadro(k);
                 yield return null;
             }
+            Quadro(abrir ? 1f : 0f);
             IsOpen = abrir;
             if (bloqueio) bloqueio.enabled = !abrir;
             if (!abrir)
@@ -100,6 +96,13 @@ namespace UltimaLinha.Cenario1
                 Luz(travada, 1f);
             }
             movendo = false;
+        }
+
+        /// <summary>0 = fechada (de perfil), 1 = aberta (de frente); o montador da cena a deixa fechada.</summary>
+        public void Quadro(float aberta)
+        {
+            if (folha && quadros != null && quadros.Length > 0)
+                folha.sprite = quadros[Mathf.Clamp(Mathf.RoundToInt(aberta * (quadros.Length - 1)), 0, quadros.Length - 1)];
         }
 
         void Luz(Color c, float brilho)

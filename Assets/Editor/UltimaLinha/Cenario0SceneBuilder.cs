@@ -23,7 +23,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario0SceneBuilder
     {
-        const int BuildVersion = 15; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 19; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario0.unity";
         const string Art0 = "Assets/Art/Cenario0";
         const string Passageiros = "Assets/Art/Personagens/PixelArt/Passageiros";
@@ -57,6 +57,8 @@ namespace UltimaLinha.EditorTools
         static Cenario0SceneBuilder()
         {
             EditorApplication.delayCall += TryAutoBuild;
+            // recompilou durante o Play: a reconstrução fica para quando sair dele
+            EditorApplication.playModeStateChanged += estado => { if (estado == PlayModeStateChange.EnteredEditMode) TryAutoBuild(); };
         }
 
         static void TryAutoBuild()

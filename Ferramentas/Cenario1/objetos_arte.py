@@ -82,10 +82,12 @@ def salva(a, nome):
     return a
 
 
-def peca(rgb, m, caixa, altura, nome, **kw):
+def peca(rgb, m, caixa, altura, nome, brilho=None, **kw):
+    """brilho: leva a peça para a luz do vagão (no_vagao), com esse tanto acima da mediana dele."""
     x0, y0, x1, y1 = caixa
     esc = altura / (y1 - y0)
-    return salva(reduz(rgb[y0:y1, x0:x1], m[y0:y1, x0:x1], esc, **kw), nome), esc
+    a = reduz(rgb[y0:y1, x0:x1], m[y0:y1, x0:x1], esc, **kw)
+    return salva(no_vagao(a, brilho=brilho) if brilho else a, nome), esc
 
 
 def buraco(m):
@@ -94,13 +96,13 @@ def buraco(m):
     return tuple(int(v) for v in max(caixas, key=lambda c: c[4])[:4])
 
 
-def no_vagao(a, cores=40):
+def no_vagao(a, cores=40, brilho=1.35):
     """Leva a peça para a luz e a paleta do vagao_antigo: mesma luminosidade mediana, cores que existem nele."""
     v = np.array(Image.open(VAGAO).convert("RGB")).astype(float)[120:500].reshape(-1, 3)
     lum_v = np.median(v @ extrai.LUM)
     cheio = a[:, :, 3] > 0
     rgb = a[:, :, :3].astype(float)
-    rgb *= 1.35 * lum_v / max(1.0, np.median(rgb[cheio] @ extrai.LUM))  # um pouco acima: a mediana do vagão inclui o escuro
+    rgb *= brilho * lum_v / max(1.0, np.median(rgb[cheio] @ extrai.LUM))  # um pouco acima: a mediana do vagão inclui o escuro
     pal = extrai.paleta(v[(v @ extrai.LUM) > 4], cores)
     viva = rgb[cheio][rgb[cheio].max(1) - rgb[cheio].min(1) > 40]  # tinta vermelha descascada: guarda um pouco dela
     if len(viva) > 50:
@@ -116,12 +118,12 @@ def main():
 
     rgb, m = recorta("alavanca")
     base, cabo = pecas(m, 2)
-    peca(rgb, m, base, 30, "alavanca_base")
-    a, esc = peca(rgb, m, cabo, 50, "alavanca_cabo")
+    peca(rgb, m, base, 30, "alavanca_base", tom=0.55)
+    a, esc = peca(rgb, m, cabo, 50, "alavanca_cabo", tom=0.55)
     med["cabo_eixo"] = 1 - 0.09  # o eixo é o anel de baixo: ~9% da altura a partir da base
 
     rgb, m = recorta("alavanca_emperrada")
-    peca(rgb, m, pecas(m, 1)[0], 46, "alavanca_emperrada")
+    peca(rgb, m, pecas(m, 1)[0], 46, "alavanca_emperrada", tom=0.55)
 
     rgb, m = recorta("lampada")
     bulbo, suporte = pecas(m, 2)
@@ -132,7 +134,7 @@ def main():
     peca(rgb, m, pecas(m, 1)[0], 10, "sinal_porta")
 
     rgb, m = recorta("painel_emergencia")
-    peca(rgb, m, pecas(m, 1)[0], 50, "painel_emergencia")
+    peca(rgb, m, pecas(m, 1)[0], 50, "painel_emergencia", tom=0.55)
 
     # antepara: a escala sai da porta (o vão transparente no meio da parede)
     rgb, m = recorta("antepara")
@@ -161,7 +163,11 @@ def main():
 
     rgb, m = recorta("tunel")
     x0, y0, x1, y1 = pecas(m, 1)[0]
-    salva(reduz(rgb[y0 + 2:y1 - 2, x0 + 2:x1 - 2], m[y0 + 2:y1 - 2, x0 + 2:x1 - 2], 640 / (y1 - y0 - 4), cores=32, tom=0.45), "tunel")
+    tun = no_vagao(reduz(rgb[y0 + 2:y1 - 2, x0 + 2:x1 - 2], m[y0 + 2:y1 - 2, x0 + 2:x1 - 2], 640 / (y1 - y0 - 4), cores=32, tom=1.0), brilho=0.8)
+    # some no escuro em cima, onde encosta no preto acima do teto dos vagões
+    alto = np.clip(np.arange(tun.shape[0]) / (tun.shape[0] * 0.35), 0, 1) ** 1.5
+    tun[:, :, :3] = (tun[:, :, :3] * alto[:, None, None]).astype(np.uint8)
+    salva(tun, "tunel")
 
     # interface: maior, sem escurecer (fica sobre um véu escuro)
     rgb, m = recorta("mostrador")

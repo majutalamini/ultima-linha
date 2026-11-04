@@ -12,6 +12,27 @@ EditorBuildSettings:
     path: Assets/Scenes/Cenario1.unity
     guid: 6999b1110e6a73549a142bede3a3eb04
   - enabled: 1
+    path: Assets/Scenes/Cenario2.unity
+    guid: 476f4892c4ad99147912aac463c81c26
+  - enabled: 1
+    path: Assets/Scenes/Cenario0.unity
+    guid: fa0f287ca7b07344981cb87677ebe00e
+  - enabled: 1
+    path: Assets/Scenes/Cenario3.unity
+    guid: 5b1adec2a04d0904c89a3b3f6110d051
+  - enabled: 1
+    path: Assets/Scenes/Cenario4.unity
+    guid: c2daee0482f18d645824c94def95360a
+  - enabled: 1
+    path: Assets/Scenes/Cenario5.unity
+    guid: aa72e54c0c0ca2847b8464d84c34bd43
+  - enabled: 1
+    path: Assets/Scenes/Cenario6.unity
+    guid: d594b45eaa643ae4bad843436c3e5330
+  - enabled: 1
+    path: Assets/Scenes/Cenario7.unity
+    guid: 890695148119c514fbb66cbaed01b422
+  - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   m_configObjects:

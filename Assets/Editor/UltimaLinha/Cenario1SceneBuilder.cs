@@ -28,7 +28,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario1SceneBuilder
     {
-        const int BuildVersion = 16; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 20; // aumente para forçar a cena a ser recriada automaticamente
 
         const string ScenePath = "Assets/Scenes/Cenario1.unity";
         internal const string Art = "Assets/Art/Cenario1";
@@ -98,7 +98,7 @@ namespace UltimaLinha.EditorTools
         static readonly (char letter, float x, float standPy, float markY)[] LetterSpots =
         {
             ('R', 7.5f, FloorPy, 2.05f),    // chão, na frente do 1º banco
-            ('E', -0.1f, FloorPy, 3.3f),    // na porta por onde o Kai entrou, que trancou atrás dele
+            ('E', 0.41f, FloorPy, 4.6f),    // na parede da ponta, ao lado da porta por onde o Kai entrou (trancou atrás dele)
             ('T', 18.0f, BackrestPy, 5.45f), // no vidro da janela, subindo no encosto do 2º banco
             ('M', 25.8f, FloorPy, 3.1f),    // na 2ª porta lateral
             ('O', 29.5f, CushionPy, 5.3f),  // no vidro, em pé no assento do 3º banco
@@ -128,6 +128,8 @@ namespace UltimaLinha.EditorTools
         static Cenario1SceneBuilder()
         {
             EditorApplication.delayCall += TryAutoBuild;
+            // recompilou durante o Play: a reconstrução fica para quando sair dele
+            EditorApplication.playModeStateChanged += estado => { if (estado == PlayModeStateChange.EnteredEditMode) TryAutoBuild(); };
         }
 
         static void TryAutoBuild()
@@ -655,15 +657,19 @@ namespace UltimaLinha.EditorTools
         }
 
         // ---------- Pontas do vagão e o vão entre eles (Cenários 0 e 1) ----------
-        // O trem é visto em corte até o fim: cada ponta tem uma antepara com porta e, do lado de fora, a plataforma do
-        // engate, no mesmo chão. Entre dois vagões, o túnel. Medidas da antepara em px da arte (Objetos/medidas.json).
-        const float AntW = 302f, AntH = 569f, AntChao = 429f, AntPilar = 183f;
-        const float AntPortaX0 = 83f, AntPortaX1 = 150f, AntPortaTopo = 154f, AntPortaBase = 404f; // y a partir do topo
+        // O trem é visto em corte até o fim: cada ponta é parede, o pilar e, do lado de fora, a plataforma do engate, no
+        // mesmo chão. A porta fica na linha do pilar e abre para fora, ficando de frente atrás da plataforma. Entre dois
+        // vagões, o túnel. As pontas são montadas com os pixels do próprio vagão, nas mesmas linhas dele
+        // (Ferramentas/Cenario1/pontas_arte.py); medidas em px da arte, a partir do lado que encosta no vagão
+        // (Objetos/medidas_pontas.json). A esquerda tem o mesmo desenho espelhado.
+        internal const float AntW = 193f, AntH = 540f, AntChao = 505f, AntPilar = 74f; // AntPilar: fim do pilar = dobradiça
+        internal const float AntPortaTopo = 182f, AntPortaBase = 443f; // y a partir do topo
+        const float PontaDirPx = 2006f, PontaEsqPx = 45f; // onde cada ponta encosta no vagao_antigo (px dele)
         internal const float VaoLargura = 4.4f; // andando não dá, correndo dá (corrida ~5,8 u/s)
-        static float U(float px) => px / PixelArtImporter.Ppu;
-        /// <summary>Paredes do fim e do começo do vagão e o chão, em unidades do mundo.</summary>
-        internal static float XFimVagao => X(RightWallPx) * EscalaVagao;
-        internal static float XIniVagao => X(LeftWallPx) * EscalaVagao;
+        internal static float U(float px) => px / PixelArtImporter.Ppu;
+        /// <summary>Onde as pontas encostam no fim e no começo do vagão, e o chão, em unidades do mundo.</summary>
+        internal static float XFimVagao => U(PontaDirPx);
+        internal static float XIniVagao => U(PontaEsqPx);
         internal static float ChaoMundo => Y(FloorPy) * EscalaVagao;
         /// <summary>Do vagão de trás (Cenário 0) para o da frente (Cenário 1): mesma arte, mesma origem dentro de cada cena.</summary>
         internal static float Deslocamento => XFimVagao + 2f * U(AntW) + VaoLargura - XIniVagao;
@@ -683,20 +689,20 @@ namespace UltimaLinha.EditorTools
 
         /// <summary>A partir de xTras (fim do vagão de trás): a porta dele, as duas plataformas, o túnel e a porta do vagão da
         /// frente, que começa em xTras + Deslocamento - (XFimVagao - XIniVagao). Fora da raiz reduzida: unidades do mundo.</summary>
-        internal static VaoRefs BuildVao(float xTras, AudioSource sfx)
+        internal static VaoRefs BuildVao(float xTras, AudioSource sfx, float largura = VaoLargura, bool painel = true)
         {
             var root = new GameObject("Vao").transform;
             float chao = ChaoMundo;
             var r = new VaoRefs();
             r.bordaTras = xTras + U(AntW);
             r.pilarTras = xTras + U(AntPilar);
-            r.bordaFrente = r.bordaTras + VaoLargura;
+            r.bordaFrente = r.bordaTras + largura;
             r.quedaY = chao - 2.5f;
             SpriteObj("Tunel", root, Obj("tunel"), new Vector3((r.bordaTras + r.bordaFrente) / 2f, -150f / PixelArtImporter.Ppu, 0f), -130);
             r.tras = BuildPortaPonta(root, xTras, false, sfx);
             // o painel que abre a porta de trás (na Abertura ele funciona; no Cenário 1 é só o que ficou para trás)
-            r.painel = new Vector3(xTras + U(40f), chao, 0f);
-            SpriteObj("PainelEmergencia", root, Obj("painel_emergencia"), r.painel + new Vector3(0f, 1.9f, 0f), -10);
+            r.painel = new Vector3(xTras + U(24f), chao, 0f);
+            if (painel) SpriteObj("PainelEmergencia", root, Obj("painel_emergencia"), r.painel + new Vector3(0f, 1.9f, 0f), -10);
             r.frente = BuildPortaPonta(root, r.bordaFrente + U(AntW), true, sfx);
             Box("PisoTras", root, (xTras - 1f + r.bordaTras) / 2f, chao - 0.5f, r.bordaTras - xTras + 1f, 1f, oneWay: false);
             Box("PisoFrente", root, r.bordaFrente + (U(AntW) + 1f) / 2f, chao - 0.5f, U(AntW) + 1f, 1f, oneWay: false);
@@ -718,21 +724,22 @@ namespace UltimaLinha.EditorTools
                 sr.transform.localPosition = new Vector3(x, y, 0f);
                 return sr;
             }
-            Peca("Antepara", Obj("antepara"), 0f, baseY, -95);
-            float px0 = U(AntPortaX0), px1 = U(AntPortaX1), py0 = baseY + U(AntH - AntPortaBase), py1 = baseY + U(AntH - AntPortaTopo);
-            var escuro = Peca("VaoDaPorta", Spr("pixel"), (px0 + px1) / 2f, (py0 + py1) / 2f, -97);
-            escuro.transform.localScale = new Vector3((px1 - px0) / 0.08f, (py1 - py0) / 0.08f, 1f); // "pixel" = 8 px a 100 px/u
-            escuro.color = new Color(0.02f, 0.02f, 0.025f, 1f);
-            var folha = Peca("Folha", Obj("porta_ponta"), px0 - U(2f), py0, -96);
+            // a raiz da ponta esquerda é espelhada (colisores e medidas); ponta_esq.png já vem espelhada, então aparece certa
+            Peca("Ponta", Obj(espelhada ? "ponta_esq" : "ponta_dir"), 0f, baseY, -95);
+            float dobra = U(AntPilar), py0 = baseY + U(AntH - AntPortaBase), py1 = baseY + U(AntH - AntPortaTopo);
+            // a folha fica atrás da ponta (o corrimão da plataforma passa na frente dela aberta); começa fechada, de perfil
+            var folha = Peca("Folha", null, dobra, py0, -96); // na raiz espelhada a porta da esquerda já abre para o outro lado
 
             var porta = new GameObject("Porta");
             porta.transform.SetParent(root, false);
-            porta.transform.localPosition = new Vector3((px0 + px1) / 2f, chao, 0f);
+            porta.transform.localPosition = new Vector3(dobra, chao, 0f);
             var pp = porta.AddComponent<PortaPonta>();
             pp.reachX = 1.3f;
             pp.promptOffset = new Vector2(0f, py1 - chao + 0.5f);
-            pp.folha = folha.transform;
-            float sx = (px0 + px1) / 2f, sy = py1 + U(9f);
+            pp.folha = folha;
+            pp.quadros = Enumerable.Range(0, 6).Select(i => Obj("porta_ponta_" + i)).ToArray();
+            pp.Quadro(0f);
+            float sx = dobra - U(12f), sy = py1 + U(8f); // a luz da trava fica no pilar, em cima da porta
             Peca("SinalTrava", Obj("sinal_porta"), sx, sy, -45);
             pp.luz = Peca("SinalTrava_Luz", Spr("ponto"), sx, sy, -44);
             pp.luz.transform.localScale = new Vector3(0.6f, 0.45f, 1f);
@@ -755,7 +762,7 @@ namespace UltimaLinha.EditorTools
         }
 
         /// <summary>Três pontinhos em cima da cabeça do Souta/Ren quando eles têm uma dica (NpcTalk.balao).</summary>
-        static SpriteRenderer[] BalaoDica(Transform npc, float altura)
+        internal static SpriteRenderer[] BalaoDica(Transform npc, float altura)
         {
             var r = new SpriteRenderer[3];
             for (int i = 0; i < 3; i++)
@@ -1249,7 +1256,7 @@ namespace UltimaLinha.EditorTools
         }
 
         /// <summary>Fonte manuscrita (Caveat, licença OFL) para o diário. Cria o TMP Font Asset na primeira vez.</summary>
-        static TMP_FontAsset EnsureHandwritingFont()
+        internal static TMP_FontAsset EnsureHandwritingFont()
         {
             const string folder = "Assets/UI/Cutscene/Fonts";
             const string file = "Caveat-Medium";
@@ -1599,8 +1606,14 @@ namespace UltimaLinha.EditorTools
             { "alavanca_emperrada", new Vector2(0.5f, 0f) },
             { "lampada_suporte", new Vector2(0.5f, 0f) },
             { "painel_emergencia", new Vector2(0.5f, 0f) },
-            { "antepara", Vector2.zero },
-            { "porta_ponta", Vector2.zero },              // dobradiça à esquerda: a folha gira em volta dela
+            { "ponta_dir", Vector2.zero },
+            { "ponta_esq", Vector2.zero },
+            { "porta_ponta_0", Vector2.zero },            // quadros da porta da ponta: dobradiça no canto de baixo à esquerda
+            { "porta_ponta_1", Vector2.zero },
+            { "porta_ponta_2", Vector2.zero },
+            { "porta_ponta_3", Vector2.zero },
+            { "porta_ponta_4", Vector2.zero },
+            { "porta_ponta_5", Vector2.zero },
             { "tunel", new Vector2(0.5f, 0f) },
             { "ponteiro", new Vector2(0.19f, 0.164f) },     // eixo do ponteiro: o anel
         };

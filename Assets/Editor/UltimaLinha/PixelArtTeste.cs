@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using UltimaLinha.Cenario1;
 using UnityEditor;
@@ -24,6 +25,7 @@ namespace UltimaLinha.EditorTools
         const string Fila = "UltimaLinha.TesteFila";
         const string Fase = "UltimaLinha.TesteFase";
         const string Erros = "UltimaLinha.TesteErros";
+        const string SoC2 = "UltimaLinha.TesteSoC2";
         const float SegundosPorCena = 4f;
 
         static double inicio = -1;
@@ -90,6 +92,28 @@ namespace UltimaLinha.EditorTools
             SessionState.SetString(Fila, "2,1,0,3,4,5,6,7"); // o primeiro Play recarrega os scripts e corta corrotinas: nem a Abertura nem a entrada do Cenário 1 podem ser a primeira
         }
 
+        /// <summary>Só o Cenário 2, jogado por um piloto automático do começo até a porta do fim (duas vezes: o primeiro
+        /// Play pode cortar a corrotina da entrada). Por linha de comando: -executeMethod UltimaLinha.EditorTools.PixelArtTeste.SoCenario2</summary>
+        [MenuItem("Última Linha/Testes/Jogar o Cenário 2 sozinho (piloto automático, sem som)")]
+        public static void SoCenario2()
+        {
+            SoRodar();
+            SessionState.SetBool(SoC2, true);
+            SessionState.SetString(Fila, "2,2");
+        }
+
+        /// <summary>Recria a cena do Cenário 2 e roda o piloto (linha de comando, depois de mudar o montador).</summary>
+        public static void ReconstruirC2ERodar()
+        {
+            var tipo = typeof(Cenario2SceneBuilder);
+            if (!(bool)tipo.GetMethod("Build", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { false }))
+                Debug.LogError("[Cenário 2] Não foi reconstruído");
+            var chave = (string)tipo.GetProperty("VersionKey", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+            EditorPrefs.SetInt(chave, (int)tipo.GetField("BuildVersion", BindingFlags.NonPublic | BindingFlags.Static).GetRawConstantValue());
+            AssetDatabase.SaveAssets();
+            SoCenario2();
+        }
+
         static void Passo()
         {
             var fila = SessionState.GetString(Fila, "");
@@ -104,6 +128,11 @@ namespace UltimaLinha.EditorTools
                 fotografada = false;
                 etapaC1 = 0;
                 FotosC1.Clear();
+                etapaC2 = fusivelC2 = 0;
+                FotosC2.Clear();
+                // sem foco a Unity descarta o teclado simulado; o projeto não tem InputSettings salvo, então isto vale só nesta sessão
+                InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+                InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
                 SessionState.SetString(Fase, "jogando");
                 EditorApplication.isPlaying = true;
             }
@@ -116,7 +145,14 @@ namespace UltimaLinha.EditorTools
                     Cenario1(t);
                     if (t < 60.0 && etapaC1 < 99) return;
                 }
-                if (!fotografada && t > SegundosPorCena * 0.5 && partes[0] != "0")
+                bool soC2 = SessionState.GetBool(SoC2, false);
+                if (soC2)
+                {
+                    Cenario2(t);
+                    if (t < 300.0 && etapaC2 < 99) return;
+                    if (etapaC2 < 99) Debug.LogError($"[Cenário 2] Piloto não chegou ao fim em 300s (etapa {etapaC2})");
+                }
+                if (!fotografada && t > SegundosPorCena * 0.5 && partes[0] != "0" && !soC2)
                 {
                     fotografada = true;
                     Exercita(partes[0]);
@@ -151,6 +187,7 @@ namespace UltimaLinha.EditorTools
                     return;
                 }
                 SessionState.SetString(Fila, "");
+                SessionState.SetBool(SoC2, false);
                 PlayerPrefs.DeleteKey(Cenario0Director.ChaveTeste);
                 foreach (var k in ChavesSave)
                 {
@@ -328,6 +365,192 @@ namespace UltimaLinha.EditorTools
                     etapaC1 = 99;
                     break;
             }
+        }
+
+        static int etapaC2, fusivelC2;
+        static double marcaC2;
+        static readonly HashSet<string> FotosC2 = new HashSet<string>();
+        // corrida a 5,8 u/s; pulando correndo o centro do Kai anda ~5 u no ar (subida 10,8, gravidade 25)
+        const float CorridaC2 = 5.8f, AlcancePuloC2 = 4.6f, MeiaLarguraKai = 0.45f;
+
+        static T Campo<T>(object o, string nome) => (T)o.GetType().GetField(nome, BindingFlags.NonPublic | BindingFlags.Instance).GetValue(o);
+        static void Chama(object o, string metodo, params object[] args) =>
+            o.GetType().GetMethod(metodo, BindingFlags.NonPublic | BindingFlags.Instance).Invoke(o, args);
+
+        /// <summary>Tempo que a porta ainda fica sem esmagar (aberta + aviso); 0 se está fechando, fechada ou abrindo.</summary>
+        static float FolgaPorta(UltimaLinha.Cenario2.CarDoor p)
+        {
+            if (p.Current != UltimaLinha.Cenario2.CarDoor.State.Open && p.Current != UltimaLinha.Cenario2.CarDoor.State.Warning) return 0f;
+            float dur = (float)typeof(UltimaLinha.Cenario2.CarDoor).GetMethod("Duration", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { p.Current });
+            float resta = dur - Campo<float>(p, "timer");
+            return p.Current == UltimaLinha.Cenario2.CarDoor.State.Open ? resta + p.warnTime : resta;
+        }
+
+        static void FotoC2(string nome)
+        {
+            if (FotosC2.Add(nome) && Camera.main) Foto(Camera.main, $"jogo_c2_{nome}.png");
+        }
+
+        /// <summary>Leva o Kai até um ponto de interação e aperta E nele (o caminho até lá não é o que se testa).</summary>
+        static void UsaAqui(UltimaLinha.Cenario2.Cenario2Director d, Interactable alvo)
+        {
+            var p = d.player;
+            p.Teleport(new Vector3(alvo.transform.position.x, alvo.transform.position.y + Cenario1SceneBuilder.ColliderHeight / 2f + 0.02f, 0f));
+            if (d.cameraFollow) d.cameraFollow.Snap();
+            alvo.Interact();
+        }
+
+        /// <summary>Cenário 2: passa as falas e os papéis (Enter, para não pular), abre o cadeado (um código errado antes),
+        /// puxa a retenção e corre, pega os três fusíveis e liga a caixa, e atravessa as passagens esperando cada porta
+        /// abrir e pulando na beirada. Anota tempos, esmagadas e quedas, e fotografa cada parte.</summary>
+        static void Cenario2(double t)
+        {
+            var d = UnityEngine.Object.FindFirstObjectByType<UltimaLinha.Cenario2.Cenario2Director>();
+            var kb = Keyboard.current;
+            if (kb == null) return;
+            if (!d)
+            {
+                if (etapaC2 > 0 && etapaC2 < 99)
+                {
+                    Debug.Log($"[Cenário 2] Saiu pela porta do fim aos {t:0.0}s e carregou {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+                    etapaC2 = 99;
+                }
+                Aperta(kb);
+                return;
+            }
+            var p = d.player;
+            float x = p.transform.position.x;
+            if (etapaC2 == 0 && t > 40.0)
+            {
+                Debug.LogWarning($"[Cenário 2] A entrada não devolveu o controle em 40s: dialogo={DialogueBox.IsBusy} introDone={Campo<bool>(d, "introDone")} " +
+                                 $"controle={p.controlEnabled} quadros={Time.frameCount} (corrotina cortada pelo primeiro Play?)");
+                etapaC2 = 99;
+                return;
+            }
+            bool papel = UltimaLinha.Salas.DocumentView.Instance && UltimaLinha.Salas.DocumentView.Instance.IsOpen;
+            if (DialogueBox.IsBusy || papel) { Aperta(kb, Time.frameCount % 20 == 0 ? Key.Enter : Key.None); return; }
+            int cp = Campo<int>(d, "checkpoint");
+
+            switch (etapaC2)
+            {
+                case 0: // entrada
+                    Aperta(kb);
+                    if (Campo<bool>(d, "introDone") && p.controlEnabled)
+                    {
+                        Debug.Log($"[Cenário 2] Entrada terminou aos {t:0.0}s; kai x={x:0.00}");
+                        FotoC2("comeco");
+                        marcaC2 = t;
+                        etapaC2 = 1;
+                    }
+                    break;
+                case 1: // o cadeado, com um código errado primeiro
+                    Aperta(kb);
+                    UsaAqui(d, d.cadeado);
+                    etapaC2 = 2;
+                    marcaC2 = t;
+                    break;
+                case 2:
+                    Aperta(kb);
+                    if (d.lockUI && d.lockUI.IsOpen && t - marcaC2 > 0.5)
+                    {
+                        Chama(d, "OnCodeSubmitted", "1234");
+                        etapaC2 = 3;
+                        marcaC2 = t;
+                    }
+                    break;
+                case 3: // depois do erro (o diretor fecha o cadeado e o Kai fala), o código certo
+                    Aperta(kb);
+                    if (t - marcaC2 < 1.5 || UltimaLinha.Salas.Modal.IsOpen && !d.lockUI.IsOpen) break;
+                    if (!d.lockUI.IsOpen) { UsaAqui(d, d.cadeado); marcaC2 = t - 1.0; break; }
+                    Chama(d, "OnCodeSubmitted", "0417");
+                    etapaC2 = 4;
+                    break;
+                case 4:
+                    Aperta(kb);
+                    if (Campo<bool>(d, "lockOpen") && d.doors[0].cycling && p.controlEnabled && !UltimaLinha.Salas.Modal.IsOpen)
+                    {
+                        Debug.Log($"[Cenário 2] Cadeado aberto aos {t:0.0}s; portas da passagem 1 batendo={d.doors[0].cycling}; Souta no vagão {Campo<int>(d, "npcVagao") + 1}");
+                        marcaC2 = t;
+                        etapaC2 = 5;
+                    }
+                    break;
+                case 5: // passagem 1
+                    if (cp >= 1) { Debug.Log($"[Cenário 2] Passagem 1 em {t - marcaC2:0.0}s"); etapaC2 = 6; marcaC2 = t; break; }
+                    Corre(d, kb, x);
+                    break;
+                case 6: // vagão 2: espera a conversa, puxa a retenção e corre
+                    if (!Campo<bool>(d, "falouV2")) { Aperta(kb); break; }
+                    FotoC2("vagao2");
+                    if (cp >= 2) { Debug.Log($"[Cenário 2] Passagem 2 em {t - marcaC2:0.0}s (com a retenção)"); etapaC2 = 7; marcaC2 = t; break; }
+                    if (!d.retencao.IsUp && x < d.carEnds[1] - 1f && p.controlEnabled) { Aperta(kb); UsaAqui(d, d.retencao); break; }
+                    if (!d.retencao.IsUp && x < d.carEnds[1] - 1f) { Aperta(kb); break; }
+                    Corre(d, kb, x);
+                    break;
+                case 7: // vagão 3: escuro; os três fusíveis e a caixa
+                    if (!Campo<bool>(d, "falouV3")) { Aperta(kb); break; }
+                    FotoC2("vagao3_escuro");
+                    Aperta(kb);
+                    if (!p.controlEnabled) break;
+                    if (fusivelC2 < d.fusiveis.Length) { UsaAqui(d, d.fusiveis[fusivelC2++]); break; }
+                    if (!Campo<bool>(d, "luzOk")) { UsaAqui(d, d.caixa); break; }
+                    Debug.Log($"[Cenário 2] Luz do vagão 3 voltou aos {t:0.0}s; fusíveis={Campo<int>(d, "fuses")}; Souta no vagão {Campo<int>(d, "npcVagao") + 1}");
+                    FotoC2("vagao3_luz");
+                    etapaC2 = 8;
+                    marcaC2 = t;
+                    break;
+                case 8: // passagem 3 até o último vagão
+                    if (Campo<bool>(d, "endingStarted"))
+                    {
+                        Debug.Log($"[Cenário 2] Passagem 3 em {t - marcaC2:0.0}s. Chegou ao último vagão aos {t:0.0}s; esmagado {Campo<int>(d, "crushes")}x, caiu {Campo<int>(d, "falls")}x");
+                        etapaC2 = 9;
+                        break;
+                    }
+                    Corre(d, kb, x);
+                    break;
+                case 9: // o trem freia; espera a porta do fim
+                    Aperta(kb);
+                    if (Campo<bool>(d, "exitOpen"))
+                    {
+                        FotoC2("fim");
+                        Debug.Log($"[Cenário 2] Porta do fim abriu aos {t:0.0}s");
+                        etapaC2 = 10;
+                    }
+                    break;
+                case 10:
+                    Aperta(kb, Key.D);
+                    break;
+            }
+        }
+
+        /// <summary>Corre para a direita; espera a porta da frente abrir; pula na beirada de cada buraco, a não ser que
+        /// fosse cair na frente de uma porta que vai bater (aí espera onde está: na plataforma ou no engate).</summary>
+        static void Corre(UltimaLinha.Cenario2.Cenario2Director d, Keyboard kb, float x)
+        {
+            var p = d.player;
+            if (Time.frameCount % 300 == 0)
+                Debug.Log($"[Cenário 2] corrida: x={x:0.00} chão={p.IsGrounded} controle={p.controlEnabled} esmagado={Campo<int>(d, "crushes")} caiu={Campo<int>(d, "falls")} " +
+                          string.Join(" ", d.doors.Select(q => $"[{q.CenterX:0.0} {q.Current} {FolgaPorta(q):0.0}]")));
+            if (!p.controlEnabled) { Aperta(kb); return; } // morreu e está voltando
+            if (!p.IsGrounded && p.velocity.y > 0f) { Aperta(kb, Key.D, Key.LeftShift, Key.Space); return; } // segura o pulo, como quem joga
+            for (int i = 0; i * 2 + 1 < d.doors.Length; i++)
+                if (x > d.doors[i * 2].CenterX - 3f && x < d.doors[i * 2 + 1].CenterX)
+                {
+                    FotoC2("passagem" + (i + 1));
+                    if (x > d.doors[i * 2].CenterX + 1.5f) FotoC2("vao" + (i + 1));
+                }
+            var porta = d.doors.Where(q => x < q.CenterX + q.halfWidth + MeiaLarguraKai).OrderBy(q => q.CenterX).FirstOrDefault();
+            var vao = d.buracos.Where(h => h.x > x - 0.05f).OrderBy(h => h.x).Select(h => (Vector2?)h).FirstOrDefault();
+            bool Passa(UltimaLinha.Cenario2.CarDoor q) => q == null || FolgaPorta(q) > (q.CenterX + q.halfWidth + MeiaLarguraKai - x) / CorridaC2 + 0.3f;
+            if (vao.HasValue && vao.Value.x - x < 0.45f && p.IsGrounded)
+            {
+                bool pousoNaPorta = porta && x + AlcancePuloC2 + MeiaLarguraKai > porta.CenterX - porta.halfWidth;
+                if (pousoNaPorta && !Passa(porta)) Aperta(kb);
+                else Aperta(kb, Key.D, Key.LeftShift, Key.Space);
+            }
+            else if (porta && porta.CenterX - x < 1.8f && (!vao.HasValue || vao.Value.x > porta.CenterX) && p.IsGrounded && !Passa(porta))
+                Aperta(kb);
+            else
+                Aperta(kb, Key.D, Key.LeftShift);
         }
 
         static void Aperta(Keyboard kb, params Key[] teclas)
