@@ -1,0 +1,619 @@
+<title>Roteiro Última Linha</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Oswald:wght@400;500&display=swap">
+<style>
+/* Layout: uma coluna de leitura, como um script de teatro: nome de quem fala à esquerda, fala à direita */
+:root{--fundo:#f3f1ec;--papel:#faf8f4;--texto:#1f1d1b;--suave:#68625b;--linha:#d9d3c9;--kai:#7a6a52;--souta:#3f5a78;--ren:#86672c;--hud:#2f5444;--sangue:#8e2a22;
+--serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;--rotulo:"Oswald","Arial Narrow",system-ui,sans-serif;--mono:ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--fundo:#121110;--papel:#181715;--texto:#e8e1d4;--suave:#9b9488;--linha:#2d2a26;--kai:#c9bfae;--souta:#a9b8c9;--ren:#cbb98e;--hud:#8fc0a7;--sangue:#d0574b;color-scheme:dark}}
+:root[data-theme="dark"]{--fundo:#121110;--papel:#181715;--texto:#e8e1d4;--suave:#9b9488;--linha:#2d2a26;--kai:#c9bfae;--souta:#a9b8c9;--ren:#cbb98e;--hud:#8fc0a7;--sangue:#d0574b;color-scheme:dark}
+body{background:var(--fundo);color:var(--texto);font:19px/1.55 var(--serif);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:720px;margin:0 auto;padding-block:48px 96px}
+.marca{font:500 13px var(--rotulo);letter-spacing:.32em;text-transform:uppercase;color:var(--sangue);margin:0 0 10px}
+h1{font:600 44px/1.05 var(--serif);margin:0 0 10px;text-wrap:balance}
+.sub{color:var(--suave);font-size:17px;margin:0 0 8px}
+section{border-top:1px solid var(--linha);margin-top:44px;padding-top:26px}
+h2{font:500 15px var(--rotulo);letter-spacing:.2em;text-transform:uppercase;margin:0 0 6px;text-wrap:balance}
+h3{font:400 12px var(--rotulo);letter-spacing:.18em;text-transform:uppercase;color:var(--suave);margin:26px 0 8px}
+.fala{display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px;margin:5px 0}
+.fala b{font:500 12px/2 var(--rotulo);letter-spacing:.16em}
+.kai b{color:var(--kai)}.souta b{color:var(--souta)}.ren b{color:var(--ren)}
+.pensa span{font-style:italic;color:var(--suave)}
+.diario{font-style:italic;border-left:2px solid var(--linha);padding-left:14px;margin:6px 0}
+.diario.data{font-style:normal;font-weight:600}
+.nota{font:15px/1.5 var(--rotulo);font-weight:400;color:var(--suave);margin:6px 0}
+.hud{font:14px var(--mono);color:var(--hud);margin:3px 0}
+@media (max-width:520px){h1{font-size:34px}.fala{grid-template-columns:minmax(0,1fr);gap:0}}
+</style>
+<main>
+<p class="marca">Última Linha</p>
+<h1>Roteiro completo</h1>
+<p class="sub">Todas as falas do jogo, na ordem das cenas. Em itálico, os pensamentos do Kai. Gerado a partir do código do jogo.</p>
+<section><h2>Abertura (Cenário 0)</h2>
+<h3>Diário (cutscene de abertura)</h3>
+<p class="diario data">Dia 20 de outubro.</p>
+<p class="diario">Mais um dia exaustivo no trabalho.</p>
+<p class="diario">Eu já nem lembro da última vez que cheguei em casa sem sentir o corpo pesado.</p>
+<p class="diario">Meu nome é Kai.</p>
+<p class="diario">Faço o suficiente para não ser demitido.<br>E pouco o bastante para ninguém me notar.</p>
+<p class="diario">O Souta entrou na empresa no mesmo dia que eu.<br>Mesma sala de espera. Mesmo nervosismo. Mesmo sonho.</p>
+<p class="diario">Hoje ele tem sala própria, reconhecimento, um futuro.<br>Eu tenho a mesma mesa de sempre.</p>
+<p class="diario">Ele nunca me tratou diferente por isso.<br>Talvez seja essa a parte que mais pesa.</p>
+<p class="diario">Hoje, antes de sair, ele me esperou na porta.<br>“Vamos juntos, Kai. Ainda dá tempo de pegar o último trem.”</p>
+<p class="diario">Eu disse que sim.<br>Não tinha forças para dizer não.</p>
+<p class="diario">O último trem da noite.<br>Eu só queria fechar os olhos por um minuto...</p>
+<h3>Painel — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Destravamento de emergência.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>...Funcionou. A porta da ponta abriu.</span></p>
+<h3>Painel — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A porta já está aberta.</span></p>
+<h3>Acorda</h3>
+<p class="fala kai pensa"><b>KAI</b><span>...</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Peguei no sono no trem de novo.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Cadê todo mundo? Agora mesmo o vagão estava cheio.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>E o trem... parou. Parece que o vagão envelheceu vinte anos.</span></p>
+<h3>Porta trancada</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Trancada. Tem um painel de emergência aqui do lado.</span></p>
+<h3>Antes do pulo</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A passarela entre os vagões... não está aqui.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Tem luz no próximo vagão. E vozes.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Se eu correr, acho que alcanço.</span></p>
+<h3>Primeira queda</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Andando não dá. Preciso pegar impulso.</span></p>
+<h3>Tutorial e objetivos na tela</h3>
+<p class="hud">Descubra para onde todo mundo foi.</p>
+<p class="hud">A  /  D   para andar</p>
+<p class="hud">ESPAÇO   para pular   ·   suba num banco</p>
+<p class="hud">Segure  S  para descer do banco</p>
+<p class="hud">Segure  SHIFT   para correr</p>
+<p class="hud">TAB   abre o diário do Kai</p>
+<p class="hud">Abra a porta da ponta do vagão.</p>
+<p class="hud">E   para interagir</p>
+<p class="hud">Atravesse para o próximo vagão.</p>
+<p class="hud">Pule para o outro vagão.</p>
+<p class="hud">Segure SHIFT para correr e pule no fim da plataforma</p>
+</section>
+<section><h2>Cenário 1 — O vagão parado</h2>
+<h3>Levers[0] — freed lines</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Soltou. Agora ela desce como as outras.</span></p>
+<h3>Souta — primeira conversa</h3>
+<p class="fala souta"><b>SOUTA</b><span>Kai. Você estava no vagão de trás?</span></p>
+<p class="fala kai"><b>KAI</b><span>Acordei lá. Sozinho. O vagão estava cheio quando eu dormi.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Cheio? Estamos só nós três aqui desde a estação. O trem parou faz uns vinte minutos e não andou mais.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>As portas laterais não abrem. A do fundo do vagão tem uma trava ligada a três alavancas.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Repara no letreiro em cima das portas. Ele acende numa ordem e depois apaga. Não é defeito.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Claro que ele já descobriu tudo. Como sempre.</span></p>
+<h3>Souta — conversas seguintes</h3>
+<p class="fala souta"><b>SOUTA</b><span>Três luzes no letreiro: esquerda, meio, direita. Cada uma é uma alavanca.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Puxe na mesma ordem em que elas acendem. Não é difícil, Kai.</span></p>
+<h3>Souta — depois do puzzle</h3>
+<p class="fala souta"><b>SOUTA</b><span>As luzes apagaram por um segundo. Quando voltaram, isso estava escrito por todo lado.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>A porta ainda tem uma segunda trava. Cinco espaços. Junte as letras das paredes.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Ele fala como se fosse só mais uma tarefa do escritório.</span></p>
+<h3>Souta — depois que a porta abre</h3>
+<p class="fala souta"><b>SOUTA</b><span>Viu? Quando você presta atenção, você consegue.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>...Por que isso soa igual a uma bronca do chefe?</span></p>
+<h3>Ren — primeira conversa</h3>
+<p class="fala ren"><b>REN</b><span>Ah! D-desculpa. Achei que fosse... outra coisa.</span></p>
+<p class="fala kai"><b>KAI</b><span>Quem é você?</span></p>
+<p class="fala ren"><b>REN</b><span>Ren. Eu trabalho com vocês dois... no mesmo andar. Você não lembra de mim?</span></p>
+<p class="fala kai"><b>KAI</b><span>...Não.</span></p>
+<p class="fala ren"><b>REN</b><span>Tudo bem. Ninguém lembra.</span></p>
+<p class="fala ren"><b>REN</b><span>Tem três alavancas: em cima dos encostos e no assento do último banco. A da ponta está emperrada. Eu não tive coragem de forçar.</span></p>
+<h3>Ren — conversas seguintes</h3>
+<p class="fala ren"><b>REN</b><span>Se errar a ordem, a porta trava de novo. Eu ouvi esse barulho... duas vezes. Antes de você acordar.</span></p>
+<p class="fala ren"><b>REN</b><span>Dá pra subir nos bancos. Do assento você alcança o encosto.</span></p>
+<h3>Ren — depois do puzzle</h3>
+<p class="fala ren"><b>REN</b><span>E-essas letras... estavam aí antes? Eu juro que não estavam.</span></p>
+<p class="fala ren"><b>REN</b><span>Tem uma na porta por onde você entrou. Outra no vidro da janela. Eu não vou chegar perto delas.</span></p>
+<h3>Souta — hint levers</h3>
+<p class="fala souta"><b>SOUTA</b><span>Kai. Para de puxar no chute.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>O letreiro acende primeiro o MEIO, depois a ESQUERDA, depois a DIREITA. É essa a ordem.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>E a da esquerda está emperrada. Solta ela antes de começar.</span></p>
+<h3>Ren — hint levers</h3>
+<p class="fala ren"><b>REN</b><span>A-aquela emperrada... tem um mostrador do lado. Eu vi o ponteiro balançando.</span></p>
+<p class="fala ren"><b>REN</b><span>Talvez se você der o tranco quando o ponteiro passar no verde...?</span></p>
+<h3>Souta — hint letters</h3>
+<p class="fala souta"><b>SOUTA</b><span>Procura onde você ainda não olhou. Chão, janelas, portas.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Uma está na porta por onde você entrou. Outra no vidro, alto: sobe no encosto.</span></p>
+<h3>Ren — hint letters</h3>
+<p class="fala ren"><b>REN</b><span>Eu vi uma no chão, na frente do primeiro banco... e outra na porta do meio.</span></p>
+<p class="fala ren"><b>REN</b><span>Junta as letras e pensa numa palavra. Uma palavra... ruim.</span></p>
+<h3>Ren — depois que a porta abre</h3>
+<p class="fala ren"><b>REN</b><span>Abriu...? Você vai na frente, né?</span></p>
+<h3>Entrada trancada</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Trancou atrás de mim.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Não tem volta.</span></p>
+<h3>Abertura da cena</h3>
+<p class="fala ren"><b>REN</b><span>E se a gente nunca mais sair daqui?</span></p>
+<p class="fala souta"><b>SOUTA</b><span>A gente sai. Tudo tem um mecanismo. É só entender a lógica.</span></p>
+<p class="fala ren"><b>REN</b><span>Você fala isso até no escritório.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>E sempre funciona.</span></p>
+<p class="fala ren"><b>REN</b><span>...Ouviu isso? A porta lá de trás bateu.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Kai?</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Souta. E... quem é o outro?</span></p>
+<h3>Porta trancada</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Trancada. A luz vermelha em cima dela não apaga.</span></p>
+<h3>Primeiro erro</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Ordem errada. As alavancas voltaram sozinhas.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Preciso olhar o letreiro de novo.</span></p>
+<h3>As letras aparecem</h3>
+<p class="fala kai pensa"><b>KAI</b><span>As luzes...</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Tem alguma coisa escrita pelo vagão. Em vermelho.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Isso não estava aqui antes.</span></p>
+<h3>A porta pede a palavra</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A luz ficou laranja. Uma trava abriu... mas tem outra.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Um painel pedindo letras. Cinco espaços.</span></p>
+<h3>Todas as letras</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Achei todas. Cinco letras, cinco espaços na trava.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>...Eu já sei que palavra elas formam.</span></p>
+<h3>Palavra certa</h3>
+<p class="fala kai pensa"><b>KAI</b><span>M... O... R... T... E.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Morte.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Quem escreveu isso?</span></p>
+<h3>Porta aberta</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Abriu.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>O próximo vagão está escuro...</span></p>
+<h3>Tutorial e objetivos na tela</h3>
+<p class="hud">A porta travou de novo.</p>
+<p class="hud">Uma das travas abriu.</p>
+</section>
+<section><h2>Cenário 2 — Os vagões em movimento</h2>
+<p class="nota">docTitle: AVISO DA OPERADORA</p>
+<p class="nota">docBody: Com o trem em movimento, as portas entre os vagões &lt;b&gt;abrem e fecham sozinhas&lt;/b&gt; com o balanço.<br><br>A luz em cima da porta &lt;b&gt;pisca antes de ela bater&lt;/b&gt;.<br><br>Não permaneça no passadiço. Não salte entre os vagões.</p>
+<p class="nota">docFooter: Placa de metal parafusada por cima de um cartaz antigo.</p>
+<h3>Aviso — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>&quot;Não salte entre os vagões.&quot; Ótimo.</span></p>
+<h3>Aviso — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A luz pisca antes de bater. Passo logo depois que ela abrir.</span></p>
+<h3>Relogio — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O relógio parou. Quatro e dezessete.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>O vidro está rachado bem em cima dos ponteiros. Como se alguém tivesse batido nele.</span></p>
+<h3>Relogio — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Quatro e dezessete. Parado.</span></p>
+<p class="nota">docTitle: CELULAR CAÍDO</p>
+<p class="nota">docBody: &lt;b&gt;11 chamadas perdidas&lt;/b&gt;: Chefe<br><br>Última mensagem, &lt;b&gt;04:17&lt;/b&gt;:<br>&lt;i&gt;&quot;Kai, preciso falar com você. Amanhã, 9h, sala 704. Não falte.&quot;&lt;/i&gt;<br><br>Rascunho não enviado:<br>&lt;i&gt;&quot;eu não vou&quot;&lt;/i&gt;</p>
+<p class="nota">docFooter: A tela está rachada. A bateria não acaba.</p>
+<h3>Celular — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Esse celular é... igual ao meu.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Sala 704. A reunião com o chefe. Está no meu diário.</span></p>
+<h3>Celular — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Onze chamadas. A última às quatro e dezessete.</span></p>
+<p class="nota">docTitle: MAPA DA LINHA</p>
+<p class="nota">docBody: &lt;b&gt;EMPRESA&lt;/b&gt;  —  &lt;b&gt;CLÍNICA DR. MORI&lt;/b&gt;  —  &lt;b&gt;APARTAMENTO 12&lt;/b&gt;  —  &lt;b&gt;ESCOLA&lt;/b&gt;  —  &lt;b&gt;HOSPITAL&lt;/b&gt;  —  ...<br><br>A linha vermelha sai da empresa e passa por todo lugar onde eu já estive.<br><br>A última bolinha não tem nome. Embaixo dela, à mão: &lt;b&gt;ÚLTIMA LINHA&lt;/b&gt;.</p>
+<p class="nota">docFooter: Alguém riscou as estações de trás, uma por uma.</p>
+<h3>Mapa — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Essas estações... não existem. São lugares meus.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>E esse trem não para em nenhum deles.</span></p>
+<h3>Mapa — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Todas riscadas, menos a última.</span></p>
+<p class="nota">docTitle: BOLSA COM CRACHÁ</p>
+<p class="nota">docBody: &lt;b&gt;KAI&lt;/b&gt;<br>Operações  ·  Mesa 12<br>Funcionário nº &lt;b&gt;0417&lt;/b&gt;<br><br>A foto do crachá foi riscada de caneta até rasgar o plástico.</p>
+<p class="nota">docFooter: Dentro da bolsa, junto dos papéis: um fusível.</p>
+<h3>Fusiveis[0] — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Meu crachá. Minha bolsa. No bagageiro de um vagão em que eu nunca entrei.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>0417... O número é o meu. Não o do Ren.</span></p>
+<p class="nota">docTitle: CARTÃO DE ANIVERSÁRIO</p>
+<p class="nota">docBody: &lt;i&gt;&quot;Feliz aniversário, Kai.<br>Mesmo dia que o meu, lembra? 20 de outubro.<br>Vamos comemorar depois do trabalho. Eu pago.<br>— S.&quot;&lt;/i&gt;</p>
+<p class="nota">docFooter: O presente nunca foi aberto. Encostado nele, um fusível.</p>
+<h3>Fusiveis[1] — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Hoje é vinte de outubro.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Ele lembrou. Eu nem lembrei do meu.</span></p>
+<p class="nota">docTitle: FRASCO DE REMÉDIO</p>
+<p class="nota">docBody: &lt;b&gt;Paciente:&lt;/b&gt; Kai<br>&lt;b&gt;Médico:&lt;/b&gt; Dr. Mori<br><br>Tomar 1 comprimido às &lt;b&gt;8h&lt;/b&gt; e às &lt;b&gt;20h&lt;/b&gt;.<br>&lt;b&gt;Não interromper sem orientação médica.&lt;/b&gt;</p>
+<p class="nota">docFooter: Vazio. A tampa rolou para baixo do banco, junto de um fusível.</p>
+<h3>Fusiveis[2] — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Vazio.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Faz três semanas. Eu estou bem. Eu estou bem.</span></p>
+<h3>F — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Já peguei o fusível daqui.</span></p>
+<h3>Abertura da cena</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Mais um vagão. Mais escuro que o outro.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>...O trem voltou a andar?</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Finalmente. Achei que a gente ia passar a noite parado naquele túnel.</span></p>
+<p class="fala ren"><b>REN</b><span>Não é normal. Esse trem não devia estar andando. Não com a gente dentro.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>A porta do fundo tem um cadeado de quatro números. Alguém prendeu com corrente.</span></p>
+<p class="fala ren"><b>REN</b><span>Quatro números... Pode ser qualquer coisa.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Nada aqui é qualquer coisa. Olha em volta, Kai.</span></p>
+<h3>Porta entrada fala</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Trancou atrás de mim. Não tem volta.</span></p>
+<h3>Saida trancada</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Trancada. Com o trem andando, essa porta não abre.</span></p>
+<h3>Cadeado primeiro</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Um cadeado de rodas. Quatro números.</span></p>
+<h3>Codigo errado</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Não é esse. O número tem que estar em algum lugar deste vagão.</span></p>
+<h3>Cadeado aberto</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Quatro... um... sete. Abriu.</span></p>
+<p class="fala ren"><b>REN</b><span>Quatro e dezessete... é o número do meu crachá.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Coincidência. Esse trem é cheio delas.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>O relógio. O celular. O crachá dele. O mesmo número.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Olha as portas. Com o tranco, elas abrem e batem sozinhas. A luz em cima pisca antes de bater.</span></p>
+<p class="fala ren"><b>REN</b><span>E se ela fechar com alguém no meio...?</span></p>
+<h3>Pode ir na frente</h3>
+<p class="fala souta"><b>SOUTA</b><span>Então não fique no meio.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Eu vou na frente com o Ren. A gente te espera no próximo vagão.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Sempre na frente. Sempre.</span></p>
+<h3>Sozinho</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Eles já passaram.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Por um segundo eu pensei... e se a porta fechasse antes dele passar?</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>...Que pensamento é esse, Kai.</span></p>
+<h3>Primeira vez esmagado</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Preciso contar. Abre... pisca... bate.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Passo logo depois que ela abrir, nunca quando a luz estiver piscando.</span></p>
+<h3>Primeira queda</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O vão entre os vagões... Tenho que pular da beirada, correndo.</span></p>
+<h3>Vagao2</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Como eles chegaram antes de mim? A porta mal abria.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Demorou. Essa próxima porta é pior: bate rápido demais. Ninguém passa por ela assim.</span></p>
+<p class="fala ren"><b>REN</b><span>Tem uma alavanca aqui atrás... está escrito &quot;retenção&quot;.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Ela segura a porta aberta. Mas a porta está lá no fundo. Puxa e corre.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>E no vão tem um engate. Se a outra porta estiver fechada, espera em cima dele.</span></p>
+<h3>Vagao3</h3>
+<p class="fala ren"><b>REN</b><span>Tá escuro demais... a luz das portas nem acende.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Sem energia. A caixa de fusíveis fica no fundo do vagão. Alguém tirou os fusíveis.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Sem a luz de aviso, você não vai saber quando a porta vai bater.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Ele fala como se eu fosse o único que precisasse passar.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Viu? Tudo tem um mecanismo.</span></p>
+<p class="fala ren"><b>REN</b><span>Você sempre fala isso. Mas quem puxou a alavanca foi o Kai.</span></p>
+<h3>Caixa faltam</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Três encaixes vazios. Preciso achar os fusíveis.</span></p>
+<h3>Todos fusiveis</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Três fusíveis. Agora é a caixa, no fundo do vagão.</span></p>
+<h3>Luz voltou</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A luz voltou...</span></p>
+<p class="fala ren"><b>REN</b><span>Kai... aquilo na parede. Estava escrito antes?</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Não olha, Ren. Vamos.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>&quot;Ele não estava no trem.&quot; Ele quem?</span></p>
+<p class="fala souta"><b>SOUTA</b><span>A gente vai na frente. O último vagão é logo ali.</span></p>
+<h3>O trem freia</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Está freando...!</span></p>
+<h3>Fim da cena</h3>
+<p class="fala souta"><b>SOUTA</b><span>Demorou, Kai.</span></p>
+<p class="fala ren"><b>REN</b><span>A gente passou logo antes de você... eu acho. Eu não lembro de ter passado.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Ele parou. Lá fora é uma estação.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>&quot;Terminal.&quot; A última parada.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>A porta do fim abriu. Vamos sair daqui.</span></p>
+<h3>Falas</h3>
+<p class="fala souta"><b>SOUTA</b><span>Quatro números. Num vagão parado, eu olharia para o que também parou.</span></p>
+<h3>Falas</h3>
+<p class="fala souta"><b>SOUTA</b><span>A alavanca segura a porta por pouco tempo. Não anda: corre.</span></p>
+<h3>Falas</h3>
+<p class="fala souta"><b>SOUTA</b><span>Três encaixes. Procura em tudo: no chão, nos bancos, lá em cima.</span></p>
+<h3>Falas</h3>
+<p class="fala souta"><b>SOUTA</b><span>Ele está parando. Segura em alguma coisa.</span></p>
+<h3>Falas</h3>
+<p class="fala ren"><b>REN</b><span>Você ouviu? Parecia alguém batendo... do outro lado daquela porta.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Não tem ninguém atrás da gente. Tem?</span></p>
+<h3>Falas</h3>
+<p class="fala ren"><b>REN</b><span>Se a porta da frente estiver fechada... fica no engate. Não pula de volta.</span></p>
+<h3>Falas</h3>
+<p class="fala ren"><b>REN</b><span>Eu vi uma bolsa lá em cima, no bagageiro. Dá pra subir pelo encosto.</span></p>
+<h3>Falas</h3>
+<p class="fala ren"><b>REN</b><span>Eu não quero descer. E se lá fora for pior?</span></p>
+<h3>Falas</h3>
+<p class="fala souta"><b>SOUTA</b><span>Kai. Olha o relógio da parede. E o celular no chão.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Os dois marcam a mesma hora. Quatro números.</span></p>
+<h3>Falas</h3>
+<p class="fala souta"><b>SOUTA</b><span>Puxa a alavanca e corre sem parar até a porta.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Se a da frente estiver fechada, espera no engate, no meio do vão.</span></p>
+<h3>Falas</h3>
+<p class="fala souta"><b>SOUTA</b><span>Um está no bagageiro: sobe no assento, depois no encosto.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Os outros estão perto do chão. Debaixo do banco do meio e no último banco.</span></p>
+<h3>Falas</h3>
+<p class="fala souta"><b>SOUTA</b><span>Espera a porta abrir e corre. Pula da beirada da plataforma.</span></p>
+<h3>Falas</h3>
+<p class="fala ren"><b>REN</b><span>O relógio parou às quatro e dezessete... será que é isso?</span></p>
+<h3>Falas</h3>
+<p class="fala ren"><b>REN</b><span>A porta só segura enquanto a luz dela está verde. Depois bate de novo.</span></p>
+<h3>Falas</h3>
+<p class="fala ren"><b>REN</b><span>Tinha um presente embaixo do banco... e um frasco laranja no último assento.</span></p>
+<h3>Falas</h3>
+<p class="fala ren"><b>REN</b><span>Correndo dá. Andando você cai.</span></p>
+</section>
+<section><h2>Cenário 3 — A estação</h2>
+<p class="nota">docTitle: QUADRO DE HORÁRIOS</p>
+<p class="nota">docBody: &lt;b&gt;ESTAÇÃO — LINHA ÚNICA&lt;/b&gt;<br><br>Partidas, todas as noites:<br>22:10   ·   23:00   ·   23:50<br><br>Depois do último trem, a estação é fechada e a administração tranca a sala de controle.<br><br>&lt;i&gt;Escrito a lápis, na margem:&lt;/i&gt;<br>Tirei as peças do painel de desvios. Sem a linha completa, a porta da administração não abre.</p>
+<p class="nota">docFooter: Atrás da folha, presa com fita: uma peça de trilho.</p>
+<h3>D1 — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Uma peça de trilho, do tamanho da mão. Arrancada de algum painel.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>&quot;Sem a linha completa, a porta não abre.&quot; Então tem mais peças por aí.</span></p>
+<h3>D1 — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O quadro de horários. Já peguei a peça.</span></p>
+<p class="nota">docTitle: BILHETE DE EMBARQUE</p>
+<p class="nota">docBody: &lt;b&gt;ÚLTIMA LINHA&lt;/b&gt;<br>Destino: plataforma final<br>Validade: uma viagem, sem volta.<br><br>&lt;i&gt;No verso, com a mesma letra:&lt;/i&gt;<br>quem quiser sair vai ter que ligar a linha sozinho.</p>
+<p class="nota">docFooter: Embaixo do bilhete, no chão: outra peça de trilho.</p>
+<h3>D2 — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Um bilhete caído e, embaixo dele, outra peça do painel.</span></p>
+<h3>D2 — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O bilhete. Sem volta.</span></p>
+<p class="nota">docTitle: ESCALA DOS FUNCIONÁRIOS</p>
+<p class="nota">docBody: Turno da noite:  ninguém escalado.<br>Turno da madrugada:  ninguém escalado.<br><br>A estação está funcionando sozinha há muito tempo. Quem estiver lendo isto: não espere por ninguém.</p>
+<p class="nota">docFooter: Na gaveta do guichê, junto da escala: uma peça de trilho.</p>
+<h3>D3 — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>No guichê dos funcionários, lá no alto, mais uma peça.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>&quot;Ninguém escalado.&quot; Então quem mantém essa estação ligada?</span></p>
+<h3>D3 — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Ninguém escalado. Ninguém.</span></p>
+<p class="nota">docTitle: RECIBO DA MÁQUINA</p>
+<p class="nota">docBody: &lt;b&gt;MÁQUINA AUTOMÁTICA&lt;/b&gt;<br>1 água · 1 pacote de biscoito<br>Total: pago.<br><br>&lt;i&gt;Impresso embaixo, em letras miúdas:&lt;/i&gt;<br>troco: uma peça de trilho.</p>
+<p class="nota">docFooter: A peça caiu na bandeja da máquina, junto com o recibo.</p>
+<h3>D4 — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A máquina cuspiu o recibo... e uma peça de trilho.</span></p>
+<h3>D4 — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A máquina não tem mais nada.</span></p>
+<h3>Souta — primeira conversa</h3>
+<p class="fala souta"><b>SOUTA</b><span>Do lado da porta tem um painel com um desenho dos trilhos. Está faltando pedaço.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Se a porta depende dele, as peças devem estar pela estação. Procura em tudo.</span></p>
+<h3>Souta — conversas seguintes</h3>
+<p class="fala souta"><b>SOUTA</b><span>Quatro buracos no painel. Ainda falta alguma peça?</span></p>
+<h3>Ren — primeira conversa</h3>
+<p class="fala ren"><b>REN</b><span>Eu vi uma pilha de caixotes lá no fundo. Dá para subir até o mezanino.</span></p>
+<p class="fala ren"><b>REN</b><span>Os funcionários ficavam lá em cima.</span></p>
+<h3>Ren — conversas seguintes</h3>
+<p class="fala ren"><b>REN</b><span>Se faltar uma peça, olha lá em cima, subindo pelos caixotes.</span></p>
+<h3>Abertura da cena</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Uma estação. Vazia, com as luzes ainda acesas.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Acabou o trilho do vagão. A saída é por aquela porta, no fundo.</span></p>
+<p class="fala ren"><b>REN</b><span>Está trancada. Do lado tem um painel com um desenho dos trilhos.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Um painel de desvios. E está faltando pedaço.</span></p>
+<h3>Ren gives last</h3>
+<p class="fala ren"><b>REN</b><span>Kai, espera! Eu achei isso no chão, perto dos caixotes.</span></p>
+<p class="fala ren"><b>REN</b><span>É um pedaço de trilho. É o que está faltando no painel?</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>É a última peça. Agora dá para completar a linha.</span></p>
+<h3>Porta fechada</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O painel mostra os trilhos da estação. A luz sai da plataforma e tem que chegar até a administração.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Mas estão faltando peças. Sem elas a linha nunca fecha.</span></p>
+<h3>Tudo encontrado</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Quatro peças. Agora é encaixar no painel e girar os trilhos até a luz chegar na porta.</span></p>
+<h3>Porta destrancada</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A linha acendeu inteira. A porta destravou.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Vai. A gente vem logo atrás.</span></p>
+</section>
+<section><h2>Cenário 4 — A sala de controle</h2>
+<h3>Socket — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Quatro encaixes no painel. Eu só tenho três alavancas aqui.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>A que falta está em outro lugar. Se eu a achar, volto aqui.</span></p>
+<h3>Socket — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O quarto encaixe continua vazio. Preciso achar a alavanca.</span></p>
+<h3>Clock — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O relógio parou. Os ponteiros estão em quatro e dezessete.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Por que eu sinto que já vi essa hora antes?</span></p>
+<h3>Clock — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>04:17. A hora em que tudo parou.</span></p>
+<p class="nota">docTitle: REGISTRO DE TURNO</p>
+<p class="nota">docBody: Turno da noite. Supervisor: M. Takeda.<br><br>A gaveta da mesa fica trancada com &lt;b&gt;cadeado de combinação&lt;/b&gt;.<br><br>A senha é a &lt;b&gt;hora em que o relógio da parede parou&lt;/b&gt;, na noite em que faltou energia. Quatro números, sem os dois pontos.<br><br>Não anote a senha em lugar nenhum. Olhe o relógio.</p>
+<p class="nota">docFooter: Folha arrancada de um caderno, presa na parede com um alfinete vermelho.</p>
+<h3>Note — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O relógio da parede. A senha é a hora em que ele parou.</span></p>
+<h3>Note — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A hora em que o relógio parou, sem os dois pontos.</span></p>
+<h3>Drawer — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Só papéis velhos. A chave já está comigo.</span></p>
+<h3>Drawer — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Já levei o que importava.</span></p>
+<h3>Souta — primeira conversa</h3>
+<p class="fala souta"><b>SOUTA</b><span>A gente precisa de energia. Sem as alavancas levantadas, essa sala é só um depósito.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Tem uma na passarela e outra em cima do gerador. Sobe pelo caixote.</span></p>
+<h3>Souta — conversas seguintes</h3>
+<p class="fala souta"><b>SOUTA</b><span>A senha daquela gaveta deve estar em algum lugar à vista. Olha o relógio, o bilhete... esse cara era metódico.</span></p>
+<h3>Ren — primeira conversa</h3>
+<p class="fala ren"><b>REN</b><span>Esse zumbido... parece que a sala inteira está respirando.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Eu também ouço. Não é só o gerador.</span></p>
+<h3>Ren — conversas seguintes</h3>
+<p class="fala ren"><b>REN</b><span>Eu fico aqui. Se algo se mexer, eu grito.</span></p>
+<h3>Abertura da cena</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A sala de controle. É daqui que o trem sai.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Painel de energia, gerador, tudo apagado. Se a gente religar isso, o trem volta a andar de verdade.</span></p>
+<p class="fala ren"><b>REN</b><span>E se ele não parar mais? Eu não gosto desse zumbido.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Quatro encaixes de alavanca. Todas precisam ficar levantadas.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Eu só vejo três alavancas: uma no chão, uma na passarela e uma em cima do gerador.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Então falta uma. A gente acha depois. Primeiro a energia, depois a porta.</span></p>
+<h3>Lever half</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Uma levantada. O painel ainda está morto. Faltam as outras duas.</span></p>
+<h3>Power on</h3>
+<p class="fala souta"><b>SOUTA</b><span>Luz! O gerador pegou.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Três acesas. O quarto encaixe continua escuro.</span></p>
+<p class="fala ren"><b>REN</b><span>A porta de serviço ligou, mas a trava é por chave. Procura uma, Kai.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>O supervisor guardava tudo naquela mesa. Olha a gaveta.</span></p>
+<h3>Souta clock</h3>
+<p class="fala souta"><b>SOUTA</b><span>Quatro e dezessete.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>É nessa hora, Kai. Às quatro e dezessete todos nós vamos morrer.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Você, eu, o Ren. Ninguém sai da última plataforma. O relógio parou para avisar a gente.</span></p>
+<p class="fala ren"><b>REN</b><span>Souta...? Do que você está falando?</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Os olhos dele estão vazios. Ele nem pisca.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Quatro e dezessete. Quatro e dezessete. Quatro e...</span></p>
+<h3>Souta forgets</h3>
+<p class="fala souta"><b>SOUTA</b><span>...Hã? O que foi? Por que vocês estão me olhando assim?</span></p>
+<p class="fala ren"><b>REN</b><span>Você acabou de dizer que a gente vai morrer, Souta.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Eu? Eu não disse nada disso. Esse lugar está mexendo com a cabeça de vocês.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Enfim... o relógio parou às quatro e dezessete. Deve servir para alguma coisa.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>04:17. A senha da gaveta é a hora em que o relógio parou.</span></p>
+<h3>Drawer no clue</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Um cadeado de quatro números. Eu não faço ideia da senha.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Tem um bilhete preso na parede. Talvez explique.</span></p>
+<h3>Drawer need clock</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O bilhete diz que a senha é a hora em que o relógio parou.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Primeiro eu preciso olhar o relógio.</span></p>
+<h3>Drawer opened</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Uma chave. A etiqueta diz &quot;SAÍDA TÉCNICA&quot;.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Quatro e dezessete. Quem diria que era só olhar a parede.</span></p>
+<h3>Door no power</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A porta não responde. Sem energia, nada abre aqui.</span></p>
+<h3>Door no key</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Tem energia, mas a trava é mecânica. Preciso da chave.</span></p>
+<h3>Porta destrancada</h3>
+<p class="fala souta"><b>SOUTA</b><span>Abriu. Vamos, Kai.</span></p>
+<p class="fala ren"><b>REN</b><span>O que será que tem do outro lado?</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Esse corredor... eu já andei por ele. Eu sei aonde ele leva.</span></p>
+</section>
+<section><h2>Cenário 5 — O escritório do chefe</h2>
+<h3>Crossing — first sticky</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O chão gruda nos sapatos. É sangue. Ainda está mole.</span></p>
+<h3>Crossing — head loose</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A cabeça... se soltou do corpo.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Não estava presa a nada. Desde quando ele está assim?</span></p>
+<p class="nota">docTitle: JORNAL DA MANHÃ</p>
+<p class="nota">docBody: &lt;b&gt;EXECUTIVO É ENCONTRADO MORTO NO PRÓPRIO ESCRITÓRIO&lt;/b&gt;<br><br>O diretor da empresa foi encontrado sem vida na noite de terça-feira. A polícia procura um funcionário do setor de operações, identificado como &lt;b&gt;Kai&lt;/b&gt;, visto discutindo com a vítima poucas horas antes.<br><br>Segundo colegas, Kai havia sido avisado de que seria demitido naquela semana. Ele não foi mais visto desde então.</p>
+<p class="nota">docFooter: Recorte dobrado ao meio, achado no bolso do paletó.</p>
+<h3>Body — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>No bolso dele, uma alavanca de ferro. A que faltava no painel lá embaixo.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>E esse recorte...</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Não. Eu lembro da discussão. Eu lembro da mesa. Eu lembro das minhas mãos.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Foi o que eu fiz.</span></p>
+<h3>Body — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Eu não quero mais olhar para ele.</span></p>
+<p class="nota">docTitle: MEMORANDO INTERNO</p>
+<p class="nota">docBody: Para: Setor de Operações<br>De: Direção<br><br>O funcionário K. será desligado ao fim do mês. &lt;b&gt;Não avisar antes.&lt;/b&gt;<br><br>Os papéis ficam no arquivo de &lt;b&gt;DEMISSÕES&lt;/b&gt;, junto da chave reserva da sala. Ninguém procura lá.</p>
+<p class="nota">docFooter: Assinado: o Diretor.</p>
+<h3>Desk — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Meu nome. Meu desligamento. Ele ia me demitir sem avisar ninguém.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>&quot;A chave reserva fica junto dos papéis de demissão.&quot;</span></p>
+<h3>Desk — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Arquivo de demissões. É lá que está a chave.</span></p>
+<h3>Spot — outras vezes</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Já olhei aqui.</span></p>
+<h3>Cabspots[0] — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Fichas de admissão. A minha está aqui: &quot;contratado há seis anos&quot;.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Nenhuma chave.</span></p>
+<h3>Cabspots[1] — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Avaliações de desempenho. &quot;Kai: insuficiente.&quot; &quot;Kai: insuficiente.&quot; Dezenas delas.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Nenhuma chave.</span></p>
+<h3>Cabspots[2] — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Pastas de demissões. A minha está por cima: &quot;Kai — desligamento imediato&quot;.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>E atrás dela, presa com fita... uma chave. Ficou em cima das pastas.</span></p>
+<h3>Cabspots[3] — primeira vez</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Planilhas, recibos. Uma pasta com o meu salário riscado de vermelho.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Nenhuma chave.</span></p>
+<h3>Souta — primeira conversa</h3>
+<p class="fala souta"><b>SOUTA</b><span>Vê se ele tem algo no bolso. Um documento, qualquer coisa que diga quem é.</span></p>
+<h3>Souta — conversas seguintes</h3>
+<p class="fala souta"><b>SOUTA</b><span>Anda logo, Kai.</span></p>
+<h3>Ren — primeira conversa</h3>
+<p class="fala ren"><b>REN</b><span>Ele está... ele não está respirando. Tem sangue por todo lado.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Eu conheço esse escritório.</span></p>
+<h3>Ren — conversas seguintes</h3>
+<p class="fala ren"><b>REN</b><span>Eu não quero ficar perto dele.</span></p>
+<h3>Abertura da cena</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Essa porta de vidro fosco. Esse corredor.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Kai... tem um homem no chão, atrás da mesa.</span></p>
+<p class="fala ren"><b>REN</b><span>Ele não está se mexendo. E aquilo no chão é... sangue?</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Eu conheço esse escritório. Eu conheço essa mesa.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Vê se ele tem algo no bolso. Um documento, qualquer coisa que diga quem é.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>...Por que sou eu que tenho que olhar?</span></p>
+<h3>Door before body</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Antes de sair, eu preciso saber quem é ele.</span></p>
+<h3>Confront1</h3>
+<p class="fala ren"><b>REN</b><span>Kai... isso é o seu nome? Aqui, no jornal.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Me dá isso. ...&quot;Procura-se funcionário Kai.&quot;</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Você matou ele.</span></p>
+<p class="fala kai"><b>KAI</b><span>Eu... eu não lembro. Souta, eu não...</span></p>
+<p class="fala ren"><b>REN</b><span>A gente confiou em você! Desde o vagão, desde o começo!</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Você vivia dizendo que ele pegava no seu pé. Mas matar...?</span></p>
+<h3>Confront2</h3>
+<p class="fala souta"><b>SOUTA</b><span>Ele guardava uma arma na gaveta da mesa. Eu sabia.</span></p>
+<p class="fala ren"><b>REN</b><span>Souta, não! A gente não precisa disso!</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Fica onde está, Kai. Mãos onde eu possa ver.</span></p>
+<p class="fala kai"><b>KAI</b><span>Souta, abaixa isso. Sou eu.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Foi o que o chefe deve ter dito.</span></p>
+<h3>Confront3</h3>
+<p class="fala ren"><b>REN</b><span>Eu só quero ir embora... Eu tenho medo de você, Kai.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>A gente vai buscar ajuda. Você fica aqui.</span></p>
+<p class="fala kai"><b>KAI</b><span>Esperem! Não me deixem aqui!</span></p>
+<h3>After lock</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Trancaram. Pelo lado de fora.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Eles têm razão em ter medo. Eu também tenho.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>A chave tem que estar em algum lugar. O chefe guardava tudo nesses arquivos e nessa mesa.</span></p>
+<h3>Ren outside</h3>
+<p class="fala ren pensa"><b>REN</b><span>(do outro lado da porta) Kai... a gente vai chamar alguém. Fica quieto, por favor.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Ren... eu juro que eu não sabia.</span></p>
+<h3>Cabinet hint</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Nenhuma chave nesses arquivos. Só falta o de demissões.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Se ele escondesse algo, seria junto da minha própria demissão.</span></p>
+<h3>Door no key</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Trancada por fora. Preciso da chave.</span></p>
+<h3>Key found</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Achei. A chave reserva, escondida junto da minha própria demissão.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Agora preciso sair. Com a alavanca no bolso... o trem ainda espera.</span></p>
+<h3>Porta destrancada</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Destrancada. Do outro lado, eles estão me esperando.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Eu preciso colocar a alavanca no painel antes que me achem.</span></p>
+</section>
+<section><h2>Cenário 6 — O túnel</h2>
+<h3>Abertura da cena</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Corredor de serviço. O painel de tração, com o encaixe vazio.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>A alavanca que estava no bolso dele ainda está comigo. É isso que faltava para o trem andar.</span></p>
+<h3>Inserted</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O metrô está ligando. Dá para sentir no chão.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>E o painel marcou um tempo. Pouco tempo.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Ele está lá no começo da linha. Eu preciso chegar antes que ele parta. Corre!</span></p>
+<h3>Primeira vez esmagado</h3>
+<p class="fala kai pensa"><b>KAI</b><span>As anteparas estão fechando no ritmo do alarme. Eu preciso passar na hora que a luz fica verde.</span></p>
+<h3>Timeout</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O trem esperou. Eu ainda tenho outra chance.</span></p>
+<h3>Door before</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O metrô ainda não está pronto. Preciso encaixar a alavanca no painel.</span></p>
+<h3>Boarding</h3>
+<p class="fala kai pensa"><b>KAI</b><span>O metrô. O mesmo vagão do começo.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Falta pouco.</span></p>
+</section>
+<section><h2>Cenário 7 — A última plataforma</h2>
+<h3>Souta — primeira conversa</h3>
+<p class="fala souta"><b>SOUTA</b><span>Não chega perto, Kai. Eu ainda estou com a arma dele.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>O Ren quis vir até aqui. Diz que precisa ver os trilhos. Vai lá, fala com ele.</span></p>
+<h3>Souta — conversas seguintes</h3>
+<p class="fala souta"><b>SOUTA</b><span>Quatro e dezessete, Kai. Você lembra o que isso quer dizer?</span></p>
+<h3>Abertura da cena</h3>
+<p class="fala kai pensa"><b>KAI</b><span>A última plataforma. O nome está escrito na parede: ÚLTIMA LINHA.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>O relógio daqui também parou em quatro e dezessete.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>O Ren está na beira, olhando os trilhos. O Souta, logo atrás, com a arma do chefe.</span></p>
+<h3>Confront</h3>
+<p class="fala ren"><b>REN</b><span>Kai... você veio.</span></p>
+<p class="fala ren"><b>REN</b><span>Lá embaixo é fundo. Se alguém cair, não levanta mais.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Fica onde está, Kai. A gente sabe o que você fez com o chefe.</span></p>
+<p class="fala souta"><b>SOUTA</b><span>São quatro e dezessete. Eu avisei. É a hora em que tudo acaba.</span></p>
+<p class="fala ren"><b>REN</b><span>Eu só quero que isso termine. Do jeito que for.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Eles nunca vão me deixar em paz. Eles estão sempre aqui. Sempre.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Alguém tem que parar.</span></p>
+<p class="nota">choiceTitle: </p>
+<p class="nota">choiceOptions: Acabar com eles | Acabar comigo</p>
+<p class="nota">choiceNotes: Ninguém mais vai me acusar. | Isso termina comigo.</p>
+<h3>Others start</h3>
+<p class="fala kai"><b>KAI</b><span>Chega.</span></p>
+<p class="fala ren"><b>REN</b><span>Kai...? O que você vai...?</span></p>
+<h3>Souta panic</h3>
+<p class="fala souta"><b>SOUTA</b><span>REN!</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Você empurrou ele! Ele bateu lá embaixo, ele não está se mexendo!</span></p>
+<p class="fala souta"><b>SOUTA</b><span>Fica longe de mim! Fica longe!</span></p>
+<h3>Point gun</h3>
+<p class="fala souta"><b>SOUTA</b><span>Kai, abaixa isso. Sou eu. Sou eu, Kai.</span></p>
+<p class="fala kai"><b>KAI</b><span>Eu sei.</span></p>
+<h3>After shot</h3>
+<p class="fala kai pensa"><b>KAI</b><span>Silêncio. Finalmente, silêncio.</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>...Por que ainda tem alguém gritando?</span></p>
+<h3>Self start</h3>
+<p class="fala kai"><b>KAI</b><span>Não. Vocês não têm culpa de nada.</span></p>
+<p class="fala kai"><b>KAI</b><span>Quem tem que parar sou eu.</span></p>
+<p class="fala ren"><b>REN</b><span>Kai? Kai, sai da beira!</span></p>
+<h3>Self last</h3>
+<p class="fala souta"><b>SOUTA</b><span>O trem! Kai, o trem está vindo!</span></p>
+<p class="fala ren"><b>REN</b><span>KAI!</span></p>
+<p class="fala kai pensa"><b>KAI</b><span>Desculpa.</span></p>
+<p class="nota">policeChannel: JORNAL DA NOITE  ·  PLANTÃO</p>
+<p class="nota">policeHeadline: FUNCIONÁRIO É PRESO NO TRABALHO POR TENTATIVA DE MASSACRE</p>
+<p class="nota">policeBody: Kai, 27 anos, funcionário da companhia de trens, foi preso na madrugada desta quarta-feira, por volta das 4h17, na estação onde trabalhava. Segundo a polícia, ele empurrou um colega para a vala dos trilhos e atirou em outro com a arma do antigo diretor da empresa, encontrado morto na semana passada.<br><br>Testemunhas contam que, antes do ataque, ele conversava sozinho com duas pessoas que chamava de Souta e Ren. Os dois funcionários feridos foram levados ao hospital.</p>
+<p class="nota">policeTicker: URGENTE  ·  Suspeito foi detido na última plataforma da linha  ·  Estação permanece fechada  ·  Polícia investiga ligação com a morte do diretor da empresa  ·  </p>
+<p class="nota">ambulanceChannel: JORNAL DA NOITE  ·  PLANTÃO</p>
+<p class="nota">ambulanceHeadline: TRABALHADOR TIRA A PRÓPRIA VIDA NO LOCAL DE TRABALHO</p>
+<p class="nota">ambulanceBody: Um funcionário de 27 anos, identificado como Kai, morreu na madrugada desta quarta-feira, por volta das 4h17, na estação de trem onde trabalhava. Segundo a família, ele tinha esquizofrenia e havia parado o tratamento.<br><br>As câmeras mostram que ele passou a noite andando sozinho pela estação, falando com duas pessoas: Souta e Ren. Não existe nenhum registro de alguém com esses nomes. Para os médicos, eles nunca estiveram lá: eram parte da doença.</p>
+<p class="nota">ambulanceTicker: SAÚDE MENTAL  ·  Se você ou alguém próximo precisa conversar, ligue 188 (CVV), 24 horas, de graça  ·  Esquizofrenia tem tratamento  ·  </p>
+</section>
+<section><h2>Diário do Kai (tecla Tab)</h2>
+<h3>Lembretes</h3><p class="diario">Relatório trimestral: sexta-feira. De novo.<br>Reunião com o chefe na sala 704, às 9h.<br><br>O prédio tem sete andares. Eu contei.<br><br>Remédio: 8h e 20h.<br>(Parei há três semanas. Estou bem.)</p>
+<h3>Trabalho</h3><p class="diario">O chefe me chamou depois do expediente.<br>Disse que meus números não fecham.<br>Disse que vai falar com o RH.<br><br>Anotei a hora para não esquecer: 04:17.<br><br>Não lembro de ter voltado para casa.</p>
+<h3>Kai</h3><p class="diario">Kai. 27 anos.<br>Analista há seis anos. Mesa 12, perto da janela que não abre.<br><br>Durmo pouco. Esqueço coisas.<br><br>O Dr. Mori diz que eu não posso parar o remédio.<br>O Dr. Mori não sabe de tudo.</p>
+<h3>Souta</h3><p class="diario">Souta. 27 anos.<br>Entramos na empresa no mesmo dia, 12 de março.<br>Hoje é gerente, com sala própria no 9º andar.<br><br>Faz aniversário em 20 de outubro. Igual a mim.<br><br>Diz que odeia trem.<br>Mesmo assim, está sempre no vagão comigo.</p>
+<h3>Ren</h3><p class="diario">Ren. Trabalha no meu andar, eu acho.<br>Perguntei dele na recepção. Ninguém conhece.<br><br>O crachá dele tem o meu número: 0417.<br><br>Usa óculos redondos, iguais aos que eu usava na escola.<br>Pede desculpas antes de eu dizer qualquer coisa.</p>
+<h3>20 de outubro</h3><p class="diario">Peguei o último trem com o Souta.<br><br>...<br><br>Ou peguei sozinho?<br>Não lembro dele entrando.</p>
+</section>
+</main>
