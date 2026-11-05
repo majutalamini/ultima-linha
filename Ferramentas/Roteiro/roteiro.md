@@ -441,77 +441,167 @@ _Gerado automaticamente a partir do código do jogo (Ferramentas/Roteiro/gera_ro
 
 ## Cenário 3 — A estação
 
-- *docTitle: QUADRO DE HORÁRIOS*
-- *docBody: <b>ESTAÇÃO — LINHA ÚNICA</b>  Partidas, todas as noites: 22:10   ·   23:00   ·   23:50  Depois do último trem, a estação é fechada e a administração tranca a sala de controle.  <i>Escrito a lápis, na margem:</i> Tirei as peças do painel de desvios. Sem a linha completa, a porta da administração não abre.*
-- *docFooter: Atrás da folha, presa com fita: uma peça de trilho.*
-
-### D1 — primeira vez
-
-**KAI:** *Uma peça de trilho, do tamanho da mão. Arrancada de algum painel.*  
-**KAI:** *"Sem a linha completa, a porta não abre." Então tem mais peças por aí.*  
-
-### D1 — outras vezes
-
-**KAI:** *O quadro de horários. Já peguei a peça.*  
 - *docTitle: BILHETE DE EMBARQUE*
-- *docBody: <b>ÚLTIMA LINHA</b> Destino: plataforma final Validade: uma viagem, sem volta.  <i>No verso, com a mesma letra:</i> quem quiser sair vai ter que ligar a linha sozinho.*
-- *docFooter: Embaixo do bilhete, no chão: outra peça de trilho.*
+- *docBody: <b>ÚLTIMA LINHA</b> Destino: plataforma final Validade: uma viagem, sem volta.  <i>No verso, à mão:</i> quem quiser sair vai ter que ligar a linha sozinho.*
+- *docFooter: Embaixo do bilhete, no chão: uma peça de trilho, do tamanho da mão.*
 
-### D2 — primeira vez
+### Bilhete — primeira vez
 
-**KAI:** *Um bilhete caído e, embaixo dele, outra peça do painel.*  
+**KAI:** *Uma peça de trilho. Arrancada de algum painel.*  
+**KAI:** *"Ligar a linha sozinho." Que linha?*  
 
-### D2 — outras vezes
+### Bilhete — outras vezes
 
 **KAI:** *O bilhete. Sem volta.*  
-- *docTitle: ESCALA DOS FUNCIONÁRIOS*
-- *docBody: Turno da noite:  ninguém escalado. Turno da madrugada:  ninguém escalado.  A estação está funcionando sozinha há muito tempo. Quem estiver lendo isto: não espere por ninguém.*
-- *docFooter: Na gaveta do guichê, junto da escala: uma peça de trilho.*
 
-### D3 — primeira vez
+### Placa — primeira vez
 
-**KAI:** *No guichê dos funcionários, lá no alto, mais uma peça.*  
-**KAI:** *"Ninguém escalado." Então quem mantém essa estação ligada?*  
+**KAI:** *Terminal. A última parada.*  
+**KAI:** *Mas o mapa do trem tinha mais uma estação depois dessa.*  
 
-### D3 — outras vezes
+### Placa — outras vezes
 
-**KAI:** *Ninguém escalado. Ninguém.*  
+**KAI:** *Terminal.*  
+- *docTitle: CARTAZ*
+- *docBody: Dormir pouco. Esquecer coisas. Conversar com quem não está lá.  <b>Você não precisa passar por isso sozinho.</b>  — Clínica Dr. Mori*
+- *docFooter: O papel está rasgado num canto. Alguém tentou arrancar.*
+
+### Cartaz — primeira vez
+
+**REN:** Esse cartaz parece que está olhando pra gente.  
+**KAI:** *Dr. Mori. Até aqui.*  
+
+### Cartaz — outras vezes
+
+**KAI:** *"Conversar com quem não está lá."*  
+
+### Moeda — primeira vez
+
+**KAI:** *Uma moeda, debaixo do banco.*  
+- *docTitle: MAPA DA REDE*
+- *docBody: A mesma linha vermelha do mapa do trem. Todas as estações riscadas.  Um adesivo: <b>VOCÊ ESTÁ AQUI — TERMINAL</b>.  Depois do Terminal, uma bolinha a mais, sem trilho ligando: <b>ÚLTIMA LINHA</b>.*
+- *docFooter: O adesivo foi colado por cima de outro nome.*
+
+### Mapa — primeira vez
+
+**KAI:** *Não tem trilho até a Última Linha. Então como se chega lá?*  
+
+### Mapa — outras vezes
+
+**KAI:** *Você está aqui. Terminal.*  
+- *docTitle: QUADRO DE PARTIDAS*
+- *docBody: <b>PARTIDAS — LINHA ÚNICA</b>  22:10   TERMINAL 23:00   TERMINAL 23:50   TERMINAL   <i>último trem</i>  <i>Num papel colado embaixo, à mão, em vermelho, numa letra torta e apertada:</i> <b>04:17 — ÚLTIMA LINHA. Não embarque.</b>*
+- *docFooter: Atrás do papel, presa com fita: outra peça de trilho.*
+
+### Partidas — primeira vez
+
+**KAI:** *Quatro e dezessete. De novo.*  
+**KAI:** *E mais uma peça. Alguém espalhou esse painel pela estação inteira.*  
+
+### Partidas — outras vezes
+
+**KAI:** *Último trem: vinte e três e cinquenta. O resto foi escrito à mão.*  
+- *docTitle: PORTÃO DE SERVIÇO*
+- *docBody: Fecha depois da <b>última partida</b>.  Código: o horário da última partida, sem os dois pontos.*
+- *docFooter: Plaquinha parafusada ao lado do teclado.*
+- *docTitle: COMUNICADO INTERNO*
+- *docBody: <b>Reestruturação do setor de operações.</b>  Os funcionários abaixo devem comparecer à <b>sala 704</b> (7º andar), às 9h, para tratar do seu desligamento:  A. Hayashi M. Ono <b>K.</b> T. Sato  — A Direção*
+- *docFooter: Colado por dentro do vidro da bilheteria. Alguém circulou o "K." de caneta.*
+
+### Comunicado — primeira vez
+
+**KAI:** *Sala 704. A mensagem do celular.*  
+**KAI:** *O prédio tem sete andares. Eu contei.*  
+
+### Comunicado — outras vezes
+
+**KAI:** *Desligamento.*  
+- *docTitle: ACHADOS E PERDIDOS*
+- *docBody: Óculos redondos, de criança — <i>ninguém veio buscar.</i> Guarda-chuva preto. Bolsa de trabalho, crachá 0417 — <i>devolvida ao dono.</i> Uma moeda, debaixo do banco da plataforma — <b>não recolhida.</b>*
+- *docFooter: Caderno de registro, com a letra de alguém que já não trabalha aqui.*
+
+### Achados — primeira vez
+
+**REN:** Óculos redondos... iguais aos meus.  
+**KAI:** *Iguais aos que eu usava na escola.*  
+
+### Achados — outras vezes
+
+**KAI:** *Uma moeda debaixo do banco da plataforma.*  
 - *docTitle: RECIBO DA MÁQUINA*
-- *docBody: <b>MÁQUINA AUTOMÁTICA</b> 1 água · 1 pacote de biscoito Total: pago.  <i>Impresso embaixo, em letras miúdas:</i> troco: uma peça de trilho.*
-- *docFooter: A peça caiu na bandeja da máquina, junto com o recibo.*
+- *docBody: <b>MÁQUINA AUTOMÁTICA</b> 1 água Total: pago.  <i>Impresso embaixo, em letras miúdas:</i> troco: uma peça de trilho.*
+- *docFooter: A peça caiu na bandeja, junto com a garrafa e o recibo.*
 
-### D4 — primeira vez
+### Maquina — primeira vez
 
-**KAI:** *A máquina cuspiu o recibo... e uma peça de trilho.*  
+**KAI:** *A máquina engoliu a moeda... e cuspiu uma peça de trilho.*  
 
-### D4 — outras vezes
+### Maquina — outras vezes
 
 **KAI:** *A máquina não tem mais nada.*  
+- *docTitle: ESCALA DOS FUNCIONÁRIOS*
+- *docBody: Noite:  ninguém escalado. Madrugada:  <b>K.</b> — afastado. Atestado: Clínica Dr. Mori.  <i>Embaixo, com outra letra:</i> voltou?*
+- *docFooter: Presa na parede da cabine com um alfinete.*
 
-### Souta — primeira conversa
+### Escala — primeira vez
 
-**SOUTA:** Do lado da porta tem um painel com um desenho dos trilhos. Está faltando pedaço.  
-**SOUTA:** Se a porta depende dele, as peças devem estar pela estação. Procura em tudo.  
+**KAI:** *Afastado. Eu não lembro de ter sido afastado.*  
 
-### Souta — conversas seguintes
+### Escala — outras vezes
 
-**SOUTA:** Quatro buracos no painel. Ainda falta alguma peça?  
+**KAI:** *"Voltou?"*  
+- *docTitle: MONITOR DA CÂMERA*
+- *docBody: <b>CÂMERA 2 — PLATAFORMA</b>  A imagem treme. Dá para ver o banco, o trem parado...  e <b>uma pessoa só</b>, de pé na beira, olhando os trilhos.*
+- *docFooter: Na gaveta embaixo do monitor: uma peça de trilho.*
 
-### Ren — primeira conversa
+### Monitor — primeira vez
 
-**REN:** Eu vi uma pilha de caixotes lá no fundo. Dá para subir até o mezanino.  
-**REN:** Os funcionários ficavam lá em cima.  
+**KAI:** *Uma pessoa só.*  
+**KAI:** *A gente estava em três na plataforma.*  
 
-### Ren — conversas seguintes
+### Monitor — outras vezes
 
-**REN:** Se faltar uma peça, olha lá em cima, subindo pelos caixotes.  
+**KAI:** *A imagem da plataforma não muda. Uma pessoa só.*  
 
 ### Abertura da cena
 
-**KAI:** *Uma estação. Vazia, com as luzes ainda acesas.*  
-**SOUTA:** Acabou o trilho do vagão. A saída é por aquela porta, no fundo.  
-**REN:** Está trancada. Do lado tem um painel com um desenho dos trilhos.  
-**KAI:** *Um painel de desvios. E está faltando pedaço.*  
+**KAI:** *A estação que eu vi pela janela. Vazia, com as luzes ainda acesas.*  
+**REN:** A porta do trem... fechou sozinha.  
+**SOUTA:** Melhor. Ninguém volta para aquele trem.  
+**SOUTA:** Tem um portão no fim da plataforma. A saída deve ser por ali.  
+**KAI:** *Terminal. Mas o trem não devia ter parado aqui.*  
+
+### Portao primeiro
+
+**KAI:** *O horário da última partida. Está no quadro, lá atrás.*  
+
+### Codigo errado
+
+**KAI:** *Não é esse. O horário da última partida está no quadro.*  
+
+### Codigo armadilha
+
+**KAI:** *Não abriu.*  
+**KAI:** *Quatro e dezessete não é partida nenhuma. Alguém escreveu por cima.*  
+
+### Portao aberto
+
+**SOUTA:** Vinte e três e cinquenta. O último trem de verdade.  
+**REN:** Então o nosso... não estava na lista?  
+**SOUTA:** Trem fora de horário. Acontece.  
+**KAI:** *A letra do 04:17 é torta, apertada. Igual à do meu diário.*  
+**SOUTA:** Vamos. O saguão é por aqui.  
+
+### Sem moeda
+
+**KAI:** *Ela pede uma moeda. Eu não tenho nenhuma.*  
+
+### Todas pecas
+
+**REN:** Kai... a câmera da plataforma. Tinha alguém na beira.  
+**SOUTA:** Era reflexo. Não tem ninguém aqui além de nós três.  
+**KAI:** *Nós três.*  
+**SOUTA:** A porta da administração fica no fundo. A gente te espera lá.  
 
 ### Ren gives last
 
@@ -521,17 +611,66 @@ _Gerado automaticamente a partir do código do jogo (Ferramentas/Roteiro/gera_ro
 
 ### Porta fechada
 
-**KAI:** *O painel mostra os trilhos da estação. A luz sai da plataforma e tem que chegar até a administração.*  
+**KAI:** *O painel do lado da porta mostra os trilhos da estação. A luz sai da plataforma e tem que chegar até a administração.*  
 **KAI:** *Mas estão faltando peças. Sem elas a linha nunca fecha.*  
-
-### Tudo encontrado
-
-**KAI:** *Quatro peças. Agora é encaixar no painel e girar os trilhos até a luz chegar na porta.*  
 
 ### Porta destrancada
 
 **KAI:** *A linha acendeu inteira. A porta destravou.*  
-**SOUTA:** Vai. A gente vem logo atrás.  
+**SOUTA:** Administração. Se tem um jeito de fazer o trem andar de novo, é lá dentro.  
+**REN:** E se a gente só esperasse o próximo trem?  
+**SOUTA:** Que próximo? O último foi às vinte e três e cinquenta.  
+**KAI:** *E o das quatro e dezessete.*  
+
+### Falas
+
+**SOUTA:** O portão tem um teclado. Deve ter o código em algum aviso por aí.  
+
+### Falas
+
+**SOUTA:** Tudo aqui tem um mecanismo, Kai. Até essa estação.  
+
+### Falas
+
+**SOUTA:** Depois dessa porta, nada de parar. Entendeu?  
+
+### Falas
+
+**REN:** Eu não gosto de plataforma vazia. Parece que alguém vai empurrar a gente.  
+**KAI:** *...Por que ele disse isso?*  
+
+### Falas
+
+**REN:** Os funcionários ficavam lá em cima, no mezanino. Dá pra subir pelos caixotes.  
+
+### Falas
+
+**REN:** Eu fico do seu lado. Mesmo que você não queira.  
+
+### Falas
+
+**SOUTA:** O portão fecha depois da última partida. O quadro pendurado diz qual foi.  
+
+### Falas
+
+**SOUTA:** A máquina pede moeda. Debaixo do banco da plataforma brilhou alguma coisa.  
+**SOUTA:** E lá em cima, no mezanino, tem uma mesa com gaveta.  
+
+### Falas
+
+**SOUTA:** A luz entra pela plataforma e tem que sair embaixo, na administração. Gira só o que está no caminho.  
+
+### Falas
+
+**REN:** Não o que está escrito à mão... o que está impresso.  
+
+### Falas
+
+**REN:** Pra subir nos caixotes, pula de um pouco longe.  
+
+### Falas
+
+**REN:** Começa pela porta e volta até a entrada.  
 
 ## Cenário 4 — A sala de controle
 

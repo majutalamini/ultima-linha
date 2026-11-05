@@ -26,6 +26,7 @@ namespace UltimaLinha.EditorTools
         const string Fase = "UltimaLinha.TesteFase";
         const string Erros = "UltimaLinha.TesteErros";
         const string SoC2 = "UltimaLinha.TesteSoC2";
+        const string SoC3 = "UltimaLinha.TesteSoC3";
         const float SegundosPorCena = 4f;
 
         static double inicio = -1;
@@ -114,6 +115,29 @@ namespace UltimaLinha.EditorTools
             SoCenario2();
         }
 
+        /// <summary>Só o Cenário 3, jogado por um piloto automático: anda até cada papel, sobe os caixotes até o mezanino,
+        /// resolve o painel de desvios com as setas e o E e sai pela porta. Por linha de comando:
+        /// -executeMethod UltimaLinha.EditorTools.PixelArtTeste.SoCenario3</summary>
+        [MenuItem("Última Linha/Testes/Jogar o Cenário 3 sozinho (piloto automático, sem som)")]
+        public static void SoCenario3()
+        {
+            SoRodar();
+            SessionState.SetBool(SoC3, true);
+            SessionState.SetString(Fila, "3,3");
+        }
+
+        /// <summary>Recria a cena do Cenário 3 e roda o piloto (linha de comando, depois de mudar o montador).</summary>
+        public static void ReconstruirC3ERodar()
+        {
+            var tipo = typeof(Cenario3SceneBuilder);
+            if (!(bool)tipo.GetMethod("Build", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { false }))
+                Debug.LogError("[Cenário 3] Não foi reconstruído");
+            var chave = (string)tipo.GetProperty("VersionKey", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+            EditorPrefs.SetInt(chave, (int)tipo.GetField("BuildVersion", BindingFlags.NonPublic | BindingFlags.Static).GetRawConstantValue());
+            AssetDatabase.SaveAssets();
+            SoCenario3();
+        }
+
         static void Passo()
         {
             var fila = SessionState.GetString(Fila, "");
@@ -130,6 +154,8 @@ namespace UltimaLinha.EditorTools
                 FotosC1.Clear();
                 etapaC2 = fusivelC2 = 0;
                 FotosC2.Clear();
+                etapaC3 = 0;
+                FotosC3.Clear();
                 // sem foco a Unity descarta o teclado simulado; o projeto não tem InputSettings salvo, então isto vale só nesta sessão
                 InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
                 InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
@@ -152,7 +178,14 @@ namespace UltimaLinha.EditorTools
                     if (t < 300.0 && etapaC2 < 99) return;
                     if (etapaC2 < 99) Debug.LogError($"[Cenário 2] Piloto não chegou ao fim em 300s (etapa {etapaC2})");
                 }
-                if (!fotografada && t > SegundosPorCena * 0.5 && partes[0] != "0" && !soC2)
+                bool soC3 = SessionState.GetBool(SoC3, false);
+                if (soC3)
+                {
+                    Cenario3(t);
+                    if (t < 300.0 && etapaC3 < 99) return;
+                    if (etapaC3 < 99) Debug.LogError($"[Cenário 3] Piloto não chegou ao fim em 300s (etapa {etapaC3}, alvo {alvoC3})");
+                }
+                if (!fotografada && t > SegundosPorCena * 0.5 && partes[0] != "0" && !soC2 && !soC3)
                 {
                     fotografada = true;
                     Exercita(partes[0]);
@@ -188,6 +221,7 @@ namespace UltimaLinha.EditorTools
                 }
                 SessionState.SetString(Fila, "");
                 SessionState.SetBool(SoC2, false);
+                SessionState.SetBool(SoC3, false);
                 PlayerPrefs.DeleteKey(Cenario0Director.ChaveTeste);
                 foreach (var k in ChavesSave)
                 {
@@ -551,6 +585,238 @@ namespace UltimaLinha.EditorTools
                 Aperta(kb);
             else
                 Aperta(kb, Key.D, Key.LeftShift);
+        }
+
+        static int etapaC3, alvoC3, travasC3, encostosC3, tentativaC3, npcNaFrenteC3;
+        static double marcaC3, inicioAlvoC3, marcaBloqC3, marcaParadoC3, amostraC3, chegouC3 = -1, recuoC3 = -1;
+        static float chaoC3, ultimoXC3, xAmostraC3;
+        static readonly HashSet<string> FotosC3 = new HashSet<string>();
+        static readonly List<Interactable> AlvosC3 = new List<Interactable>();
+        static readonly Queue<Key> TeclasC3 = new Queue<Key>();
+        static readonly List<Bounds> BeiradasC3 = new List<Bounds>();
+
+        static void FotoC3(string nome)
+        {
+            if (FotosC3.Add(nome) && Camera.main) Foto(Camera.main, $"jogo_c3_{nome}.png");
+        }
+
+        static void CodigoC3(UltimaLinha.Salas.Cenario3Director d, string codigo)
+        {
+            var m = typeof(UltimaLinha.Salas.Cenario3Director).GetMethod("CheckCode", BindingFlags.NonPublic | BindingFlags.Instance);
+            d.StartCoroutine((System.Collections.IEnumerator)m.Invoke(d, new object[] { codigo }));
+        }
+
+        /// <summary>Cenário 3: anda (com o teclado simulado) até cada lugar de E em ordem de x (bilhete, placa, moeda, cartaz,
+        /// mapa, quadro, portão, comunicado, achados, máquina, escala e monitor no mezanino) e depois até a porta. No portão,
+        /// erra com 0417 de propósito e acerta com 2350. Para subir, pula quando há uma beirada de mão única alcançável logo à
+        /// frente (os caixotes e o mezanino) e segura o ESPAÇO enquanto sobe. No painel, setas e E até a solução. Parado 6 s:
+        /// anota onde travou e teleporta até o alvo.</summary>
+        static void Cenario3(double t)
+        {
+            var d = UnityEngine.Object.FindFirstObjectByType<UltimaLinha.Salas.Cenario3Director>();
+            var kb = Keyboard.current;
+            if (kb == null) return;
+            if (!d)
+            {
+                if (etapaC3 > 0 && etapaC3 < 99)
+                {
+                    Debug.Log($"[Cenário 3] Saiu pela porta aos {t:0.0}s e carregou {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}; " +
+                              $"travou {travasC3}x, encostou sem conseguir pular {encostosC3}x, NPC na frente do E {npcNaFrenteC3}x");
+                    etapaC3 = 99;
+                }
+                Aperta(kb);
+                return;
+            }
+            var p = d.player;
+            float x = p.transform.position.x;
+            float pes = p.GetComponent<Collider2D>().bounds.min.y;
+            if (etapaC3 == 0 && t > 40.0)
+            {
+                Debug.LogWarning($"[Cenário 3] A entrada não devolveu o controle em 40s: dialogo={DialogueBox.IsBusy} introDone={Campo<bool>(d, "introDone")} " +
+                                 $"controle={p.controlEnabled} quadros={Time.frameCount} (corrotina cortada pelo primeiro Play?)");
+                etapaC3 = 99;
+                return;
+            }
+            bool papel = UltimaLinha.Salas.DocumentView.Instance && UltimaLinha.Salas.DocumentView.Instance.IsOpen;
+            if (DialogueBox.IsBusy || papel)
+            {
+                Aperta(kb, Time.frameCount % 20 == 0 ? Key.Enter : Key.None);
+                marcaBloqC3 = marcaParadoC3 = t; // parado de propósito, não barrado
+                chegouC3 = -1;
+                return;
+            }
+            var interactor = p.GetComponent<PlayerInteractor>();
+
+            switch (etapaC3)
+            {
+                case 0: // entrada
+                    Aperta(kb);
+                    if (Campo<bool>(d, "introDone") && p.controlEnabled && p.IsGrounded)
+                    {
+                        Debug.Log($"[Cenário 3] Entrada terminou aos {t:0.0}s; kai x={x:0.00}; porta do trem fechada={(d.portaTrem && !d.portaTrem.IsOpen)}");
+                        FotoC3("comeco");
+                        chaoC3 = pes;
+                        travasC3 = encostosC3 = tentativaC3 = npcNaFrenteC3 = 0;
+                        recuoC3 = chegouC3 = -1;
+                        AlvosC3.Clear();
+                        AlvosC3.AddRange(UnityEngine.Object.FindObjectsByType<UltimaLinha.Salas.ObjectSpot>(FindObjectsSortMode.None).OrderBy(s => s.transform.position.x));
+                        AlvosC3.Add(d.door);
+                        BeiradasC3.Clear();
+                        foreach (var o in UnityEngine.Object.FindObjectsByType<Platformer.Mechanics.OneWayPlatform>(FindObjectsSortMode.None))
+                            BeiradasC3.Add(o.GetComponent<Collider2D>().bounds);
+                        alvoC3 = 0;
+                        marcaC3 = inicioAlvoC3 = marcaParadoC3 = marcaBloqC3 = t;
+                        ultimoXC3 = x;
+                        // a dica (como se tivesse passado 75 s parado): balão nos dois; falar com o Souta desliga
+                        Chama(d, "LigaDica");
+                        bool ligou = d.souta.dica && d.ren.dica;
+                        d.souta.Interact();
+                        Debug.Log($"[Cenário 3] Dica: ligou={ligou}, fala do Souta=\"{(d.souta.hintLevers.Count > 0 ? d.souta.hintLevers[0].text : "")}\", desligou ao falar={!d.souta.dica && !d.ren.dica}");
+                        etapaC3 = 1;
+                    }
+                    break;
+                case 1: // anda até o alvo e aperta E nele
+                {
+                    var alvo = AlvosC3[alvoC3];
+                    var spot = alvo as UltimaLinha.Salas.ObjectSpot;
+                    bool portao = spot && spot == d.portao;
+                    bool feito = portao ? Campo<bool>(d, "gateOpen") : spot ? spot.Uses > 0 && !spot.Busy : d.panel.IsOpen;
+                    if (feito)
+                    {
+                        Debug.Log($"[Cenário 3] {alvo.name} em {t - inicioAlvoC3:0.0}s (aos {t:0.0}s)" +
+                                  (spot ? $"; peças {Campo<bool[]>(d, "found").Count(f => f)}/{d.documents.Length}" : "; painel aberto"));
+                        Aperta(kb);
+                        if (!spot) { etapaC3 = 2; marcaC3 = t; break; }
+                        if (portao) FotoC3("portao_aberto");
+                        alvoC3++;
+                        inicioAlvoC3 = marcaParadoC3 = marcaBloqC3 = t;
+                        chegouC3 = -1;
+                        break;
+                    }
+                    if (portao && d.lockUI && d.lockUI.IsOpen) // o teclado do portão: primeiro a armadilha, depois o certo
+                    {
+                        Aperta(kb);
+                        marcaParadoC3 = t;
+                        chegouC3 = -1;
+                        if (t - marcaC3 < 0.6) break;
+                        string codigo = tentativaC3 == 0 ? d.armadilha : d.codigo;
+                        Debug.Log($"[Cenário 3] Portão: tentando {codigo} aos {t:0.0}s");
+                        CodigoC3(d, codigo);
+                        tentativaC3++;
+                        marcaC3 = t + 2.5; // espera o resultado e a fala
+                        break;
+                    }
+                    if (!p.controlEnabled || UltimaLinha.Salas.Modal.IsOpen) { Aperta(kb); marcaParadoC3 = t; marcaC3 = Math.Max(marcaC3, t); chegouC3 = -1; break; }
+                    float ax = alvo.transform.position.x, ay = alvo.transform.position.y;
+                    if (!spot) ax -= 0.6f; // a porta: fica na frente dela
+                    bool sobe = ay > pes + 0.3f, perto = Mathf.Abs(ax - x) < 0.35f && Mathf.Abs(ay - pes) < 0.4f;
+                    if (pes > chaoC3 + 3f) FotoC3("mezanino");
+                    if (perto && p.IsGrounded)
+                    {
+                        FotoC3(spot ? spot.id : "porta");
+                        if (chegouC3 < 0) chegouC3 = t;
+                        bool meu = interactor && interactor.Current == alvo;
+                        Aperta(kb, meu && Time.frameCount % 10 == 0 ? Key.E : Key.None);
+                        if (!meu && t - chegouC3 > 3.0)
+                        {
+                            npcNaFrenteC3++;
+                            var pe = new Vector2(p.Bounds.center.x, p.Bounds.min.y);
+                            Debug.LogWarning($"[Cenário 3] O E de {alvo.name} não aparece (a tecla E está em {(interactor && interactor.Current ? interactor.Current.name : "nada")}; " +
+                                             $"controle={p.controlEnabled} modal={UltimaLinha.Salas.Modal.Count} pode={alvo.CanInteract} alcance={alvo.InReach(pe)} " +
+                                             $"ativo={alvo.isActiveAndEnabled} interactor={(interactor ? interactor.enabled : false)} letras={LetterLockUI.IsOpen} dialogo={DialogueBox.IsBusy} " +
+                                             $"jogador do interactor={(interactor.player == p)}/{(interactor.player ? interactor.player.controlEnabled : false)} tecla E visível={(interactor.prompt && interactor.prompt.enabled)} " +
+                                             $"na lista={Interactable.Active.Contains(alvo)} perto={string.Join(",", Interactable.Active.Where(i => i && i.InReach(pe)).Select(i => i.name + (i.CanInteract ? "+" : "-")))}); usando direto");
+                            alvo.Interact();
+                            chegouC3 = t;
+                        }
+                    }
+                    else if (!p.IsGrounded)
+                    {
+                        recuoC3 = -1;
+                        Aperta(kb, ax > x ? Key.D : Key.A, sobe ? Key.None : Key.LeftShift, p.velocity.y > 0f ? Key.Space : Key.None);
+                    }
+                    else
+                    {
+                        float lado = ax > x ? 1f : -1f;
+                        // barrado: a velocidade não zera contra a parede, então olha se a posição mudou
+                        if (t - amostraC3 > 0.1) { if (Mathf.Abs(x - xAmostraC3) > 0.03f) marcaBloqC3 = t; xAmostraC3 = x; amostraC3 = t; }
+                        bool barrado = Mathf.Abs(ax - x) > 0.5f && t - marcaBloqC3 > 0.25;
+                        if (barrado && recuoC3 < 0)
+                        {
+                            recuoC3 = t;
+                            if (encostosC3++ == 0) Debug.Log($"[Cenário 3] Encostado em x={x:0.00} pés={pes:0.00}: recuando um passo para pular");
+                        }
+                        if (recuoC3 >= 0 && t - recuoC3 < 0.25) { Aperta(kb, ax > x ? Key.A : Key.D); break; }
+                        // subindo: pula quando tem uma beirada de mão única logo à frente, mais alta e ao alcance do pulo (2,3 u)
+                        bool beirada = sobe && BeiradasC3.Any(b => b.max.y > pes + 0.3f && b.max.y < pes + 2.1f && x + lado * 0.9f > b.min.x + 0.15f && x + lado * 0.9f < b.max.x - 0.15f);
+                        bool pula = (recuoC3 >= 0 || beirada) && Time.frameCount % 4 < 2
+                                    || p.velocity.y > 0f; // segura enquanto sobe (soltar corta o pulo), mesmo no 1º quadro, ainda "no chão"
+                        if (recuoC3 >= 0 && t - recuoC3 > 1.0) recuoC3 = -1;
+                        Aperta(kb, ax > x ? Key.D : Key.A, sobe ? Key.None : Key.LeftShift, pula ? Key.Space : Key.None);
+                    }
+                    if (Mathf.Abs(x - ultimoXC3) > 0.05f || perto) { ultimoXC3 = x; marcaParadoC3 = t; }
+                    else if (t - marcaParadoC3 > 6.0)
+                    {
+                        travasC3++;
+                        Debug.LogWarning($"[Cenário 3] TRAVOU indo para {alvo.name}: kai x={x:0.00} pés={pes:0.00} (alvo x={ax:0.00} y={ay:0.00}); teleportando");
+                        FotoC3("travou" + travasC3);
+                        p.Teleport(new Vector3(ax, ay + Cenario1SceneBuilder.ColliderHeight / 2f + 0.02f, 0f));
+                        if (d.cameraFollow) d.cameraFollow.Snap();
+                        marcaParadoC3 = t;
+                    }
+                    if (t - inicioAlvoC3 > 60.0) { Debug.LogError($"[Cenário 3] Não chegou em {alvo.name} em 60s"); etapaC3 = 99; }
+                    break;
+                }
+                case 2: // painel: espera as peças caírem e monta as teclas (setas até cada trilho torto, E até ficar certo)
+                {
+                    if (t - marcaC3 < 2.0) { Aperta(kb); break; }
+                    var celulas = (Array)typeof(UltimaLinha.Salas.SwitchPanelUI).GetField("cells", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(d.panel);
+                    int cursor = Campo<int>(d.panel, "cursor"), cols = d.panel.columns, giros = 0;
+                    TeclasC3.Clear();
+                    for (int i = 0; i < celulas.Length; i++)
+                    {
+                        var cel = celulas.GetValue(i);
+                        int falta = (4 - (int)cel.GetType().GetField("turns").GetValue(cel) % 4) % 4;
+                        if (falta == 0) continue;
+                        for (int c = cursor % cols; c != i % cols; c += c < i % cols ? 1 : -1) TeclasC3.Enqueue(c < i % cols ? Key.RightArrow : Key.LeftArrow);
+                        for (int r = cursor / cols; r != i / cols; r += r < i / cols ? 1 : -1) TeclasC3.Enqueue(r < i / cols ? Key.DownArrow : Key.UpArrow);
+                        for (int k = 0; k < falta; k++) TeclasC3.Enqueue(Key.E);
+                        giros += falta;
+                        cursor = i;
+                    }
+                    Debug.Log($"[Cenário 3] Painel: {giros} giros, {TeclasC3.Count} teclas até a solução (sem errar)");
+                    FotoC3("painel");
+                    marcaC3 = t;
+                    etapaC3 = 3;
+                    break;
+                }
+                case 3: // uma tecla a cada 6 quadros (solta entre uma e outra, para contar como apertada)
+                    if (d.panel.IsSolved)
+                    {
+                        Debug.Log($"[Cenário 3] Linha completa em {t - marcaC3:0.0}s de painel (aos {t:0.0}s)");
+                        Aperta(kb);
+                        etapaC3 = 4;
+                        break;
+                    }
+                    if (TeclasC3.Count == 0)
+                    {
+                        Aperta(kb);
+                        if (t - marcaC3 > 30.0) { Debug.LogError("[Cenário 3] Painel: acabaram as teclas e a linha não fechou"); etapaC3 = 99; }
+                        break;
+                    }
+                    Aperta(kb, Time.frameCount % 6 == 0 ? TeclasC3.Dequeue() : Key.None);
+                    break;
+                case 4: // a porta destravou: entra
+                    if (!p.controlEnabled || d.panel.IsOpen) { Aperta(kb); break; }
+                    FotoC3("fim");
+                    Debug.Log($"[Cenário 3] Porta aberta, controle de volta aos {t:0.0}s; Souta x={d.souta.transform.position.x:0.0}, Ren x={d.ren.transform.position.x:0.0}, " +
+                              $"porta x={d.door.transform.position.x:0.0}; conversa das peças={Campo<bool>(d, "falouPecas")}");
+                    etapaC3 = 5;
+                    break;
+                case 5:
+                    Aperta(kb, interactor && interactor.Current == d.door && Time.frameCount % 10 == 0 ? Key.E : Key.None);
+                    break;
+            }
         }
 
         static void Aperta(Keyboard kb, params Key[] teclas)

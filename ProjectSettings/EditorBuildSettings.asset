@@ -12,11 +12,11 @@ EditorBuildSettings:
     path: Assets/Scenes/Cenario1.unity
     guid: 6999b1110e6a73549a142bede3a3eb04
   - enabled: 1
-    path: Assets/Scenes/Cenario2.unity
-    guid: 476f4892c4ad99147912aac463c81c26
-  - enabled: 1
     path: Assets/Scenes/Cenario0.unity
     guid: fa0f287ca7b07344981cb87677ebe00e
+  - enabled: 1
+    path: Assets/Scenes/Cenario2.unity
+    guid: 476f4892c4ad99147912aac463c81c26
   - enabled: 1
     path: Assets/Scenes/Cenario3.unity
     guid: 5b1adec2a04d0904c89a3b3f6110d051
