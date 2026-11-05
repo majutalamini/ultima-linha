@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 namespace UltimaLinha.Cenario1
 {
     /// <summary>
-    /// Roteiro do Cenário 1: diário → o Kai acorda no vagão parado, encontra Souta e Ren,
+    /// Roteiro do Cenário 1: o Kai chega do vagão de trás (Abertura) e encontra Souta e Ren conversando,
     /// resolve as alavancas (1ª trava), acha as letras espalhadas e digita a palavra secreta
     /// na porta (2ª trava) e sai pela porta do fundo.
     /// Também ajusta a gravidade da cena (o template usa a da Unity, leve demais para esta escala)
@@ -23,6 +23,25 @@ namespace UltimaLinha.Cenario1
         public NpcTalk ren;
         [Tooltip("Segundo puzzle: as letras espalhadas (palavra secreta).")]
         public LetterPuzzle letterPuzzle;
+
+        [Header("Entrada (vindo da Abertura, sem corte)")]
+        [Tooltip("Porta da ponta esquerda: abre, o Kai entra, ela bate e tranca para sempre.")]
+        public PortaPonta portaEntrada;
+        [Tooltip("Na plataforma do engate: o mesmo lugar e o mesmo quadro em que a Abertura terminou.")]
+        public Vector3 entradaInicio;
+        [Tooltip("Até onde ele anda antes da porta bater atrás dele.")]
+        public float entradaDentro;
+        [Tooltip("Onde ele para, perto do Souta e do Ren.")]
+        public float conversaX;
+        [Tooltip("Câmera na entrada (igual à do fim da Abertura) e no vagão.")]
+        public Rect boundsEntrada, boundsVagao;
+        public List<DialogueLine> entradaTrancada = new List<DialogueLine>();
+
+        [Header("Dicas para quem está travado")]
+        public TrainLever emperrada;
+        public int dicaErros = 2;
+        public float dicaSegundos = 75f;
+        public string dicaToast = "Talvez o Souta ou o Ren saibam de alguma coisa.";
 
         [Header("Cutscene de abertura (tela preta com texto)")]
         public IntroCutscene introCutscene;
@@ -67,6 +86,9 @@ namespace UltimaLinha.Cenario1
         bool leaving;
         int fails;
         bool leversObjectiveShown;
+        bool emJogo, dicaLigada;
+        int erros;
+        float semProgresso;
 
         void Awake()
         {
@@ -89,7 +111,7 @@ namespace UltimaLinha.Cenario1
             {
                 puzzle.Solved += OnSolved;
                 puzzle.Failed += OnFailed;
-                puzzle.Progressed += _ => ShowLeversObjective();
+                puzzle.Progressed += _ => { ShowLeversObjective(); Progresso(); };
             }
             if (letterPuzzle)
             {
@@ -97,7 +119,14 @@ namespace UltimaLinha.Cenario1
                 letterPuzzle.Collected += OnLetterCollected;
                 letterPuzzle.AllCollected += OnAllLetters;
                 letterPuzzle.Solved += OnWordSolved;
+                if (letterPuzzle.lockUI)
+                    letterPuzzle.lockUI.Submitted += w => { if (!string.Equals(w, letterPuzzle.secretWord, System.StringComparison.OrdinalIgnoreCase)) Erro(); };
             }
+            if (emperrada) emperrada.Freed += Progresso;
+            if (DestravaUI.Instance) DestravaUI.Instance.Errou += Erro;
+            foreach (var npc in new[] { souta, ren })
+                if (npc) npc.Talked += OnTalked;
+            if (portaEntrada) portaEntrada.onLockedInteract = () => Say(entradaTrancada);
             if (door)
             {
                 door.onLockedInteract = () =>
@@ -129,15 +158,16 @@ namespace UltimaLinha.Cenario1
                 StartCoroutine(FadeAudio(ambience, ambienceVolume, 3f));
             }
 
-            if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 2.2f);
-            yield return new WaitForSeconds(0.3f);
-
-            bool done = false;
-            if (DialogueBox.Instance) DialogueBox.Instance.Play(intro, () => done = true);
-            else done = true;
-            while (!done) yield return null;
+            if (continuing)
+            {
+                if (cameraFollow) cameraFollow.bounds = boundsVagao;
+                if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 2.2f);
+            }
+            else
+                yield return Entrada();
 
             if (player) player.controlEnabled = true;
+            emJogo = true;
             if (Hud.Instance) Hud.Instance.SetObjective(objectiveStart);
             GameSave.Save(SceneManager.GetActiveScene().name); // libera o "Continuar" no menu
         }
@@ -145,12 +175,108 @@ namespace UltimaLinha.Cenario1
         void Update()
         {
             if (leaving || (introCutscene && introCutscene.IsPlaying) || LetterLockUI.IsOpen) return;
-            if (InputHelper.BackPressed() && !DialogueBox.IsBusy)
+            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !DiarioKai.IsOpen)
                 StartCoroutine(Leave(menuScene));
 
             // depois de falar com o Souta (que explica o letreiro), o objetivo fica mais claro
             if (!leversObjectiveShown && souta && souta.TimesTalked > 0 && !DialogueBox.IsBusy)
                 ShowLeversObjective();
+
+            // travado (errando ou parado): os dois têm uma dica
+            bool livre = player && player.controlEnabled && !DialogueBox.IsBusy && !UltimaLinha.Salas.Modal.IsOpen;
+            if (!emJogo || dicaLigada || (door && door.IsOpen) || (letterPuzzle && letterPuzzle.IsSolved)) return;
+            if (livre) semProgresso += Time.deltaTime;
+            if (erros >= dicaErros || semProgresso >= dicaSegundos) LigaDica();
+        }
+
+        // ------------------------------------------------------------------ entrada
+
+        /// <summary>Continua o quadro em que a Abertura terminou: a porta da ponta abre, o Kai entra, ela bate atrás dele,
+        /// Souta e Ren se assustam com o barulho e o Kai vai até eles.</summary>
+        IEnumerator Entrada()
+        {
+            if (player) player.Teleport(entradaInicio);
+            if (cameraFollow)
+            {
+                cameraFollow.bounds = boundsEntrada;
+                cameraFollow.Snap();
+            }
+            if (Hud.Instance && Hud.Instance.fader) Hud.Instance.fader.alpha = 0f; // sem corte: a Abertura acabou neste mesmo quadro
+
+            yield return new WaitForSeconds(0.4f);
+            if (portaEntrada)
+            {
+                portaEntrada.Open();
+                while (!portaEntrada.IsOpen) yield return null;
+            }
+            if (cameraFollow) cameraFollow.bounds = boundsVagao; // a câmera solta e acompanha ele para dentro
+            yield return UltimaLinha.Salas.DirUtil.WalkPlayerTo(player, entradaDentro);
+            yield return new WaitForSeconds(0.5f);
+            if (portaEntrada)
+            {
+                portaEntrada.Close();
+                while (portaEntrada.IsOpen) yield return null;
+            }
+            if (cameraFollow) cameraFollow.Shake(0.08f, 0.4f);
+            var corpo = player ? player.GetComponent<SpriteRenderer>() : null;
+            if (corpo) corpo.flipX = true; // olha para trás, para a porta que bateu
+            yield return new WaitForSeconds(0.9f);
+
+            // Souta e Ren ouviram a porta; a câmera fica neles até notarem o Kai
+            var alvo = cameraFollow ? cameraFollow.target : null;
+            if (souta && ren)
+            {
+                souta.lookAt = ren.transform;
+                ren.lookAt = souta.transform;
+                if (cameraFollow) cameraFollow.target = souta.transform;
+            }
+            yield return SayAndWait(intro);
+            if (souta) souta.lookAt = player ? player.transform : null;
+            if (ren) ren.lookAt = player ? player.transform : null;
+            if (cameraFollow && alvo) cameraFollow.target = alvo;
+
+            yield return UltimaLinha.Salas.DirUtil.WalkPlayerTo(player, conversaX);
+            yield return new WaitForSeconds(0.2f);
+            if (souta)
+            {
+                souta.Interact(); // a primeira conversa com o Souta já começa
+                while (DialogueBox.IsBusy) yield return null;
+            }
+        }
+
+        // ------------------------------------------------------------------ dicas
+
+        void Progresso()
+        {
+            semProgresso = 0f;
+            erros = 0;
+        }
+
+        void Erro() => erros++;
+
+        void LigaDica()
+        {
+            dicaLigada = true;
+            if (souta) souta.dica = true;
+            if (ren) ren.dica = true;
+            if (Hud.Instance) Hud.Instance.Toast(dicaToast, 6f);
+        }
+
+        void OnTalked(NpcTalk npc)
+        {
+            if (!dicaLigada) return;
+            dicaLigada = false;
+            if (souta) souta.dica = false;
+            if (ren) ren.dica = false;
+            Progresso();
+        }
+
+        IEnumerator SayAndWait(List<DialogueLine> lines)
+        {
+            bool done = false;
+            if (DialogueBox.Instance && lines != null && lines.Count > 0) DialogueBox.Instance.Play(lines, () => done = true);
+            else done = true;
+            while (!done) yield return null;
         }
 
         void ShowLeversObjective()
@@ -164,6 +290,7 @@ namespace UltimaLinha.Cenario1
         void OnFailed()
         {
             fails++;
+            Erro();
             if (Hud.Instance) Hud.Instance.Toast("A porta travou de novo.");
             if (cameraFollow) cameraFollow.Shake(0.06f, 0.5f);
             if (fails == 1) StartCoroutine(SayLater(firstFail, 1.6f));
@@ -172,6 +299,7 @@ namespace UltimaLinha.Cenario1
         /// <summary>Alavancas resolvidas: abre a 1ª trava. Se houver o puzzle das letras, ele começa.</summary>
         void OnSolved()
         {
+            Progresso();
             if (cameraFollow) cameraFollow.Shake(0.04f, 0.8f);
             if (letterPuzzle)
             {
@@ -190,6 +318,7 @@ namespace UltimaLinha.Cenario1
 
         void OnLetterCollected(char c)
         {
+            Progresso();
             if (Hud.Instance) Hud.Instance.Toast($"Letra encontrada:  {char.ToUpperInvariant(c)}");
         }
 

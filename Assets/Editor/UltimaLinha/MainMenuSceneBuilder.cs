@@ -271,7 +271,7 @@ namespace UltimaLinha.EditorTools
             music.volume = 0f;
 
             var so = new SerializedObject(ctrl);
-            so.FindProperty("gameSceneName").stringValue = "Cenario1"; // primeira cena do jogo
+            so.FindProperty("gameSceneName").stringValue = "Cenario0"; // primeira cena do jogo: a Abertura
             so.FindProperty("firstSelected").objectReferenceValue = start;
             so.FindProperty("continueButton").objectReferenceValue = cont;
             so.FindProperty("settingsButton").objectReferenceValue = config;

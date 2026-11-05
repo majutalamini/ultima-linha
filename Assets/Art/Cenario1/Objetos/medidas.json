@@ -1,0 +1,24 @@
+{
+ "cabo_eixo": 0.91,
+ "antepara": {
+  "w": 302,
+  "h": 569,
+  "porta": [
+   83,
+   154,
+   150,
+   404
+  ],
+  "pilar_fim": 183,
+  "chao": 429,
+  "plataforma_fim": 302
+ },
+ "ponteiro": {
+  "w": 56,
+  "h": 70,
+  "eixo": [
+   11,
+   59
+  ]
+ }
+}

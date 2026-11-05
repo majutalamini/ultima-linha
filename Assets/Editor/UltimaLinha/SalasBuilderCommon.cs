@@ -232,7 +232,8 @@ namespace UltimaLinha.EditorTools
             playerGo.name = "Kai (Player)";
             playerGo.transform.position = spawn.transform.position;
             var player = playerGo.GetComponent<PlayerController>();
-            player.maxSpeed = 3.4f;
+            player.maxSpeed = 2.8f;
+            player.runMultiplier = 2.06f; // corrida a ~5,8 u/s
             player.jumpTakeOffSpeed = 7.2f;
             player.gravityModifier = 1.25f;
             player.jumpAudio = null;
@@ -253,7 +254,6 @@ namespace UltimaLinha.EditorTools
             var kaiRig = BuildPersonagem("kai", playerGo.transform, new Vector3(0f, -1.6f, 0f), 10);
             kaiRig.mover = player;
             kaiRig.flipSource = mainSr;
-            kaiRig.strideLength = 2.3f;
             core.player = player;
             core.kai = kaiRig;
 
@@ -436,7 +436,7 @@ namespace UltimaLinha.EditorTools
 
         // ---------- Interface ----------
 
-        static Ui BuildUi(Fonts fonts, AudioSource voice, bool withLock)
+        internal static Ui BuildUi(Fonts fonts, AudioSource voice, bool withLock)
         {
             var ui = new Ui();
             var canvasGo = new GameObject("Interface") { layer = UILayer };
@@ -475,7 +475,7 @@ namespace UltimaLinha.EditorTools
             Img(TopLeft("Linha", objRt, 64, 70, 46, 1), Rule);
             var objText = Label("Texto", objRt, "", fonts.italic, 32, Cream, 64, 82, 1400, 60);
 
-            var controls = Label("Controles", hudRt, "A/D andar   ·   ESPAÇO pular   ·   E interagir   ·   ESC menu",
+            var controls = Label("Controles", hudRt, "A/D andar   ·   SHIFT correr   ·   ESPAÇO pular   ·   E interagir   ·   TAB diário   ·   ESC menu",
                 fonts.sans, 15, new Color(Muted.r, Muted.g, Muted.b, 0.55f), 64, 1080 - 44, 1400, 24);
             controls.characterSpacing = 6;
 
@@ -493,6 +493,7 @@ namespace UltimaLinha.EditorTools
             ui.document = BuildDocument(root, fonts, voice);
             if (withLock) ui.lockUi = BuildDigitLock(root, fonts, voice);
             ui.dialogue = BuildDialogue(root, fonts.sans, fonts.serif, voice);
+            BuildDiario(root, fonts.sans);
 
             var endRt = Stretch("Fim", hudRt);
             var endGroup = endRt.gameObject.AddComponent<CanvasGroup>();
@@ -557,7 +558,7 @@ namespace UltimaLinha.EditorTools
             body.lineSpacing = 6;
             var footer = Label("Rodape", sheet, "", fonts.italic, 26, new Color(ink.r, ink.g, ink.b, 0.8f), 50, 744, 700, 60);
             footer.textWrappingMode = TextWrappingModes.Normal;
-            var hint = Label("Fechar", sheet, "E  ›  fechar", fonts.sans, 18, new Color(ink.r, ink.g, ink.b, 0.6f), 0, 0, 200, 28);
+            var hint = Label("Fechar", sheet, "ESPAÇO  ›  fechar", fonts.sans, 18, new Color(ink.r, ink.g, ink.b, 0.6f), 0, 0, 200, 28);
             var hrt = hint.rectTransform;
             hrt.anchorMin = hrt.anchorMax = new Vector2(1, 0);
             hrt.pivot = new Vector2(1, 0);

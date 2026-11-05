@@ -60,6 +60,8 @@ namespace UltimaLinha.Cenario1
         [Header("Ritmo")]
         public float charsPerSecond = 40f;
         public float fadeTime = 0.18f;
+        [Tooltip("No começo de cada fala nenhuma tecla avança (teclado que repete a tecla não pula a fala).")]
+        public float holdTime = 0.25f;
 
         [Header("Quem fala")]
         public List<Speaker> speakers = new List<Speaker>();
@@ -111,12 +113,13 @@ namespace UltimaLinha.Cenario1
 
                 yield return null; // não reaproveita a mesma tecla que abriu a conversa
 
-                float shown = 0f;
+                float shown = 0f, since = 0f;
                 int lastBlip = 0;
                 Speaking = line.speaker;
                 while (shown < total)
                 {
-                    if (InputHelper.AdvancePressed()) break;
+                    since += Time.deltaTime;
+                    if (since >= holdTime && InputHelper.AdvancePressed()) break;
                     shown += Time.deltaTime * charsPerSecond;
                     int visible = Mathf.Min(total, Mathf.FloorToInt(shown));
                     if (visible != bodyText.maxVisibleCharacters)

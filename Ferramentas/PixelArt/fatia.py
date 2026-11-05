@@ -5,6 +5,7 @@ python fatia.py <pasta das folhas> <kai|souta|ren|medir>
 Cada folha: separa as poses por componentes conexos, reduz para a altura do personagem, aplica uma paleta única
 do personagem e grava {clipe}_{nn}.png num quadro 256x256 com os pés na última linha e a âncora no centro.
 """
+import json
 import os
 import sys
 
@@ -13,6 +14,7 @@ from PIL import Image
 
 import extrai
 import sprite
+import sujeira
 
 QUADRO = 256
 CORES = 28
@@ -25,10 +27,11 @@ ALTURA = {"kai": 222, "souta": 232, "ren": 215}
 # "costas" para poses em que o braço puxa a média para a frente
 FOLHAS = {
     "kai": [
-        ("kai 1", "idle", 6, "pes", None), ("kai caminhada", "walk", 6, "tronco", None),
-        ("kai correndo", "run", 6, "tronco", 640), ("kai pulando", "jump", 6, "tronco", 600),
-        ("kai falando", "talk", 4, "pes", None), ("kai alavanca", "lever", 6, "costas", None),
-        ("kai vasculhando", "search", 6, "costas", None), ("kai suspirando", "act", 6, "pes", None),
+        # caminhada, corrida, alavanca e interagir: segunda leva, com 8 quadros (a passada fica ~3% abaixo de quem está parado)
+        ("kai 1", "idle", 6, "pes", None), ("kai caminhada 2", "walk", 8, "tronco", 585),
+        ("kai correndo 2", "run", 8, "tronco", 480), ("kai pulando", "jump", 6, "tronco", 600),
+        ("kai falando", "talk", 4, "pes", None), ("kai alavanca 2", "lever", 8, "pes", None),
+        ("kai interagir", "search", 8, "pes", None), ("kai suspirando", "act", 6, "pes", None),
         ("kai final", "final", 6, "costas", None),
     ],
     "souta": [
@@ -138,10 +141,19 @@ def processa(pasta, id_):
         dados.append((rgb, m, ps, clipe, anc, altura))
     pal = neutro(extrai.paleta(np.concatenate(amostras).astype(float), CORES))
     destino = os.path.join(sprite.ASSETS, id_.capitalize())
+    # o Kai do mundo real é encardido; a paleta limpa fica guardada para o trem limpo da Abertura (abertura_arte.py)
+    cores = pal
+    if id_ == "kai":
+        with open(os.path.join(pasta, id_, "paleta_limpa.json"), "w") as f:
+            json.dump(pal.tolist(), f)
+        cores = sujeira.suja(pal)
+    else:
+        cores = sujeira.suja(pal, 0.6)  # Souta e Ren só aparecem no mundo real: um pouco encardidos
     for rgb, m, ps, clipe, anc, altura in dados:
         # a primeira pose é a neutra: usar a mais alta faria o personagem encolher ao entrar no gesto
         h_pe = altura or ps[0][3] - ps[0][1]
         esc = alvo / h_pe
+        chao = max(p[3] for p in ps)  # na corrida, quem está no ar fica no ar (um pouco menos que na folha)
         ajuste = 0  # alinha os pés da primeira pose com os do personagem parado: o clipe não salta ao começar
         for i, (x0, y0, x1, y1, mp) in enumerate(ps):
             cor, cheio = reduz(rgb[y0:y1, x0:x1], mp[y0:y1, x0:x1], esc)
@@ -152,10 +164,11 @@ def processa(pasta, id_):
             cx = ancora(cor, cheio, anc) - ajuste
             h, w = cheio.shape
             q = np.zeros((QUADRO, QUADRO, 4), np.uint8)
-            ox, oy = QUADRO // 2 - cx, QUADRO - h
+            sobe = round((chao - y1) * esc * 0.6) if clipe == "run" else 0
+            ox, oy = QUADRO // 2 - cx, QUADRO - h - sobe
             xs0, xs1 = max(0, -ox), min(w, QUADRO - ox)
             ys0 = max(0, -oy)
-            q[oy + ys0:oy + h, ox + xs0:ox + xs1, :3] = pal[idx[ys0:, xs0:xs1]]
+            q[oy + ys0:oy + h, ox + xs0:ox + xs1, :3] = cores[idx[ys0:, xs0:xs1]]
             q[oy + ys0:oy + h, ox + xs0:ox + xs1, 3] = cheio[ys0:, xs0:xs1] * 255
             Image.fromarray(q, "RGBA").save(os.path.join(destino, f"{clipe}_{i:02d}.png"))
     return pal

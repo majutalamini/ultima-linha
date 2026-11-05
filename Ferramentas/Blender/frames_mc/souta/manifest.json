@@ -1,0 +1,9 @@
+{
+ "idle": 42,
+ "walk": 16,
+ "talk": 47,
+ "act": 30,
+ "jump": 8,
+ "fall": 8,
+ "strideMeters": 1.816
+}

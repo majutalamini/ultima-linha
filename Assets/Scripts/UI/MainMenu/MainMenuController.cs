@@ -19,7 +19,7 @@ namespace UltimaLinha.UI
     {
         [Header("Cena do jogo")]
         [Tooltip("Nome da cena carregada ao clicar em Começar (precisa estar na lista de cenas do build).")]
-        [SerializeField] string gameSceneName = "Cenario1";
+        [SerializeField] string gameSceneName = "Cenario0";
 
         [Header("Botões")]
         [Tooltip("Botão selecionado ao abrir (teclado/controle) quando não há jogo salvo.")]
