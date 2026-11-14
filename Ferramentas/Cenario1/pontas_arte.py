@@ -132,6 +132,20 @@ def quadros_da_porta():
     for x0, _, _, _ in caixas:
         q = objetos_arte.reduz(rgb[topo:base, x0:x0 + larg], m[topo:base, x0:x0 + larg], esc, cores=24, tom=1.0)
         out.append(objetos_arte.no_vagao(q, brilho=1.6))
+    return entremeia(out)
+
+
+def entremeia(quadros):
+    """Um quadro entre cada par: o seguinte achatado na largura do meio, com a dobradiça (borda esquerda) parada.
+    Os 6 quadros desenhados pulavam de 19 para 42 px de largura; com 11 a porta gira sem trancos."""
+    out = [quadros[0]]
+    for a, b in zip(quadros, quadros[1:]):
+        la, lb = (int(np.nonzero(q[:, :, 3].max(0))[0].max()) + 1 for q in (a, b))
+        meio = (la + lb) // 2
+        tira = Image.fromarray(b[:, :lb], "RGBA").resize((meio, b.shape[0]), Image.NEAREST)
+        q = np.zeros_like(b)
+        q[:, :meio] = np.array(tira)
+        out += [q, b]
     return out
 
 

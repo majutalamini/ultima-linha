@@ -39,6 +39,7 @@ namespace UltimaLinha.Salas
 
         float travelled, lastX;
         bool saidSticky;
+        int passos; // depois de alguns passos o som some: repetido, o estalo molhado parecia tiro
         int lastClip = -1;
 
         void Start()
@@ -53,7 +54,8 @@ namespace UltimaLinha.Salas
             float x = player.transform.position.x;
             float dx = x - lastX;
             lastX = x;
-            bool moving = Mathf.Abs(dx) > 0.0005f;
+            // andando de verdade (o Kai parado tremia uns milésimos e o som não parava)
+            bool moving = Mathf.Abs(dx) > 0.0005f && Mathf.Abs(player.velocity.x) > 0.5f && player.controlEnabled;
             bool onBody = x >= x0 && x <= x1 && player.IsGrounded;
 
             if (onBody && moving)
@@ -62,7 +64,7 @@ namespace UltimaLinha.Salas
                 if (travelled >= stepDistance)
                 {
                     travelled = 0f;
-                    PlaySquelch(1f);
+                    if (passos++ < 8) PlaySquelch(passos <= 3 ? 0.45f : 0.25f);
                     if (!saidSticky && firstSticky.Count > 0 && DialogueBox.Instance && !DialogueBox.IsBusy && !Modal.IsOpen)
                     {
                         saidSticky = true;
@@ -93,7 +95,6 @@ namespace UltimaLinha.Salas
         {
             HeadLoose = true;
             if (sfx && headClip) sfx.PlayOneShot(headClip);
-            PlaySquelch(1f);
             Vector3 p0 = head.position;
             float z0 = head.eulerAngles.z;
             float t = 0f, dur = 0.95f;

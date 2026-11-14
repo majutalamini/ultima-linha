@@ -6,17 +6,17 @@ def bandpass(x, lo, hi):
     return lowpass(x, hi) - lowpass(x, lo)
 
 def caneta(sec=3.0):
-    """Riscos curtos e irregulares, como letras sendo escritas."""
+    """Lápis macio no papel: riscos irregulares, grave e abafado (o chiado agudo de 1,8-7 kHz irritava)."""
     n = int(sec * SR); tt = np.arange(n) / SR
-    base = bandpass(rng.normal(0, 1, n), 1800, 7000)
+    base = bandpass(rng.normal(0, 1, n), 250, 2200)
     env = np.zeros(n); pos = 0.0
     while pos < sec:
-        dur = 0.04 + rng.random() * 0.11
+        dur = 0.08 + rng.random() * 0.16
         i0, i1 = int(pos * SR), int(min(sec, pos + dur) * SR)
         seg = np.arange(i1 - i0) / SR
-        env[i0:i1] += np.sin(np.pi * seg / dur) ** 0.7 * (0.5 + rng.random() * 0.5)
+        env[i0:i1] += np.sin(np.pi * seg / dur) ** 1.5 * (0.35 + rng.random() * 0.4)
         pos += dur + rng.random() * 0.05
-    x = base * env * (0.8 + 0.2 * np.sin(2 * np.pi * 7 * tt))
+    x = lowpass(base * env, 1600) * (0.9 + 0.1 * np.sin(2 * np.pi * 3 * tt))
     f = int(0.15 * SR); w = np.linspace(0, 1, f)
     x[:f] = x[:f] * w + x[-f:] * (1 - w)
     return x[:-f]
@@ -30,6 +30,6 @@ def pagina():
     return x * env + lowpass(crackle, 4000) * env
 
 if __name__ == '__main__':
-    write('caneta_escrevendo', caneta(), 0.5)
+    write('caneta_escrevendo', caneta(), 0.22)
     write('pagina_virando', pagina(), 0.7)
     print('ok')

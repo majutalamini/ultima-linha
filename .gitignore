@@ -60,3 +60,6 @@ Thumbs.db
 # Geradas pelas ferramentas de pixel art
 /Ferramentas/PixelArt/previa/
 /Ferramentas/PixelArt/__pycache__/
+
+# pacotes de terceiros baixados: a licença não deixa redistribuir os arquivos (ver Ferramentas/Assets/LICENCAS.md)
+Ferramentas/Assets/originais/

@@ -11,12 +11,11 @@ namespace UltimaLinha.Salas
 {
     /// <summary>
     /// Cenário 3 — a estação (Ferramentas/Cenario3/PLANO.md). O Kai sai pela porta do fim do trem, na mesma plataforma que
-    /// se via pela janela no fim do Cenário 2. Três partes, cada uma com algo para ler, um puzzle e uma conversa:
+    /// se via pela janela no fim do Cenário 2. Duas partes, cada uma com um puzzle e uma conversa:
     /// 1. Plataforma: o portão de serviço tem um código de 4 números, o horário da última partida do quadro (2350).
     ///    O 04:17 escrito à mão embaixo dele é a armadilha.
-    /// 2. Saguão: a moeda debaixo do banco da plataforma compra na máquina (troco: uma peça); no mezanino, subindo
-    ///    pelos caixotes, a gaveta embaixo do monitor da câmera tem outra. Peças: bilhete, quadro, máquina, gaveta.
-    /// 3. Administração: com as quatro peças, o painel de desvios (SwitchPanelUI) liga a porta.
+    /// 2. Saguão: a moeda no chão compra na máquina (troco: a peça que falta); com ela, o painel de desvios
+    ///    (SwitchPanelUI) preso ao batente liga a porta da administração.
     /// Souta e Ren vão uma parte na frente; 75 s sem avançar, ficam com o balão "..." e dão uma dica.
     /// </summary>
     public class Cenario3Director : MonoBehaviour
@@ -72,7 +71,7 @@ namespace UltimaLinha.Salas
         public string dicaToast = "Talvez o Souta ou o Ren saibam de alguma coisa.";
 
         public string objectiveGate = "Abra o portão de serviço no fim da plataforma.";
-        public string objectiveFind = "Ache as peças que faltam no painel de desvios.";
+        public string objectiveFind = "A porta da administração pede uma peça de trilho. Ache uma no saguão.";
         public string objectiveDoor = "Complete a linha no painel ao lado da porta da administração.";
 
         public List<DialogueLine> intro = new List<DialogueLine>();
@@ -308,7 +307,7 @@ namespace UltimaLinha.Salas
             if (documents[i]) documents[i].available = documents[i] != maquina; // a máquina não tem mais nada
             if (sfx && pieceClip) sfx.PlayOneShot(pieceClip, 0.8f);
             else if (sfx && noteClip) sfx.PlayOneShot(noteClip);
-            if (Hud.Instance) Hud.Instance.Toast($"Peça do painel encontrada ({Count()}/{found.Length})");
+            if (Hud.Instance) Hud.Instance.Toast(found.Length > 1 ? $"Peça do painel encontrada ({Count()}/{found.Length})" : "Peça do painel encontrada.");
             Progresso();
         }
 
@@ -333,7 +332,7 @@ namespace UltimaLinha.Salas
                 StartCoroutine(FirstLook());
                 return;
             }
-            if (Count() == found.Length - 1 && !renHelped)
+            if (found.Length > 1 && Count() == found.Length - 1 && !renHelped) // com uma peça só, ela é do jogador
             {
                 StartCoroutine(RenGivesLast());
                 return;

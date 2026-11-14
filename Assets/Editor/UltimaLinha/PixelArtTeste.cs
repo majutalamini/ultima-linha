@@ -55,6 +55,7 @@ namespace UltimaLinha.EditorTools
         [MenuItem("Última Linha/Testes/Reconstruir os 7 cenários")]
         public static void Reconstruir()
         {
+            Renderizador2D.Garante(); // antes das cenas: o Cenário 4 usa luz 2D
             for (int i = 0; i <= 7; i++)
             {
                 // direto no Build: os menus pedem confirmação, e em batch a caixa de diálogo cancela
@@ -606,8 +607,8 @@ namespace UltimaLinha.EditorTools
             d.StartCoroutine((System.Collections.IEnumerator)m.Invoke(d, new object[] { codigo }));
         }
 
-        /// <summary>Cenário 3: anda (com o teclado simulado) até cada lugar de E em ordem de x (bilhete, placa, moeda, cartaz,
-        /// mapa, quadro, portão, comunicado, achados, máquina, escala e monitor no mezanino) e depois até a porta. No portão,
+        /// <summary>Cenário 3: anda (com o teclado simulado) até cada lugar de E em ordem de x (bilhete, quadro, portão,
+        /// comunicado, moeda e máquina) e depois até a porta. No portão,
         /// erra com 0417 de propósito e acerta com 2350. Para subir, pula quando há uma beirada de mão única alcançável logo à
         /// frente (os caixotes e o mezanino) e segura o ESPAÇO enquanto sobe. No painel, setas e E até a solução. Parado 6 s:
         /// anota onde travou e teleporta até o alvo.</summary>

@@ -12,9 +12,6 @@ EditorBuildSettings:
     path: Assets/Scenes/Cenario1.unity
     guid: 6999b1110e6a73549a142bede3a3eb04
   - enabled: 1
-    path: Assets/Scenes/Cenario0.unity
-    guid: fa0f287ca7b07344981cb87677ebe00e
-  - enabled: 1
     path: Assets/Scenes/Cenario2.unity
     guid: 476f4892c4ad99147912aac463c81c26
   - enabled: 1
@@ -32,6 +29,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Cenario7.unity
     guid: 890695148119c514fbb66cbaed01b422
+  - enabled: 1
+    path: Assets/Scenes/Cenario0.unity
+    guid: fa0f287ca7b07344981cb87677ebe00e
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 2cda990e2423bbf4892e6590ba056729

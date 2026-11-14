@@ -364,9 +364,7 @@ namespace UltimaLinha.EditorTools
             kaiRig.jumpSpeed = player.jumpTakeOffSpeed * 1.5f; // jumpModifier do GameController
             NoVagao(kaiRig);
 
-            var prompt = SpriteObj("TeclaE", null, Spr("tecla_e"), Vector3.zero, 50);
-            prompt.transform.localScale = Vector3.one * 0.75f;
-            prompt.enabled = false;
+            var prompt = PromptE();
             var interactor = playerGo.AddComponent<PlayerInteractor>();
             interactor.player = player;
             interactor.prompt = prompt;

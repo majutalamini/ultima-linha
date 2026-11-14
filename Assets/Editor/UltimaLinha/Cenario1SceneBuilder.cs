@@ -364,9 +364,7 @@ namespace UltimaLinha.EditorTools
             kaiRig.jumpSpeed = player.jumpTakeOffSpeed * 1.5f; // jumpModifier do GameController
             NoVagao(kaiRig);
 
-            var prompt = SpriteObj("TeclaE", null, Spr("tecla_e"), Vector3.zero, 50);
-            prompt.transform.localScale = Vector3.one * 0.75f;
-            prompt.enabled = false;
+            var prompt = PromptE();
             var interactor = playerGo.AddComponent<PlayerInteractor>();
             interactor.player = player;
             interactor.prompt = prompt;
@@ -662,7 +660,9 @@ namespace UltimaLinha.EditorTools
         // vagões, o túnel. As pontas são montadas com os pixels do próprio vagão, nas mesmas linhas dele
         // (Ferramentas/Cenario1/pontas_arte.py); medidas em px da arte, a partir do lado que encosta no vagão
         // (Objetos/medidas_pontas.json). A esquerda tem o mesmo desenho espelhado.
-        internal const float AntW = 193f, AntH = 540f, AntChao = 505f, AntPilar = 74f; // AntPilar: fim do pilar = dobradiça
+        internal const float AntW = 193f, AntH = 540f, AntChao = 505f, AntPilar = 74f; // AntPilar: fim do pilar (lado do engate)
+        internal const float AntPilarIni = 50f; // começo do pilar (lado do vagão): a dobradiça da porta
+        internal const int PortaQuadros = 11;  // porta_ponta_0..10 (Ferramentas/Cenario1/pontas_arte.py)
         internal const float AntPortaTopo = 182f, AntPortaBase = 443f; // y a partir do topo
         const float PontaDirPx = 2006f, PontaEsqPx = 45f; // onde cada ponta encosta no vagao_antigo (px dele)
         internal const float VaoLargura = 4.4f; // andando não dá, correndo dá (corrida ~5,8 u/s)
@@ -702,11 +702,21 @@ namespace UltimaLinha.EditorTools
             r.tras = BuildPortaPonta(root, xTras, false, sfx);
             // o painel que abre a porta de trás (na Abertura ele funciona; no Cenário 1 é só o que ficou para trás)
             r.painel = new Vector3(xTras + U(24f), chao, 0f);
-            if (painel) SpriteObj("PainelEmergencia", root, Obj("painel_emergencia"), r.painel + new Vector3(0f, 1.9f, 0f), -10);
+            if (painel) SpriteObj("PainelEmergencia", root, Obj("painel_emergencia"), r.painel + new Vector3(0f, 1.9f, 0f), -94); // na parede: a porta aberta passa na frente
             r.frente = BuildPortaPonta(root, r.bordaFrente + U(AntW), true, sfx);
             Box("PisoTras", root, (xTras - 1f + r.bordaTras) / 2f, chao - 0.5f, r.bordaTras - xTras + 1f, 1f, oneWay: false);
             Box("PisoFrente", root, r.bordaFrente + (U(AntW) + 1f) / 2f, chao - 0.5f, U(AntW) + 1f, 1f, oneWay: false);
             return r;
+        }
+
+        /// <summary>Tecla E sobre o objeto interativo: pixel art de Ferramentas/Interface/tecla_e.py, na grade de 58 px,
+        /// em escala 1,5 (3 px de tela por pixel em 1080p, sem borrar).</summary>
+        internal static SpriteRenderer PromptE()
+        {
+            var prompt = SpriteObj("TeclaE", null, Obj("tecla_e_pixel"), Vector3.zero, 50);
+            prompt.transform.localScale = Vector3.one * 1.5f;
+            prompt.enabled = false;
+            return prompt;
         }
 
         /// <summary>Antepara de uma ponta do vagão, com a porta de dobradiça. xParede: onde o interior do vagão termina
@@ -727,8 +737,11 @@ namespace UltimaLinha.EditorTools
             // a raiz da ponta esquerda é espelhada (colisores e medidas); ponta_esq.png já vem espelhada, então aparece certa
             Peca("Ponta", Obj(espelhada ? "ponta_esq" : "ponta_dir"), 0f, baseY, -95);
             float dobra = U(AntPilar), py0 = baseY + U(AntH - AntPortaBase), py1 = baseY + U(AntH - AntPortaTopo);
-            // a folha fica atrás da ponta (o corrimão da plataforma passa na frente dela aberta); começa fechada, de perfil
-            var folha = Peca("Folha", null, dobra, py0, -96); // na raiz espelhada a porta da esquerda já abre para o outro lado
+            // a porta abre para dentro do vagão: dobradiça no começo do pilar, folha virada (flipX) indo para o lado do
+            // vagão e na frente da parede da ponta; começa fechada, de perfil. Na raiz espelhada vale o mesmo, do outro lado
+            // na frente dos personagens (ordem 12): aberta, ela fica do lado de cá e o Kai passa por trás dela
+            var folha = Peca("Folha", null, U(AntPilarIni), py0, 12);
+            folha.flipX = true;
 
             var porta = new GameObject("Porta");
             porta.transform.SetParent(root, false);
@@ -737,7 +750,7 @@ namespace UltimaLinha.EditorTools
             pp.reachX = 1.3f;
             pp.promptOffset = new Vector2(0f, py1 - chao + 0.5f);
             pp.folha = folha;
-            pp.quadros = Enumerable.Range(0, 6).Select(i => Obj("porta_ponta_" + i)).ToArray();
+            pp.quadros = Enumerable.Range(0, PortaQuadros).Select(i => Obj("porta_ponta_" + i)).ToArray();
             pp.Quadro(0f);
             float sx = dobra - U(12f), sy = py1 + U(8f); // a luz da trava fica no pilar, em cima da porta
             Peca("SinalTrava", Obj("sinal_porta"), sx, sy, -45);
@@ -1104,15 +1117,17 @@ namespace UltimaLinha.EditorTools
             var objRt = Stretch("Objetivo", hudRt);
             var objGroup = objRt.gameObject.AddComponent<CanvasGroup>();
             objGroup.alpha = 0f;
-            var objLabel = Label("Rotulo", objRt, "OBJETIVO", sans, 16, Tagline, 64, 58, 600, 24);
+            var objLabel = Label("Rotulo", objRt, "OBJETIVO", sans, 16, Tagline, 64, 52, 600, 30);
             objLabel.characterSpacing = 22;
-            Img(TopLeft("Linha", objRt, 64, 70, 46, 1), Rule);
-            var objText = Label("Texto", objRt, "", italic, 32, Cream, 64, 82, 1000, 60);
+            Img(TopLeft("Linha", objRt, 64, 86, 60, 2), Rule);
+            var objText = Label("Texto", objRt, "", italic, 40, Cream, 64, 96, 1200, 70);
 
             // dicas de controle
-            var controls = Label("Controles", hudRt, "A/D andar   ·   SHIFT correr   ·   ESPAÇO pular   ·   S descer   ·   E interagir   ·   TAB diário   ·   ESC menu",
-                sans, 15, new Color(Muted.r, Muted.g, Muted.b, 0.55f), 64, 1080 - 44, 1400, 24);
-            controls.characterSpacing = 6;
+            Img(TopLeft("FaixaControles", hudRt, 0, 1080 - 64, 1920, 64), new Color(0f, 0f, 0f, 0.55f));
+            var controls = Label("Controles", hudRt, "<color=#E8DCC8>A/D</color> andar     <color=#E8DCC8>SHIFT</color> correr     <color=#E8DCC8>ESPAÇO</color> pular     <color=#E8DCC8>S</color> descer     <color=#E8DCC8>E</color> interagir     <color=#E8DCC8>TAB</color> diário     <color=#E8DCC8>ESC</color> menu",
+                sans, 15, new Color(Muted.r, Muted.g, Muted.b, 0.9f), 64, 1080 - 50, 1800, 32);
+            controls.characterSpacing = 4;
+            controls.richText = true;
 
             // aviso curto
             var toastRt = Stretch("Aviso", hudRt);
@@ -1353,7 +1368,7 @@ namespace UltimaLinha.EditorTools
             panel.anchorMax = new Vector2(1, 0);
             panel.pivot = new Vector2(0.5f, 0);
             panel.offsetMin = new Vector2(150, 48);
-            panel.offsetMax = new Vector2(-150, 48 + 250);
+            panel.offsetMax = new Vector2(-150, 48 + 280);
             Img(panel, new Color(0.02f, 0.02f, 0.022f, 0.88f));
             var line = new GameObject("Linha", typeof(RectTransform)) { layer = UILayer }.GetComponent<RectTransform>();
             line.SetParent(panel, false);
@@ -1374,9 +1389,9 @@ namespace UltimaLinha.EditorTools
             var portrait = Img(frame, Color.white);
             portrait.preserveAspect = true;
 
-            var name = Label("Nome", panel, "", sans, 26, Cream, 350, 26, 900, 36);
+            var name = Label("Nome", panel, "", sans, 32, Cream, 350, 24, 900, 42);
             name.characterSpacing = 16;
-            var body = Label("Fala", panel, "", serif, 38, Cream, 350, 72, 1250, 160);
+            var body = Label("Fala", panel, "", serif, 44, Cream, 350, 76, 1250, 180);
             body.textWrappingMode = TextWrappingModes.Normal;
             body.overflowMode = TextOverflowModes.Overflow;
             body.alignment = TextAlignmentOptions.TopLeft;
@@ -1408,7 +1423,7 @@ namespace UltimaLinha.EditorTools
             var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
             if (font) t.font = font;
             t.text = text;
-            t.fontSize = size;
+            t.fontSize = size < 26f ? Mathf.Round(size * 1.4f) : size; // piso de leitura: rótulos e dicas de 15-20 px sumiam na tela
             t.color = color;
             t.alignment = TextAlignmentOptions.TopLeft;
             t.textWrappingMode = TextWrappingModes.NoWrap;
@@ -1614,6 +1629,11 @@ namespace UltimaLinha.EditorTools
             { "porta_ponta_3", Vector2.zero },
             { "porta_ponta_4", Vector2.zero },
             { "porta_ponta_5", Vector2.zero },
+            { "porta_ponta_6", Vector2.zero },
+            { "porta_ponta_7", Vector2.zero },
+            { "porta_ponta_8", Vector2.zero },
+            { "porta_ponta_9", Vector2.zero },
+            { "porta_ponta_10", Vector2.zero },
             { "tunel", new Vector2(0.5f, 0f) },
             { "ponteiro", new Vector2(0.19f, 0.164f) },     // eixo do ponteiro: o anel
         };

@@ -279,9 +279,7 @@ namespace UltimaLinha.EditorTools
             var sombraSentado = SpriteObj("SombraNoBanco", kai.transform, AssetDatabase.LoadAssetAtPath<Sprite>(PixelArtKai + "/sombra_acorda_00.png"),
                 kai.transform.position, 9);
             sombraSentado.gameObject.SetActive(false);
-            var prompt = SpriteObj("TeclaE", null, Spr("tecla_e"), Vector3.zero, 50);
-            prompt.transform.localScale = Vector3.one * 0.75f;
-            prompt.enabled = false;
+            var prompt = PromptE();
             var interactor = playerGo.AddComponent<PlayerInteractor>();
             interactor.player = player;
             interactor.prompt = prompt;

@@ -25,6 +25,8 @@ namespace UltimaLinha.Salas
         [Tooltip("A alavanca do chefe encaixada no painel (aparece quando o Kai a coloca).")]
         public GameObject leverInserted;
         public Transform leverHandle;
+        [Tooltip("Maior que zero: o cabo desce por esse tanto (u) no trilho do painel, em vez de girar.")]
+        public float leverDesce;
         public AudioClip leverClip;
         public ExitDoor door;
         public CarDoor[] gates = new CarDoor[0];
@@ -127,10 +129,13 @@ namespace UltimaLinha.Salas
             if (leverHandle)
             {
                 float t = 0f;
+                Vector3 p0 = leverHandle.localPosition;
                 while (t < 0.45f)
                 {
                     t += Time.deltaTime;
-                    leverHandle.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-38f, 38f, Mathf.SmoothStep(0f, 1f, t / 0.45f)));
+                    float k = Mathf.SmoothStep(0f, 1f, t / 0.45f);
+                    if (leverDesce > 0f) leverHandle.localPosition = p0 + Vector3.down * (leverDesce * k);
+                    else leverHandle.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-38f, 38f, k));
                     yield return null;
                 }
             }

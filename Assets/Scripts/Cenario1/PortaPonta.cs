@@ -5,8 +5,8 @@ using UnityEngine;
 namespace UltimaLinha.Cenario1
 {
     /// <summary>
-    /// Porta da ponta do vagão (para o vão entre os vagões), na linha do pilar da ponta. É de dobradiça e abre para fora:
-    /// fechada, aparece de perfil (uma lâmina); aberta, gira e fica de frente, no fundo, atrás da plataforma. A animação é
+    /// Porta da ponta do vagão (para o vão entre os vagões), na linha do pilar da ponta. É de dobradiça e abre para dentro do vagão:
+    /// fechada, aparece de perfil (uma lâmina); aberta, gira e fica de frente, encostada na parede do vagão. A animação é
     /// a troca de quadros (todos do mesmo tamanho, com a dobradiça no pivô). Fechada, um colisor no pilar segura o Kai.
     /// Não se atravessa com E: aberta, passa andando. Trancada, E chama onLockedInteract.
     /// </summary>

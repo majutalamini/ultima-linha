@@ -21,15 +21,17 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 5; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 7; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
-        const float W = 3600f, Floor = 850f, LWall = 120f, RWall = 2660f;
-        const float EdgeX = 2700f, RenX = 2540f, SoutaX = 2250f, TunnelX = 3300f;
-        // o fundo é mais alto (1500 px): embaixo da plataforma fica a vala funda, para ver a queda do Ren
-        const float ImgH7 = 1500f, PitPy = 1410f;
-        static readonly (float x, float w)[] Tubes = { (500f, 240f), (1300f, 240f), (2100f, 240f), (2900f, 240f) };
+        // fundo: o painel c7_painel_b do usuário (Ferramentas/Cenarios4a7): a plataforma termina na beirada amarela (11,55 u),
+        // depois vêm os trilhos e a boca do túnel. Tudo foi trazido para perto do começo do painel (px "antigos": 100 por u).
+        const float PePx = 540f;
+        const float W = 2150f, Floor = 850f, LWall = 60f, RWall = 1110f;
+        const float EdgeX = 1155f, RenX = 925f, SoutaX = 705f, TunnelX = 1630f;
+        const float PitPy = 991f; // os trilhos, logo abaixo da beirada
+        static readonly (float x, float w)[] Tubes = { (590f, 400f), (1590f, 400f) }; // as pintadas
 
         static string VersionKey => "UltimaLinha.Cenario7.Version:" + Application.dataPath;
         static double firstTry = -1;
@@ -74,7 +76,7 @@ namespace UltimaLinha.EditorTools
         {
             ImportFolder(Art7, new Dictionary<string, Vector2> { { "cenario7_fundo", Vector2.zero } }, "cenario7_fundo");
             return Run(interactive, ScenePath, "Cenário 7", new[] { "Cenario6", "Cenario5", "Cenario4", "Cenario3", "Cenario2", "Cenario1", "MainMenu" },
-                () => Load(Art7, "cenario7_fundo") != null, Populate);
+                () => File.Exists(Paineis4a7 + "/c7_painel_b.png"), Populate);
         }
 
         // ------------------------------------------------------------------
@@ -82,21 +84,19 @@ namespace UltimaLinha.EditorTools
         static void Populate(GameObject playerPrefab)
         {
             var fonts = LoadFonts();
-            var core = BuildCore(playerPrefab, Load(Art7, "cenario7_fundo"), W, Floor, LWall, RWall, 330f, withLock: false, fonts);
+            var core = BuildCore(playerPrefab, null, W, Floor, LWall, RWall, 150f, withLock: false, fonts);
+            Paineis(core.world, Floor, PePx, "c7_painel_b");
             var player = core.player;
             var sfx = core.sfx;
 
-            // o fundo desce além da tela normal: a parte de cima continua no mesmo lugar, a vala fica abaixo do zero
-            float extra = (ImgH7 - ImgH) / PPU;
-            var bg = core.world.Find("Fundo");
-            if (bg) bg.position = new Vector3(0f, -extra, 0f);
+            float extra = 1f; // na queda a câmera desce até os trilhos
             core.follow.bounds = new Rect(0f, 0f, X(W) - 0.01f, ImgH / PPU);
 
             var ambience = Source(core.audioRoot, "AmbientePlataforma", Clip("ambiente_plataforma"), loop: true);
             var rumble = Source(core.audioRoot, "Trem", Clip("trem_aproxima"), loop: false);
             var siren = Source(core.audioRoot, "Sirene", null, loop: false);
 
-            BuildTubes(core.world, Tubes, 111f, i => i == 1);
+            BuildTubes(core.world, Tubes, 203f, i => i == 1);
 
             var spots = new GameObject("Lugares").transform;
             spots.SetParent(core.world, false);
@@ -105,6 +105,7 @@ namespace UltimaLinha.EditorTools
             var tmp = BuildNpc("Ren", "ren", RenX, Floor, 3.3f, null);
             var renRig = tmp.rig;
             renRig.facing = 1f;
+            renRig.olhaNaConversa = false; // de costas para o Kai, olhando os trilhos
             Object.DestroyImmediate(tmp);
             renRig.transform.parent.SetParent(core.world, true);
             var renSpot = BuildSpot(spots, "ren", RenX, Floor, 3.4f, 1.7f);
@@ -130,7 +131,7 @@ namespace UltimaLinha.EditorTools
             muzzle.color = new Color(1f, 0.9f, 0.6f, 0f);
 
             // farol do trem (sai do túnel à direita)
-            var head = SpriteObj("FarolDoTrem", core.world, Spr("brilho"), new Vector3(X(TunnelX), Y(560f), 0f), 60);
+            var head = SpriteObj("FarolDoTrem", core.world, Spr("brilho"), new Vector3(X(TunnelX), Y(609f), 0f), 60);
             head.color = new Color(1f, 0.96f, 0.85f, 0f);
             head.transform.localScale = Vector3.one * 0.3f;
 
@@ -157,7 +158,7 @@ namespace UltimaLinha.EditorTools
             dir.edgeX = X(EdgeX);
             dir.floorY = Y(Floor);
             dir.pitY = Y(PitPy);
-            dir.fallBounds = new Rect(0f, -extra, X(W) - 0.01f, ImgH7 / PPU);
+            dir.fallBounds = new Rect(0f, -extra, X(W) - 0.01f, ImgH / PPU + extra);
             dir.darkness = core.ui.darkness;
             dir.flash = core.ui.redTint;
             dir.choice = choice;
@@ -245,7 +246,7 @@ namespace UltimaLinha.EditorTools
 
         /// <summary>
         /// Escolha no estilo de Detroit: Become Human. Sem tela escura: um tom azul leve por cima da cena e, ao lado do Kai,
-        /// uma lista curta com um ícone de botão (△ ○) e o texto em maiúsculas. A opção escolhida ganha um traço azul embaixo.
+        /// uma lista curta com o texto em maiúsculas. A opção escolhida ganha um traço azul embaixo.
         /// </summary>
         static ChoiceUI BuildChoice(Transform root, Fonts fonts, AudioSource voice)
         {
@@ -273,7 +274,6 @@ namespace UltimaLinha.EditorTools
             var title = Label("Titulo", list, "", fonts.sans, 16, new Color(0.6f, 0.8f, 1f, 0.7f), 0, -34, width, 24);
             title.characterSpacing = 18;
 
-            string[] iconNames = { "icone_triangulo", "icone_circulo", "icone_quadrado", "icone_xis" };
             var rows = new RectTransform[count];
             var icons = new Image[count];
             var labels = new TMP_Text[count];
@@ -289,12 +289,8 @@ namespace UltimaLinha.EditorTools
                 bars[i] = Img(TopLeft("Faixa", row, 0, 4, width - 60, rowH - 8), new Color(0.02f, 0.04f, 0.07f, 0.32f));
                 bars[i].raycastTarget = true;
 
-                var icon = Img(TopLeft("Icone", row, 10, 9, 46, 46), Color.white);
-                icon.sprite = Load(Art7, iconNames[i]);
-                icon.preserveAspect = true;
-                icons[i] = icon;
-
-                var label = Label("Texto", row, "", fonts.sans, 30, new Color(0.82f, 0.88f, 0.94f, 0.62f), 74, 11, width - 140, 40);
+                // sem os ícones do controle de PlayStation: só o texto, com o traço embaixo da escolhida
+                var label = Label("Texto", row, "", fonts.sans, 30, new Color(0.82f, 0.88f, 0.94f, 0.62f), 24, 11, width - 90, 40);
                 label.characterSpacing = 12;
                 labels[i] = label;
 

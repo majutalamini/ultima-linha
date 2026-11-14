@@ -26,6 +26,13 @@ namespace UltimaLinha.Cenario1
 
         [Tooltip("Id de quem fala no diálogo (kai, souta, ren).")]
         public string speakerId;
+        [Tooltip("Parado numa conversa, vira para quem fala (quem fala vira para quem ouve). Desligue em cenas em que o " +
+                 "personagem tem de ficar de costas de propósito (o Ren na beira da plataforma).")]
+        public bool olhaNaConversa = true;
+
+        static readonly System.Collections.Generic.List<PersonagemPixel> Todos = new System.Collections.Generic.List<PersonagemPixel>();
+        void OnEnable() => Todos.Add(this);
+        void OnDisable() => Todos.Remove(this);
 
         [Header("Desenho")]
         public SpriteRenderer view;
@@ -92,6 +99,26 @@ namespace UltimaLinha.Cenario1
 
         public void Soltar() => clipe = null;
 
+        /// <summary>Quem ouve olha para quem fala; quem fala olha para o Kai (ou, se for o Kai, para o mais perto).</summary>
+        PersonagemPixel AlvoDaConversa()
+        {
+            string fala = DialogueBox.Speaking;
+            PersonagemPixel melhor = null;
+            float d = float.MaxValue;
+            foreach (var p in Todos)
+            {
+                if (p == this || !p.isActiveAndEnabled) continue;
+                if (fala != speakerId && p.speakerId == fala) return p;
+                if (fala == speakerId)
+                {
+                    if (Jogador && Jogador != this) return Jogador;
+                    float dx = Mathf.Abs(p.transform.position.x - transform.position.x);
+                    if (dx < d) { d = dx; melhor = p; }
+                }
+            }
+            return melhor;
+        }
+
         void LateUpdate()
         {
             float dt = Time.deltaTime;
@@ -105,6 +132,12 @@ namespace UltimaLinha.Cenario1
                 grounded = mover.IsGrounded;
             }
             if (flipSource) facing = flipSource.flipX ? -1f : 1f;
+            if (olhaNaConversa && DialogueBox.IsBusy && Mathf.Abs(vx) < 0.15f)
+            {
+                var alvo = AlvoDaConversa();
+                if (alvo && Mathf.Abs(alvo.transform.position.x - transform.position.x) > 0.3f)
+                    facing = alvo.transform.position.x < transform.position.x ? -1f : 1f;
+            }
             transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * Mathf.Sign(facing), transform.localScale.y, 1f);
 
             float speed = Mathf.Abs(vx);

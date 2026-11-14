@@ -45,7 +45,7 @@ namespace UltimaLinha.Cenario1
                 prompt.color = c;
                 prompt.enabled = promptAlpha > 0.01f;
                 if (Current)
-                    prompt.transform.position = Current.PromptPosition + Vector3.up * (Mathf.Sin(Time.time * 4f) * 0.05f);
+                    prompt.transform.position = Current.PromptPosition + Vector3.up * (0.2f + Mathf.Sin(Time.time * 4f) * 0.05f); // a tecla é maior que a antiga: sobe um pouco
             }
 
             if (Current && InputHelper.InteractPressed())
