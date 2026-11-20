@@ -3,8 +3,8 @@ using UnityEngine;
 namespace UltimaLinha
 {
     /// <summary>
-    /// Cursor do mouse do jogo inteiro (menu e cenários): a ponta facetada de RPG em
-    /// Assets/Resources/Cursor/cursor_rpg.png (desenhada por Ferramentas/Interface/cursor_rpg.py).
+    /// Cursor do mouse do jogo inteiro (menu e cenários): seta em pixel art na paleta da interface (contorno escuro,
+    /// aro creme gasto, miolo vermelho), em Assets/Resources/Cursor/cursor_rpg.png (Ferramentas/Interface/cursor_rpg.py).
     /// O clique é a ponta, no canto de cima à esquerda. Ligado sozinho quando o jogo abre.
     /// </summary>
     public static class GameCursor
