@@ -53,7 +53,7 @@ namespace UltimaLinha.Cenario1
         public AudioSource drone;
         public float droneVolume = 0.45f;
         public AudioSource penLoop;
-        public float penVolume = 0.55f;
+        public float penVolume = 0.3f;
         public AudioSource sfx;
         public AudioClip pageClip;
         public AudioClip trainClip;

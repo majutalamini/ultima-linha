@@ -121,7 +121,13 @@ namespace UltimaLinha.Salas
             }
             if (bossDesk) { bossDesk.available = false; bossDesk.Presented += OnDeskRead; }
             foreach (var c in cabinets)
-                if (c) { c.available = false; c.Presented += OnSearched; }
+                if (c)
+                {
+                    c.available = false;
+                    c.Presented += OnSearched;
+                    // com a chave à mostra, o E no próprio arquivo também pega a chave (o lugar da chave ficava escondido atrás dele)
+                    if (c.id == keyCabinetId) c.Intercept = s => { if (!keyRevealed || hasKey) return false; OnKeyPickup(keyPickup); return true; };
+                }
             if (keyPickup) keyPickup.Intercept = OnKeyPickup;
             if (door)
             {
@@ -180,7 +186,7 @@ namespace UltimaLinha.Salas
                 if (!c) continue;
                 c.available = true;
                 if (GameSave.Has("arquivo_" + c.id) && c.openVisual) c.openVisual.SetActive(true);
-                if (c.id == keyCabinetId && GameSave.Has("arquivo_" + c.id)) c.available = false;
+                if (c.id == keyCabinetId && hasKey) c.available = false;
             }
             if (!hasKey && GameSave.Has("arquivo_" + keyCabinetId)) ShowKey();
         }
@@ -199,7 +205,7 @@ namespace UltimaLinha.Salas
             }
 
             if (!introDone || leaving || running) return;
-            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !Modal.IsOpen)
+            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !DiarioKai.IsOpen && !Modal.IsOpen)
                 StartCoroutine(Leave(menuScene));
         }
 
@@ -335,7 +341,6 @@ namespace UltimaLinha.Salas
         /// <summary>O arquivo certo foi aberto: a chave aparece na gaveta, brilhando, para o Kai pegar.</summary>
         IEnumerator RevealKey(ObjectSpot cabinet)
         {
-            cabinet.available = false;     // o E passa para a chave
             ShowKey();
             if (sfx && keyClip) sfx.PlayOneShot(keyClip, 0.45f);
             yield return null;
@@ -355,8 +360,11 @@ namespace UltimaLinha.Salas
         bool OnKeyPickup(ObjectSpot spot)
         {
             if (hasKey) return true;
-            spot.available = false;
-            spot.gameObject.SetActive(false);
+            if (spot)
+            {
+                spot.available = false;
+                spot.gameObject.SetActive(false);
+            }
             StartCoroutine(FoundKey());
             return true;
         }

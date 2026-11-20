@@ -11,7 +11,7 @@ using static UltimaLinha.EditorTools.SalasBuild;
 namespace UltimaLinha.EditorTools
 {
     /// <summary>
-    /// Monta a cena Assets/Scenes/Cenario6.unity (o túnel: alavanca no painel, contagem regressiva e anteparas que fecham).
+    /// Monta a cena Assets/Scenes/Cenario6.unity (o túnel: alavanca no painel e uma corrida contra a contagem regressiva até o metrô).
     /// - Roda sozinho quando o projeto recompila, se a cena não existir ou estiver numa versão antiga.
     /// - Para refazer do zero: menu  Última Linha > Recriar Cenário 6.
     /// As medidas vêm de Ferramentas/Cenarios367/cenarios_finais.py (mesmos números).
@@ -19,15 +19,19 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario6SceneBuilder
     {
-        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 7; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario6.unity";
         const string Art6 = "Assets/Art/Cenario6";
 
         const float W = 6200f, Floor = 850f, LWall = 120f, RWall = 6140f;
-        const float SocketX = 530f, Slab = 90f, Post = 10f, GateTop = 478f;
-        const float DoorX0 = 5880f, DoorX1 = 6040f, DoorTop = 400f;
-        static readonly float[] Slabs = { 1900f, 3000f, 4100f, 5100f };
-        static readonly (float x, float w)[] Tubes = { (700f, 240f), (1450f, 240f), (2450f, 240f), (3550f, 240f), (4600f, 240f), (5400f, 240f) };
+        // fundo: os painéis c6_inicio/meio/fim do usuário (Ferramentas/Cenarios4a7): painel de tração pintado no começo e o
+        // trem parado, de porta aberta, no fim. Medidas tiradas deles (px "antigos": 100 por unidade).
+        const float PePx = 565f;
+        const float SocketX = 585f, Slab = 90f, Post = 10f, GateTop = 478f;
+        const float DoorX0 = 5790f, DoorX1 = 5960f, DoorTop = 345f, DoorBase = 750f; // a porta aberta do trem pintado
+        // sem anteparas por enquanto: o túnel é só uma corrida contra o tempo (antes: 1900, 3000, 4100, 5100)
+        static readonly float[] Slabs = { };
+        static readonly (float x, float w)[] Tubes = { (600f, 380f), (1580f, 380f), (2760f, 380f), (3730f, 380f), (4910f, 380f), (5870f, 380f) };
         // ritmo de cada antepara: abre, avisa, fecha, fica fechada, reabre, deslocamento
         static readonly float[][] Rhythm =
         {
@@ -80,7 +84,7 @@ namespace UltimaLinha.EditorTools
         {
             ImportFolder(Art6, new Dictionary<string, Vector2> { { "cenario6_fundo", Vector2.zero } }, "cenario6_fundo");
             return Run(interactive, ScenePath, "Cenário 6", new[] { "Cenario5", "Cenario4", "Cenario3", "Cenario2", "Cenario1", "MainMenu" },
-                () => Load(Art6, "cenario6_fundo") != null, Populate);
+                () => Load(Art6, "porta6_folha_esq") != null, Populate);
         }
 
         // ------------------------------------------------------------------
@@ -90,16 +94,16 @@ namespace UltimaLinha.EditorTools
         static void Populate(GameObject playerPrefab)
         {
             var fonts = LoadFonts();
-            var core = BuildCore(playerPrefab, Load(Art6, "cenario6_fundo"), W, Floor, LWall, RWall, 330f, withLock: false, fonts);
+            var core = BuildCore(playerPrefab, null, W, Floor, LWall, RWall, 330f, withLock: false, fonts);
+            Paineis(core.world, Floor, PePx, "c6_inicio", "c6_meio", "c6_fim");
             var player = core.player;
             core.kai.correndo = true; // túnel: contagem regressiva
-            core.kai.strideLength = 3.4f;
             var sfx = core.sfx;
 
             var ambience = Source(core.audioRoot, "AmbienteTunel", Clip("ambiente_tunel"), loop: true);
             var alarm = Source(core.audioRoot, "Alarme", Clip("alarme_loop"), loop: true);
 
-            BuildTubes(core.world, Tubes, 111f, i => i == 1 || i == 3);
+            BuildTubes(core.world, Tubes, 167f, i => i == 1 || i == 3);
 
             // anteparas: parede acima do vão (sólida) + a folha que desce
             float gateH = (Floor - GateTop) / PPU;
@@ -119,15 +123,24 @@ namespace UltimaLinha.EditorTools
             var spots = new GameObject("Lugares").transform;
             spots.SetParent(core.world, false);
             var socket = BuildSpot(spots, "soquete", SocketX, Floor, 3.6f, 1.6f);
-            // a alavanca do chefe, encaixada no soquete do painel (desenhado no fundo em x=530, y=700)
+            // a alavanca: a pega em T recortada do painel pintado (fundos.py, PEGA_C6: x 333-357, linhas 371-380) aparece
+            // no alto do trilho quando o Kai encaixa a alavanca e desce até o pé dele
             var leverRoot = new GameObject("AlavancaEncaixada");
             leverRoot.transform.SetParent(spots, false);
-            var basePos = new Vector3(X(SocketX), Y(722f), 0f);
+            float Linha(float r) => Y(Floor) + (PePx - r) / PixelArtImporter.Ppu;
+            var basePos = new Vector3(333f / PixelArtImporter.Ppu, Linha(380f), 0f);
             leverRoot.transform.position = basePos;
-            SpriteObj("Base", leverRoot.transform, Spr("alavanca_base"), basePos, -10);
-            var handle = SpriteObj("Cabo", leverRoot.transform, Spr("alavanca_cabo"), basePos + new Vector3(0f, 0.4f, 0f), -11);
-            handle.transform.localRotation = Quaternion.Euler(0f, 0f, -38f);
-            var door = BuildExitDoor(core.world, "PortaDoMetro", Art6, "porta6", DoorX0, DoorX1, DoorTop, Floor, sfx, Clip1("porta_destrava"));
+            ConfigureSprite(Paineis4a7 + "/alavanca_c6.png", Vector2.zero, PixelArtImporter.Ppu, 64, FilterMode.Point);
+            var handle = SpriteObj("Cabo", leverRoot.transform, Load(Paineis4a7, "alavanca_c6"), basePos, -10);
+            var door = BuildExitDoor(core.world, "PortaDoMetro", Art6, "porta6", DoorX0, DoorX1, DoorTop, DoorBase, sfx, Clip1("porta_destrava"));
+            // a porta do trem pintado já está aberta, com luz lá dentro: só fica o lugar do E (sem folhas nem vão escuro)
+            foreach (var n in new[] { "Escuro", "Mascara", "FolhaEsquerda", "FolhaDireita" })
+            {
+                var c = door.transform.Find(n);
+                if (c) c.gameObject.SetActive(false);
+            }
+            door.minFeetDy = -1.2f;
+            door.promptOffset = new Vector2(0f, (DoorBase - DoorTop) / PPU + 0.3f);
 
             var dir = new GameObject("Diretor_Cenario6").AddComponent<Cenario6Director>();
             dir.player = player;
@@ -135,6 +148,7 @@ namespace UltimaLinha.EditorTools
             dir.socket = socket;
             dir.leverInserted = leverRoot;
             dir.leverHandle = handle.transform;
+            dir.leverDesce = 38f / PixelArtImporter.Ppu; // até o pé do trilho (linha 418)
             dir.leverClip = Clip("alavanca_pega");
             dir.door = door;
             dir.gates = gates.ToArray();
@@ -142,7 +156,7 @@ namespace UltimaLinha.EditorTools
             foreach (var sx in Slabs) cps.Add(X(sx + Slab + 60f));
             dir.checkpoints = cps.ToArray();
             dir.spawnY = Y(Floor) + 1.62f;
-            dir.countdownSeconds = 70f;
+            dir.countdownSeconds = 25f; // ~55 u correndo a 5,8 u/s levam uns 10 s: sobra folga, mas aperta
             dir.timerText = core.ui.timer;
             dir.redTint = core.ui.redTint;
             dir.ambience = ambience;

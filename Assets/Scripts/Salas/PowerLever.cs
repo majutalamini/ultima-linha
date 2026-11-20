@@ -78,6 +78,28 @@ namespace UltimaLinha.Salas
             Raised?.Invoke(this);
         }
 
+        /// <summary>Volta a alavanca para baixo (dá para puxar de novo).</summary>
+        public void Lower()
+        {
+            if (!IsUp || moving) return;
+            StartCoroutine(Desce());
+        }
+
+        IEnumerator Desce()
+        {
+            moving = true;
+            if (sfx && pullClip) sfx.PlayOneShot(pullClip, 0.5f);
+            float t = 0f, d = 0.6f;
+            while (t < d)
+            {
+                t += Time.deltaTime;
+                if (handle) handle.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(upAngle, downAngle, Mathf.SmoothStep(0f, 1f, t / d)));
+                yield return null;
+            }
+            IsUp = false;
+            moving = false;
+        }
+
         void SetLamp(Color c, float glow)
         {
             c.a = 1f;

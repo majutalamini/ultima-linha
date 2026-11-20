@@ -21,19 +21,25 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario4SceneBuilder
     {
-        const int BuildVersion = 3; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 8; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario4.unity";
-        const string Art4 = "Assets/Art/Cenario4";
+        // fundo: os painéis c4_painel_a/b do usuário (Ferramentas/Cenarios4a7), com os móveis pintados. As medidas abaixo são
+        // em px "antigos" (100 por unidade, y para baixo numa tela de 941): X()/Y() dão unidades; foram tiradas da arte.
+        const string Art4 = "Assets/Art/Cenario4/Pixel"; // gaveta aberta e caixa da luz de emergência (c4_objetos.py)
+        static readonly string[] Moveis = { "gaveta_aberta", "luz_emergencia" };
+        const float PePx = 599f; // linha dos pés nos painéis (o C4 vem a 85 %: Ferramentas/Cenarios4a7/fundos.py, ESCALA)
 
         // medidas (px da imagem, y para baixo)
-        const float W = 3400f, Floor = 850f, LWall = 120f, RWall = 3340f;
-        const float CrateX0 = 1740f, CrateX1 = 1900f, CrateTop = 720f;
-        const float CatX0 = 1900f, CatX1 = 2600f, CatY = 590f;
-        const float GenX0 = 2650f, GenX1 = 2900f, GenTop = 640f;
-        const float DoorX0 = 3120f, DoorX1 = 3300f, DoorTop = 300f;
-        static readonly (float x, float y)[] Levers = { (1650f, 850f), (2050f, 590f), (2780f, 640f) };
-        static readonly (float x, float w)[] Tubes = { (500f, 230f), (1300f, 230f), (2100f, 230f), (2900f, 230f) };
-        static readonly (float x, float y)[] RedLamps = { (380f, 150f), (1500f, 150f), (2300f, 150f), (3200f, 150f) };
+        const float W = 3400f, Floor = 850f, LWall = 120f, RWall = 3270f;
+        const float CrateX0 = 1469f, CrateX1 = 1758f, CrateTop = 660f;   // o caixote pintado (1,9 u acima dos pés)
+        const float CatX0 = 1890f, CatX1 = 2395f, CatY = 598f;            // a passarela pintada
+        const float GenX0 = 2420f, GenX1 = 2726f, GenTop = 578f;          // o gerador pintado
+        const float DoorX0 = 2956f, DoorX1 = 3160f, DoorTop = 412f, DoorBase = 813f; // o vão vazio pintado em c4_painel_b
+        static readonly (float x, float y)[] Levers = { (1359f, 850f), (2081f, 598f), (2573f, 578f) };
+        // as luminárias pintadas nos painéis
+        static readonly (float x, float w)[] Tubes = { (527f, 376f), (1452f, 376f), (2344f, 376f) };
+        const float TubePy = 263f;
+        static readonly (float x, float y)[] RedLamps = { (978f, 230f), (1870f, 230f), (2650f, 230f) };
 
         static string VersionKey => "UltimaLinha.Cenario4.Version:" + Application.dataPath;
         static double firstTry = -1;
@@ -76,9 +82,12 @@ namespace UltimaLinha.EditorTools
 
         static bool Build(bool interactive)
         {
-            ImportFolder(Art4, new Dictionary<string, Vector2> { { "cenario4_fundo", Vector2.zero } }, "cenario4_fundo");
+            var pivos = new Dictionary<string, Vector2>();
+            foreach (var m in Moveis) pivos[m] = Vector2.zero; // canto de baixo à esquerda: posição = pé do móvel
+            ImportFolder(Art4, pivos, "", PixelArtImporter.Ppu, FilterMode.Point);
+            EfeitosBuild.ImportaEfeitos();
             return Run(interactive, ScenePath, "Cenário 4", new[] { "Cenario3", "Cenario2", "Cenario1", "MainMenu" },
-                () => Load(Art4, "cenario4_fundo") != null, Populate);
+                () => Load(Art4, "relogio") != null, Populate);
         }
 
         // ------------------------------------------------------------------
@@ -86,7 +95,8 @@ namespace UltimaLinha.EditorTools
         static void Populate(GameObject playerPrefab)
         {
             var fonts = LoadFonts();
-            var core = BuildCore(playerPrefab, Load(Art4, "cenario4_fundo"), W, Floor, LWall, RWall, 300f, withLock: true, fonts);
+            var core = BuildCore(playerPrefab, null, W, Floor, LWall, RWall, 300f, withLock: true, fonts);
+            Moveis4(core.world);
             var player = core.player;
             var sfx = core.sfx;
 
@@ -96,14 +106,15 @@ namespace UltimaLinha.EditorTools
             var heart = Source(core.audioRoot, "Coracao", Clip("coracao"), loop: true);
 
             // ---------- Luzes ----------
-            BuildTubes(core.world, Tubes, 111f, i => i == 2);
+            BuildTubes(core.world, Tubes, TubePy, i => i == 2);
             var reds = new List<SpriteRenderer>();
             for (int i = 0; i < RedLamps.Length; i++)
             {
+                SpriteObj("LuzDeEmergencia_Caixa" + (i + 1), core.world, Load(Art4, "luz_emergencia"), new Vector3(X(RedLamps[i].x) - A(8f), Y(RedLamps[i].y) - A(12f), 0f), -40);
                 var pos = new Vector3(X(RedLamps[i].x), Y(RedLamps[i].y + 6f), 0f);
                 var glow = SpriteObj("LuzDeEmergencia" + (i + 1), core.world, Spr("brilho"), pos, 21);
-                glow.color = new Color(1f, 0.1f, 0.06f, 0.5f);
-                glow.transform.localScale = new Vector3(1.9f, 1.5f, 1f);
+                glow.color = new Color(1f, 0.1f, 0.06f, 0.35f);
+                glow.transform.localScale = new Vector3(0.6f, 0.45f, 1f); // a luz no ambiente é a Light2D; o halo é só o brilho da lente
                 reds.Add(glow);
             }
 
@@ -123,19 +134,19 @@ namespace UltimaLinha.EditorTools
             var spots = new GameObject("Lugares").transform;
             spots.SetParent(core.world, false);
 
-            var socket = BuildSpot(spots, "encaixe", 3000f, Floor, 3.2f, 1.3f, sfx, null);
+            var socket = BuildSpot(spots, "encaixe", 2828f, Floor, 3.2f, 1.3f, sfx, null);
             socket.first = Lines(
                 ("kai", "<i>Quatro encaixes no painel. Eu só tenho três alavancas aqui.</i>"),
                 ("kai", "<i>A que falta está em outro lugar. Se eu a achar, volto aqui.</i>"));
             socket.again = Lines(("kai", "<i>O quarto encaixe continua vazio. Preciso achar a alavanca.</i>"));
 
-            var clock = BuildSpot(spots, "relogio", 1250f, Floor, 3.6f, 1.4f);
+            var clock = BuildSpot(spots, "relogio", 1240f, Floor, 3.6f, 1.4f);
             clock.first = Lines(
                 ("kai", "<i>O relógio parou. Os ponteiros estão em quatro e dezessete.</i>"),
                 ("kai", "<i>Por que eu sinto que já vi essa hora antes?</i>"));
             clock.again = Lines(("kai", "<i>04:17. A hora em que tudo parou.</i>"));
 
-            var note = BuildSpot(spots, "bilhete", 660f, Floor, 3.3f, 1.3f);
+            var note = BuildSpot(spots, "bilhete", 641f, Floor, 3.3f, 1.3f);
             note.docTitle = "REGISTRO DE TURNO";
             note.docBody =
                 "Turno da noite. Supervisor: M. Takeda.\n\n" +
@@ -146,15 +157,15 @@ namespace UltimaLinha.EditorTools
             note.first = Lines(("kai", "<i>O relógio da parede. A senha é a hora em que ele parou.</i>"));
             note.again = Lines(("kai", "<i>A hora em que o relógio parou, sem os dois pontos.</i>"));
 
-            var drawer = BuildSpot(spots, "gaveta", 862f, Floor, 2.6f, 1.3f, sfx, null);
+            var drawer = BuildSpot(spots, "gaveta", 764f, Floor, 2.6f, 1.3f, sfx, null);
             drawer.first = Lines(("kai", "<i>Só papéis velhos. A chave já está comigo.</i>"));
             drawer.again = Lines(("kai", "<i>Já levei o que importava.</i>"));
-            var open = SpriteObj("GavetaAberta", core.world, Load(Art4, "gaveta_aberta"), new Vector3(X(864f), Y(776f), 0f), 2);
+            var open = SpriteObj("GavetaAberta", core.world, Load(Art4, "gaveta_aberta"), new Vector3(X(688f), Y(Floor) + 1.62f, 0f), -38);
             open.gameObject.SetActive(false);
             drawer.openVisual = open.gameObject;
 
             // ---------- Porta de serviço ----------
-            var door = BuildExitDoor(core.world, "PortaDeServico", Art4, "porta4", DoorX0, DoorX1, DoorTop, Floor, sfx, Clip1("porta_destrava"));
+            var door = PortaNoVao(core.world, "PortaDeServico", "porta_c4", DoorX0, DoorX1, DoorTop, DoorBase, sfx);
 
             // ---------- Souta e Ren ----------
             var souta = BuildNpc("Souta", "souta", 470f, Floor, 3.55f, player.transform);
@@ -242,6 +253,53 @@ namespace UltimaLinha.EditorTools
                 ("kai", "<i>Esse corredor... eu já andei por ele. Eu sei aonde ele leva.</i>"));
 
             SetSpeakers(core.ui.dialogue);
+            Luzes(core, reds);
+        }
+
+        static float A(float px) => px / PixelArtImporter.Ppu;
+
+        /// <summary>A sala: os dois painéis do usuário, com armários, mesa, relógio (repintado em 04:17), caixote, passarela,
+        /// gerador, painel de energia e o batente vazio da porta.</summary>
+        static void Moveis4(Transform world) => Paineis(world, Floor, PePx, "c4_painel_a", "c4_painel_b");
+
+        /// <summary>Luz 2D de verdade e efeitos de ambiente (piloto: Ferramentas/Assets/GUIA_ARTE.md).</summary>
+        static void Luzes(Core core, List<SpriteRenderer> reds)
+        {
+            var luzes = new GameObject("Luzes2D").transform;
+            luzes.SetParent(core.world, false);
+            EfeitosBuild.Global(luzes, 0.62f, new Color(0.74f, 0.77f, 0.82f));
+            // as luminárias: uma luz fria embaixo de cada halo, que falha junto com ele
+            int i = 0;
+            foreach (var t in Tubes)
+            {
+                var halo = core.world.Find($"Luminarias/Luminaria{++i}/Halo")?.GetComponent<SpriteRenderer>();
+                EfeitosBuild.Fluorescente(luzes, new Vector3(X(t.x), Y(111f) - 0.4f, 0f), halo);
+            }
+            // vermelho de emergência: segue o halo que o diretor pulsa e desliga quando a energia volta
+            for (int r = 0; r < reds.Count; r++)
+                EfeitosBuild.DeEmergencia(luzes, reds[r].transform.position + Vector3.down * 0.3f, reds[r]);
+            // a luz quente do mostrador do gerador e a lâmpada da mesa
+            Renderizador2D.Luz("Luz2D_Mesa", luzes, new Vector3(X(935f), Y(604f), 0f), UnityEngine.Rendering.Universal.Light2D.LightType.Point,
+                new Color(1f, 0.8f, 0.55f), 0.6f, 2.6f);
+
+            var fx = new GameObject("Efeitos").transform;
+            fx.SetParent(core.world, false);
+            float chao = Y(Floor);
+            EfeitosBuild.Emissor(fx, "Poeira_A", new Vector3(X(765f), chao + 3.0f, 0f), UltimaLinha.Visual.EmissorAmbiente.Tipo.Poeira, new Vector2(12f, 5f), new Color(0.78f, 0.76f, 0.7f), 0.45f);
+            EfeitosBuild.Emissor(fx, "Poeira_B", new Vector3(X(2040f), chao + 3.0f, 0f), UltimaLinha.Visual.EmissorAmbiente.Tipo.Poeira, new Vector2(12f, 5f), new Color(0.78f, 0.76f, 0.7f), 0.45f);
+            var neblina = EfeitosBuild.Emissor(fx, "Neblina", new Vector3(X(1445f), chao + 0.25f, 0f), UltimaLinha.Visual.EmissorAmbiente.Tipo.Neblina, new Vector2(30f, 0.4f), new Color(0.55f, 0.58f, 0.6f), 0.06f, 1f, 15);
+            neblina.textura = Spr("brilho"); // mancha suave: em quadradinho a neblina virava blocos cinza no chão
+            neblina.Aplica();
+            // sem vapor no gerador: a fumaça em quadradinhos ficou feia
+            EfeitosBuild.Goteira(fx, new Vector3(X(1000f), Y(220f), 0f), chao, new Vector2(1.8f, 4f));
+            EfeitosBuild.Goteira(fx, new Vector3(X(2098f), Y(220f), 0f), chao, new Vector2(2.5f, 6f));
+            EfeitosBuild.Faiscas(fx, new Vector3(X(2883f), chao + 2.8f, 0f)); // os fios soltos do quarto encaixe, no painel pintado
+            // uma silhueta passa pela parede do relógio quando o Kai chega perto (uma vez)
+            var sombra = EfeitosBuild.Sombra(fx, new Vector3(X(1359f), chao, 0f), core.player.transform, -5f);
+            sombra.distanciaAtivacao = 2.5f;
+
+            int lit = EfeitosBuild.LitNaCena();
+            Debug.Log($"[Cenário 4] Luz 2D: {lit} sprites Lit, {Tubes.Length} luminárias, {reds.Count} luzes de emergência");
         }
     }
 }

@@ -133,14 +133,51 @@ namespace UltimaLinha.EditorTools
 
         // ---------- Assets ----------
 
-        public static void ImportFolder(string artFolder, Dictionary<string, Vector2> pivots, string bigFile)
+        /// <summary>ppu/filtro: a arte antiga é 100 px/u com filtro bilinear; a refeita em pixel art, 58 px/u e Point.
+        /// Mapas de normais (_normal) ficam de fora: quem usa configura.</summary>
+        public static void ImportFolder(string artFolder, Dictionary<string, Vector2> pivots, string bigFile, float ppu = PPU, FilterMode filtro = FilterMode.Bilinear)
         {
             foreach (var path in AssetDatabase.FindAssets("t:Texture2D", new[] { artFolder }).Select(AssetDatabase.GUIDToAssetPath))
             {
                 string file = Path.GetFileNameWithoutExtension(path);
+                if (file.EndsWith("_normal")) continue;
                 var pivot = pivots.TryGetValue(file, out var p) ? p : new Vector2(0.5f, 0.5f);
-                ConfigureSprite(path, pivot, PPU, file == bigFile ? 8192 : 2048);
+                ConfigureSprite(path, pivot, ppu, file == bigFile ? 8192 : 2048, filtro);
             }
+        }
+
+        public const string Paineis4a7 = "Assets/Art/Cenarios4a7";
+
+        /// <summary>Fundo de painéis gerados pelo usuário (Ferramentas/Cenarios4a7/fundos.py: 58 px/u, 540 px de tela + 110 de
+        /// teto), lado a lado a partir de x = 0. pePx: a linha (de cima, no painel com o teto) onde os pés pisam, que fica em
+        /// Y(floorPy). Devolve onde cada painel começa (u).</summary>
+        public static float[] Paineis(Transform world, float floorPy, float pePx, params string[] nomes)
+        {
+            var inicio = new float[nomes.Length + 1];
+            for (int i = 0; i < nomes.Length; i++)
+            {
+                string path = $"{Paineis4a7}/{nomes[i]}.png";
+                ConfigureSprite(path, Vector2.zero, PixelArtImporter.Ppu, 4096, FilterMode.Point);
+                var spr = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (!spr) Debug.LogWarning("[Última Linha] Painel não encontrado: " + path + " (rode Ferramentas/Cenarios4a7/fundos.py)");
+                float h = spr ? spr.rect.height : 650f;
+                SpriteObj("Fundo_" + nomes[i], world, spr, new Vector3(inicio[i], Y(floorPy) - (h - pePx) / PixelArtImporter.Ppu, 0f), -110);
+                inicio[i + 1] = inicio[i] + (spr ? spr.bounds.size.x : 21.6f);
+            }
+            return inicio;
+        }
+
+        /// <summary>Porta da administração (folhas e corredor de fundos.py) num vão vazio pintado no painel. A base do vão fica
+        /// um pouco acima dos pés: o alcance da porta aceita isso.</summary>
+        public static ExitDoor PortaNoVao(Transform world, string nome, string prefixo, float x0Px, float x1Px, float topoPy, float basePy,
+            AudioSource sfx)
+        {
+            foreach (var lado in new[] { "_folha_esq", "_folha_dir", "_interior" })
+                ConfigureSprite($"{Paineis4a7}/{prefixo}{lado}.png", new Vector2(0.5f, 0.5f), PixelArtImporter.Ppu, 1024, FilterMode.Point);
+            var door = BuildExitDoor(world, nome, Paineis4a7, prefixo, x0Px, x1Px, topoPy, basePy, sfx, Clip1("porta_destrava"));
+            door.minFeetDy = -1.2f;
+            door.promptOffset = new Vector2(0f, (basePy - topoPy) / PPU + 0.3f);
+            return door;
         }
 
         public static Sprite Load(string folder, string name)
@@ -232,7 +269,8 @@ namespace UltimaLinha.EditorTools
             playerGo.name = "Kai (Player)";
             playerGo.transform.position = spawn.transform.position;
             var player = playerGo.GetComponent<PlayerController>();
-            player.maxSpeed = 3.4f;
+            player.maxSpeed = 2.8f;
+            player.runMultiplier = 2.06f; // corrida a ~5,8 u/s
             player.jumpTakeOffSpeed = 7.2f;
             player.gravityModifier = 1.25f;
             player.jumpAudio = null;
@@ -253,13 +291,10 @@ namespace UltimaLinha.EditorTools
             var kaiRig = BuildPersonagem("kai", playerGo.transform, new Vector3(0f, -1.6f, 0f), 10);
             kaiRig.mover = player;
             kaiRig.flipSource = mainSr;
-            kaiRig.strideLength = 2.3f;
             core.player = player;
             core.kai = kaiRig;
 
-            var prompt = SpriteObj("TeclaE", null, Spr("tecla_e"), Vector3.zero, 50);
-            prompt.transform.localScale = Vector3.one * 0.75f;
-            prompt.enabled = false;
+            var prompt = PromptE();
             var interactor = playerGo.AddComponent<PlayerInteractor>();
             interactor.player = player;
             interactor.prompt = prompt;
@@ -310,13 +345,13 @@ namespace UltimaLinha.EditorTools
                 cover.color = new Color(0.03f, 0.03f, 0.035f, 0f);
                 cover.transform.localScale = new Vector3(tube.w / 8f, 16f / 8f, 1f);
                 var glow = SpriteObj("Halo", go.transform, Spr("brilho_tubo"), go.transform.position, 20);
-                glow.color = new Color(0.86f, 0.93f, 0.9f, 0.15f);
-                glow.transform.localScale = new Vector3(Mathf.Max(0.6f, tube.w * 1.7f / 256f), 1.8f, 1f);
+                glow.color = new Color(0.86f, 0.93f, 0.9f, 0.08f); // a luminária já vem pintada no fundo: o halo só respira
+                glow.transform.localScale = new Vector3(Mathf.Max(0.6f, tube.w * 1.2f / 256f), 0.9f, 1f);
                 var fl = go.AddComponent<FluorescentLight>();
                 fl.glow = glow;
                 fl.cover = cover;
                 fl.broken = broken != null && broken(i);
-                fl.glowAlpha = fl.broken ? 0.11f : 0.15f;
+                fl.glowAlpha = fl.broken ? 0.06f : 0.08f;
                 fl.crackle = null;
                 i++;
             }
@@ -408,14 +443,15 @@ namespace UltimaLinha.EditorTools
             lever.sfx = sfx;
             lever.pullClip = pull;
 
+            // a alavanca em pixel art do Cenário 1 (mesmas medidas do TrainLever, na grade dos personagens)
             var p = root.transform.position;
-            SpriteObj("Base", root.transform, Spr("alavanca_base"), p, -10);
-            var handle = SpriteObj("Cabo", root.transform, Spr("alavanca_cabo"), p + new Vector3(0f, 0.4f, 0f), -11);
+            SpriteObj("Base", root.transform, Obj("alavanca_base"), p, -10);
+            var handle = SpriteObj("Cabo", root.transform, Obj("alavanca_cabo"), p + new Vector3(0f, U(27f), 0f), -11);
             lever.handle = handle.transform;
 
-            var lampPos = p + new Vector3(0f, 1.05f, 0f);
-            SpriteObj("Soquete", root.transform, Spr("lampada_soquete"), lampPos + new Vector3(0f, 0.13f, 0f), -12);
-            var lamp = SpriteObj("Lampada", root.transform, Spr("lampada"), lampPos, -10);
+            var lampPos = p + new Vector3(0f, U(62f), 0f);
+            SpriteObj("Suporte", root.transform, Obj("lampada_suporte"), lampPos + new Vector3(0f, U(9f), 0f), -12);
+            var lamp = SpriteObj("Lampada", root.transform, Obj("lampada"), lampPos, -10);
             var glow = SpriteObj("Lampada_Halo", root.transform, Spr("brilho"), lampPos, -9);
             glow.transform.localScale = Vector3.one * 0.55f;
             glow.color = new Color(1f, 1f, 1f, 0f);
@@ -436,7 +472,7 @@ namespace UltimaLinha.EditorTools
 
         // ---------- Interface ----------
 
-        static Ui BuildUi(Fonts fonts, AudioSource voice, bool withLock)
+        internal static Ui BuildUi(Fonts fonts, AudioSource voice, bool withLock)
         {
             var ui = new Ui();
             var canvasGo = new GameObject("Interface") { layer = UILayer };
@@ -470,14 +506,16 @@ namespace UltimaLinha.EditorTools
             var objRt = Stretch("Objetivo", hudRt);
             var objGroup = objRt.gameObject.AddComponent<CanvasGroup>();
             objGroup.alpha = 0f;
-            var objLabel = Label("Rotulo", objRt, "OBJETIVO", fonts.sans, 16, Tagline, 64, 58, 600, 24);
+            var objLabel = Label("Rotulo", objRt, "OBJETIVO", fonts.sans, 16, Tagline, 64, 52, 600, 30);
             objLabel.characterSpacing = 22;
-            Img(TopLeft("Linha", objRt, 64, 70, 46, 1), Rule);
-            var objText = Label("Texto", objRt, "", fonts.italic, 32, Cream, 64, 82, 1400, 60);
+            Img(TopLeft("Linha", objRt, 64, 86, 60, 2), Rule);
+            var objText = Label("Texto", objRt, "", fonts.italic, 40, Cream, 64, 96, 1400, 70);
 
-            var controls = Label("Controles", hudRt, "A/D andar   ·   ESPAÇO pular   ·   E interagir   ·   ESC menu",
-                fonts.sans, 15, new Color(Muted.r, Muted.g, Muted.b, 0.55f), 64, 1080 - 44, 1400, 24);
-            controls.characterSpacing = 6;
+            Img(TopLeft("FaixaControles", hudRt, 0, 1080 - 64, 1920, 64), new Color(0f, 0f, 0f, 0.55f));
+            var controls = Label("Controles", hudRt, "<color=#E8DCC8>A/D</color> andar     <color=#E8DCC8>SHIFT</color> correr     <color=#E8DCC8>ESPAÇO</color> pular     <color=#E8DCC8>E</color> interagir     <color=#E8DCC8>TAB</color> diário     <color=#E8DCC8>ESC</color> menu",
+                fonts.sans, 15, new Color(Muted.r, Muted.g, Muted.b, 0.9f), 64, 1080 - 50, 1800, 32);
+            controls.characterSpacing = 4;
+            controls.richText = true;
 
             ui.timer = Label("Contagem", hudRt, "", fonts.sans, 60, Hex("D9453A"), 1356, 44, 500, 80);
             ui.timer.alignment = TextAlignmentOptions.Right;
@@ -493,6 +531,7 @@ namespace UltimaLinha.EditorTools
             ui.document = BuildDocument(root, fonts, voice);
             if (withLock) ui.lockUi = BuildDigitLock(root, fonts, voice);
             ui.dialogue = BuildDialogue(root, fonts.sans, fonts.serif, voice);
+            BuildDiario(root, fonts.sans);
 
             var endRt = Stretch("Fim", hudRt);
             var endGroup = endRt.gameObject.AddComponent<CanvasGroup>();
@@ -557,7 +596,7 @@ namespace UltimaLinha.EditorTools
             body.lineSpacing = 6;
             var footer = Label("Rodape", sheet, "", fonts.italic, 26, new Color(ink.r, ink.g, ink.b, 0.8f), 50, 744, 700, 60);
             footer.textWrappingMode = TextWrappingModes.Normal;
-            var hint = Label("Fechar", sheet, "E  ›  fechar", fonts.sans, 18, new Color(ink.r, ink.g, ink.b, 0.6f), 0, 0, 200, 28);
+            var hint = Label("Fechar", sheet, "ESPAÇO  ›  fechar", fonts.sans, 18, new Color(ink.r, ink.g, ink.b, 0.6f), 0, 0, 200, 28);
             var hrt = hint.rectTransform;
             hrt.anchorMin = hrt.anchorMax = new Vector2(1, 0);
             hrt.pivot = new Vector2(1, 0);

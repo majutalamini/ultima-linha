@@ -26,15 +26,29 @@ namespace UltimaLinha.Cenario1
 
         [Tooltip("Id de quem fala no diálogo (kai, souta, ren).")]
         public string speakerId;
+        [Tooltip("Parado numa conversa, vira para quem fala (quem fala vira para quem ouve). Desligue em cenas em que o " +
+                 "personagem tem de ficar de costas de propósito (o Ren na beira da plataforma).")]
+        public bool olhaNaConversa = true;
+
+        static readonly System.Collections.Generic.List<PersonagemPixel> Todos = new System.Collections.Generic.List<PersonagemPixel>();
+        void OnEnable() => Todos.Add(this);
+        void OnDisable() => Todos.Remove(this);
 
         [Header("Desenho")]
         public SpriteRenderer view;
         public SpriteRenderer shadow;
+        [Tooltip("Reflexo no chão encerado/molhado (opcional): repete o quadro do desenho, de cabeça para baixo.")]
+        public SpriteRenderer reflexo;
+        [Tooltip("Sombra de contato (opcional): pequena e de borda dura, logo abaixo das solas.")]
+        public SpriteRenderer contato;
+        public float alfaSombra = 0.55f, alfaReflexo = 0.2f;
+        [Tooltip("Altura (mundo) do chão que reflete; fora dele o reflexo some.")]
+        public float chaoReflexo;
         public Sprite[] idle, walk, run, jump, fall, talk, act;
         public ClipePixel[] extras;
-        public float idleFps = 4f, talkFps = 7f;
+        public float idleFps = 3f, talkFps = 5f;
         [Tooltip("Velocidade do gesto próprio (suspiro, relógio, olhar para trás).")]
-        public float gestoFps = 4f;
+        public float gestoFps = 3f;
         [Tooltip("Intervalo em segundos entre um gesto e outro (mínimo, máximo).")]
         public Vector2 pausaGesto = new Vector2(18f, 32f);
 
@@ -49,6 +63,8 @@ namespace UltimaLinha.Cenario1
         public float jumpSpeed = 10.8f;
         [Tooltip("Usa a corrida no lugar da caminhada.")]
         public bool correndo;
+        [Tooltip("Distância (unidades) de um ciclo de passos correndo.")]
+        public float strideCorrida = 4.2f;
 
         /// <summary>1 = olhando para a direita, -1 = para a esquerda.</summary>
         [HideInInspector] public float facing = 1f;
@@ -83,6 +99,26 @@ namespace UltimaLinha.Cenario1
 
         public void Soltar() => clipe = null;
 
+        /// <summary>Quem ouve olha para quem fala; quem fala olha para o Kai (ou, se for o Kai, para o mais perto).</summary>
+        PersonagemPixel AlvoDaConversa()
+        {
+            string fala = DialogueBox.Speaking;
+            PersonagemPixel melhor = null;
+            float d = float.MaxValue;
+            foreach (var p in Todos)
+            {
+                if (p == this || !p.isActiveAndEnabled) continue;
+                if (fala != speakerId && p.speakerId == fala) return p;
+                if (fala == speakerId)
+                {
+                    if (Jogador && Jogador != this) return Jogador;
+                    float dx = Mathf.Abs(p.transform.position.x - transform.position.x);
+                    if (dx < d) { d = dx; melhor = p; }
+                }
+            }
+            return melhor;
+        }
+
         void LateUpdate()
         {
             float dt = Time.deltaTime;
@@ -96,6 +132,12 @@ namespace UltimaLinha.Cenario1
                 grounded = mover.IsGrounded;
             }
             if (flipSource) facing = flipSource.flipX ? -1f : 1f;
+            if (olhaNaConversa && DialogueBox.IsBusy && Mathf.Abs(vx) < 0.15f)
+            {
+                var alvo = AlvoDaConversa();
+                if (alvo && Mathf.Abs(alvo.transform.position.x - transform.position.x) > 0.3f)
+                    facing = alvo.transform.position.x < transform.position.x ? -1f : 1f;
+            }
             transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * Mathf.Sign(facing), transform.localScale.y, 1f);
 
             float speed = Mathf.Abs(vx);
@@ -116,8 +158,9 @@ namespace UltimaLinha.Cenario1
             }
             else if (walking)
             {
-                var ciclo = correndo && Len(run) > 0 ? run : walk;
-                cicloPasso += dt * speed / Mathf.Max(0.5f, strideLength);
+                bool corre = (correndo || (mover is PlayerController pc && pc.Running)) && Len(run) > 0;
+                var ciclo = corre ? run : walk;
+                cicloPasso += dt * speed / Mathf.Max(0.5f, corre ? strideCorrida : strideLength);
                 cicloPasso -= Mathf.Floor(cicloPasso);
                 frame = Pick(ciclo, Mathf.FloorToInt(cicloPasso * Len(ciclo)));
                 actPlayed = -1f;
@@ -138,8 +181,23 @@ namespace UltimaLinha.Cenario1
             if (shadow)
             {
                 var c = shadow.color;
-                c.a = Mathf.Lerp(0.55f, 0.15f, air);
+                c.a = Mathf.Lerp(alfaSombra, 0.15f, air);
                 shadow.color = c;
+            }
+            if (contato)
+            {
+                var c = contato.color;
+                c.a = 1f - air;
+                contato.color = c;
+            }
+            if (reflexo && view)
+            {
+                reflexo.sprite = view.sprite;
+                var c = view.color;
+                // só o chão do vagão reflete: em cima de banco ou bagageiro o reflexo some
+                float noChao = Mathf.Clamp01(1f - Mathf.Abs(transform.position.y - chaoReflexo) / 0.3f);
+                c.a *= alfaReflexo * (1f - air) * noChao;
+                reflexo.color = c;
             }
         }
 

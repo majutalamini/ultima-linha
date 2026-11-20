@@ -136,7 +136,7 @@ namespace UltimaLinha.Salas
         void Update()
         {
             if (!introDone || finale) return;
-            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !Modal.IsOpen) StartCoroutine(Quit());
+            if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !DiarioKai.IsOpen && !Modal.IsOpen) StartCoroutine(Quit());
         }
 
         IEnumerator Quit()

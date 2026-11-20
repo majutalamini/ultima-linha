@@ -63,6 +63,17 @@ namespace UltimaLinha.Salas
             if (rig) rig.externalSpeed = 0f;
         }
 
+        /// <summary>O Kai anda sozinho até x (cinemática). Deixa o controle desligado.</summary>
+        public static IEnumerator WalkPlayerTo(Platformer.Mechanics.PlayerController player, float x, float speed = 1f)
+        {
+            if (!player) yield break;
+            player.controlEnabled = false;
+            float dir = Mathf.Sign(x - player.transform.position.x);
+            player.scriptedMove = dir * speed;
+            while (Mathf.Sign(x - player.transform.position.x) == dir) yield return null;
+            player.scriptedMove = 0f;
+        }
+
         public static IEnumerator ReadAll(string[] titles, string[] bodies, string[] footers)
         {
             for (int i = 0; i < bodies.Length; i++)

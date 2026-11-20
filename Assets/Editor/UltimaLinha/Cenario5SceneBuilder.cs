@@ -21,26 +21,31 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario5SceneBuilder
     {
-        const int BuildVersion = 4; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 6; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario5.unity";
         const string Art5 = "Assets/Art/Cenario5";
 
-        const float W = 3600f, Floor = 850f, LWall = 120f, RWall = 3540f;
-        const float DoorX0 = 3250f, DoorX1 = 3430f, DoorTop = 300f;
-        const float BossDeskX = 1790f, BodyX = 2355f;
+        // fundo: os painéis c5_painel_a/b do usuário (Ferramentas/Cenarios4a7), com mesas, arquivos e a mesa do chefe
+        // pintados; as medidas abaixo foram tiradas deles (px "antigos": 100 por unidade). Corpo, placas, gavetas e chave
+        // continuam a arte antiga por cima.
+        const float PePx = 585f;
+        const float W = 3900f, Floor = 850f, LWall = 120f, RWall = 3800f;
+        const float DoorX0 = 3519f, DoorX1 = 3750f, DoorTop = 321f, DoorBase = 790f; // o vão vazio pintado em c5_painel_b
+        const float BossDeskX = 1840f, BodyX = 2505f;
         // corpo e cabeça (sprites separados, mesmas medidas de Ferramentas/Cenarios45/cenario5.py: BODY_BOX e HEAD_BOX)
-        const float BodyCx = 2355f, BodyCy = 814f, HeadCx = 2497f, HeadCy = 809f, BodyX0 = 2150f, BodyX1 = 2560f;
-        const float PlateY = 526f, KeyY = 655f, DrawerY = 690f;
+        // o corpo: um passageiro do C0 deitado (Ferramentas/Cenario5/corpo.py, 178 x 55 px; a cabeça, 40 px, à direita)
+        const float BodyCx = 2468f, BodyCy = 808f, HeadCx = 2656f, HeadCy = 808f, BodyX0 = 2300f, BodyX1 = 2710f;
+        const float PlateY = 383f, KeyY = 620f, DrawerY = 655f; // plaquinhas e gavetas dos arquivos pintados
         static readonly (string id, string label, float x0, float x1)[] Cabinets =
         {
-            ("arquivoA", "ADMISSÕES", 1280f, 1410f),
-            ("arquivoB", "AVALIAÇÕES", 2640f, 2770f),
-            ("arquivoC", "DEMISSÕES", 2810f, 2940f),
-            ("arquivoD", "FINANCEIRO", 2980f, 3110f),
+            ("arquivoA", "ADMISSÕES", 1320f, 1490f),
+            ("arquivoB", "AVALIAÇÕES", 2870f, 3030f),
+            ("arquivoC", "DEMISSÕES", 3060f, 3220f),
+            ("arquivoD", "FINANCEIRO", 3250f, 3410f),
         };
         // placas legíveis em cima dos arquivos (Ferramentas/Cenarios45/extras5.py), na mesma ordem
         static readonly string[] Plates = { "placa_admissoes", "placa_avaliacoes", "placa_demissoes", "placa_financeiro" };
-        static readonly (float x, float w)[] Tubes = { (560f, 240f), (1300f, 240f), (2050f, 240f), (2800f, 240f), (3280f, 240f) };
+        static readonly (float x, float w)[] Tubes = { (610f, 390f), (1550f, 390f), (2780f, 390f), (3720f, 390f) }; // as pintadas
 
         static string VersionKey => "UltimaLinha.Cenario5.Version:" + Application.dataPath;
         static double firstTry = -1;
@@ -85,7 +90,7 @@ namespace UltimaLinha.EditorTools
         {
             ImportFolder(Art5, new Dictionary<string, Vector2> { { "cenario5_fundo", Vector2.zero } }, "cenario5_fundo");
             return Run(interactive, ScenePath, "Cenário 5", new[] { "Cenario4", "Cenario3", "Cenario2", "Cenario1", "MainMenu" },
-                () => Load(Art5, "cenario5_fundo") != null, Populate);
+                () => Load(Art5, "corpo_chefe") != null, Populate);
         }
 
         // ------------------------------------------------------------------
@@ -93,7 +98,8 @@ namespace UltimaLinha.EditorTools
         static void Populate(GameObject playerPrefab)
         {
             var fonts = LoadFonts();
-            var core = BuildCore(playerPrefab, Load(Art5, "cenario5_fundo"), W, Floor, LWall, RWall, 330f, withLock: false, fonts);
+            var core = BuildCore(playerPrefab, null, W, Floor, LWall, RWall, 330f, withLock: false, fonts);
+            Paineis(core.world, Floor, PePx, "c5_painel_a", "c5_painel_b");
             var player = core.player;
             var sfx = core.sfx;
 
@@ -102,10 +108,10 @@ namespace UltimaLinha.EditorTools
             var heartbeat = Source(core.audioRoot, "Coracao", Clip("coracao"), loop: true);
 
             // ---------- Luzes ----------
-            BuildTubes(core.world, Tubes, 111f, i => i == 1 || i == 3);
+            BuildTubes(core.world, Tubes, 126f, i => i == 1 || i == 3);
 
             // ---------- Porta do escritório ----------
-            var door = BuildExitDoor(core.world, "PortaDoEscritorio", Art5, "porta5", DoorX0, DoorX1, DoorTop, Floor, sfx, Clip1("porta_destrava"));
+            var door = PortaNoVao(core.world, "PortaDoEscritorio", "porta_c5", DoorX0, DoorX1, DoorTop, DoorBase, sfx);
 
             // ---------- Lugares de interação ----------
             var spots = new GameObject("Lugares").transform;
@@ -113,8 +119,11 @@ namespace UltimaLinha.EditorTools
 
             var body = BuildSpot(spots, "corpo", BodyX, Floor, 1.5f, 2.3f);
             // o corpo e a cabeça ficam soltos do fundo: os passos grudam no sangue e a cabeça se desprende
-            SpriteObj("CorpoDoChefe", body.transform, Load(Art5, "corpo_chefe"), new Vector3(X(BodyCx), Y(BodyCy), 0f), 3);
-            var headSr = SpriteObj("CabecaDoChefe", body.transform, Load(Art5, "cabeca_chefe"), new Vector3(X(HeadCx), Y(HeadCy), 0f), 4);
+            foreach (var n in new[] { "corpo_chefe", "cabeca_chefe", "sangue_chefe" })
+                ConfigureSprite($"{Paineis4a7}/{n}.png", new Vector2(0.5f, 0.5f), PixelArtImporter.Ppu, 512, FilterMode.Point);
+            SpriteObj("SangueDoChefe", body.transform, Load(Paineis4a7, "sangue_chefe"), new Vector3(X(BodyCx + 40f), Y(Floor) + 0.05f, 0f), 2);
+            SpriteObj("CorpoDoChefe", body.transform, Load(Paineis4a7, "corpo_chefe"), new Vector3(X(BodyCx), Y(BodyCy), 0f), 3);
+            var headSr = SpriteObj("CabecaDoChefe", body.transform, Load(Paineis4a7, "cabeca_chefe"), new Vector3(X(HeadCx), Y(HeadCy), 0f), 4);
             var crossing = body.gameObject.AddComponent<BodyCrossing>();
             crossing.player = player;
             crossing.x0 = X(BodyX0);
