@@ -286,7 +286,7 @@ namespace UltimaLinha.Cenario1
             if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 1.2f);
         }
 
-        /// <summary>Botão no canto de baixo à direita, por cima de tudo (até do preto da abertura).</summary>
+        /// <summary>Botão no canto de baixo à esquerda, por cima de tudo (até do preto da abertura).</summary>
         void CriaBotaoPular()
         {
             if (botaoPular) return;
@@ -316,8 +316,9 @@ namespace UltimaLinha.Cenario1
             var rt = new GameObject("Botao", typeof(RectTransform), typeof(Image), typeof(Button)).GetComponent<RectTransform>();
             rt.gameObject.layer = 5;
             rt.SetParent(botaoPular.transform, false);
-            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-40f, -36f);
+            // embaixo à esquerda: à direita fica o "E / ESPAÇO ›" do diário
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 0f);
+            rt.anchoredPosition = new Vector2(40f, 30f);
             rt.sizeDelta = new Vector2(330f, 60f);
             var fundo = rt.GetComponent<Image>();
             fundo.color = new Color(0.07f, 0.06f, 0.055f, 0.85f);
@@ -351,15 +352,15 @@ namespace UltimaLinha.Cenario1
             var dica = new GameObject("Dica", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
             dica.gameObject.layer = 5;
             dica.rectTransform.SetParent(botaoPular.transform, false);
-            dica.rectTransform.anchorMin = dica.rectTransform.anchorMax = dica.rectTransform.pivot = new Vector2(1f, 1f);
-            dica.rectTransform.anchoredPosition = new Vector2(-40f, -100f);
-            dica.rectTransform.sizeDelta = new Vector2(330f, 26f);
+            dica.rectTransform.anchorMin = dica.rectTransform.anchorMax = dica.rectTransform.pivot = new Vector2(0f, 0f);
+            dica.rectTransform.anchoredPosition = new Vector2(40f + 330f + 18f, 30f);
+            dica.rectTransform.sizeDelta = new Vector2(240f, 60f);
             if (fonte) dica.font = fonte;
             dica.text = "ou segure ESC";
             dica.fontSize = 16;
             dica.characterSpacing = 6;
-            dica.color = new Color(cor.r, cor.g, cor.b, 0.5f);
-            dica.alignment = TextAlignmentOptions.Center;
+            dica.color = new Color(cor.r, cor.g, cor.b, 0.55f);
+            dica.alignment = TextAlignmentOptions.MidlineLeft;
             dica.raycastTarget = false;
 
         }
