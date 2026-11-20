@@ -28,7 +28,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario1SceneBuilder
     {
-        const int BuildVersion = 21; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 22; // aumente para forçar a cena a ser recriada automaticamente
 
         const string ScenePath = "Assets/Scenes/Cenario1.unity";
         internal const string Art = "Assets/Art/Cenario1";
@@ -622,7 +622,8 @@ namespace UltimaLinha.EditorTools
             root.transform.position = new Vector3(X(xPx), Y(surfacePy), 0);
             var lever = root.AddComponent<TrainLever>();
             lever.reachX = 1.0f;
-            lever.minFeetDy = -0.35f;
+            // no encosto: dá para puxar em pé no encosto ou no assento logo abaixo (do chão do vagão, não)
+            lever.minFeetDy = surfacePy == BackrestPy ? -((CushionPy - BackrestPy) / PPU * EscalaVagao + 0.3f) : -0.35f;
             lever.maxFeetDy = 0.5f;
             lever.promptOffset = new Vector2(0f, 2.15f);
             lever.puzzle = puzzle;
