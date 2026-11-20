@@ -87,7 +87,9 @@ namespace UltimaLinha.Cenario1
         bool aberturaAcabou, pularPedido;
         Coroutine fadeEscuro;
         GameObject botaoPular;
-        float escSegurado;
+        CanvasGroup grupoPular;
+        float escSegurado, pularAte;
+        const float PularDelay = 1f, PularSegundos = 4.5f, PularMouse = 3f;
 
         void Awake()
         {
@@ -144,6 +146,16 @@ namespace UltimaLinha.Cenario1
             if (leaving) return;
             if (botaoPular)
             {
+                // o botão fica na tela uns segundos e some; mexer o mouse traz de volta
+                var mouse = UnityEngine.InputSystem.Mouse.current;
+                if (mouse != null && mouse.delta.ReadValue().sqrMagnitude > 4f && Time.unscaledTime > PularDelay)
+                    pularAte = Mathf.Max(pularAte, Time.unscaledTime + PularMouse);
+                if (grupoPular)
+                {
+                    bool mostra = Time.unscaledTime < pularAte;
+                    grupoPular.alpha = Mathf.MoveTowards(grupoPular.alpha, mostra ? 1f : 0f, Time.unscaledDeltaTime * (mostra ? 2f : 1.2f));
+                    grupoPular.blocksRaycasts = grupoPular.interactable = grupoPular.alpha > 0.15f;
+                }
                 // abertura na tela: segurar ESC pula tudo (no diário quem conta é a própria cutscene)
                 var k = UnityEngine.InputSystem.Keyboard.current;
                 var g = UnityEngine.InputSystem.Gamepad.current;
@@ -295,6 +307,8 @@ namespace UltimaLinha.Cenario1
             scaler.matchWidthOrHeight = 0.5f;
             var grupo = botaoPular.GetComponent<CanvasGroup>();
             grupo.alpha = 0f;
+            grupoPular = grupo;
+            pularAte = Time.unscaledTime + PularDelay + PularSegundos;
 
             var fonte = Hud.Instance && Hud.Instance.objectiveText ? Hud.Instance.objectiveText.font : TMP_Settings.defaultFontAsset;
             var cor = new Color(0.91f, 0.86f, 0.77f, 1f);
@@ -302,8 +316,8 @@ namespace UltimaLinha.Cenario1
             var rt = new GameObject("Botao", typeof(RectTransform), typeof(Image), typeof(Button)).GetComponent<RectTransform>();
             rt.gameObject.layer = 5;
             rt.SetParent(botaoPular.transform, false);
-            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 0f);
-            rt.anchoredPosition = new Vector2(-48f, 48f);
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 1f);
+            rt.anchoredPosition = new Vector2(-40f, -36f);
             rt.sizeDelta = new Vector2(330f, 60f);
             var fundo = rt.GetComponent<Image>();
             fundo.color = new Color(0.07f, 0.06f, 0.055f, 0.85f);
@@ -337,8 +351,8 @@ namespace UltimaLinha.Cenario1
             var dica = new GameObject("Dica", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
             dica.gameObject.layer = 5;
             dica.rectTransform.SetParent(botaoPular.transform, false);
-            dica.rectTransform.anchorMin = dica.rectTransform.anchorMax = dica.rectTransform.pivot = new Vector2(1f, 0f);
-            dica.rectTransform.anchoredPosition = new Vector2(-48f, 18f);
+            dica.rectTransform.anchorMin = dica.rectTransform.anchorMax = dica.rectTransform.pivot = new Vector2(1f, 1f);
+            dica.rectTransform.anchoredPosition = new Vector2(-40f, -100f);
             dica.rectTransform.sizeDelta = new Vector2(330f, 26f);
             if (fonte) dica.font = fonte;
             dica.text = "ou segure ESC";
@@ -348,25 +362,13 @@ namespace UltimaLinha.Cenario1
             dica.alignment = TextAlignmentOptions.Center;
             dica.raycastTarget = false;
 
-            StartCoroutine(MostraBotaoPular(grupo));
-        }
-
-        static IEnumerator MostraBotaoPular(CanvasGroup grupo)
-        {
-            yield return new WaitForSecondsRealtime(1.2f);
-            float t = 0f;
-            while (grupo && t < 0.8f)
-            {
-                t += Time.unscaledDeltaTime;
-                grupo.alpha = t / 0.8f;
-                yield return null;
-            }
         }
 
         void TiraBotaoPular()
         {
             if (botaoPular) Destroy(botaoPular);
             botaoPular = null;
+            grupoPular = null;
         }
 
         // ------------------------------------------------------------------ tutorial

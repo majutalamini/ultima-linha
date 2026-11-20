@@ -235,7 +235,9 @@ namespace UltimaLinha.Cenario1
                 UpdateSkip();
                 yield return null;
             }
-            SetPen(false);
+            // a caneta cala na hora em que o texto termina (antes ela ia sumindo só aos poucos e, pulando rápido,
+            // o som ficava para trás da escrita)
+            if (penLoop) penLoop.volume = 0f;
             ApplyInk(text, total, total);
         }
 
@@ -259,8 +261,10 @@ namespace UltimaLinha.Cenario1
         void SetPen(bool writing)
         {
             if (!penLoop) return;
+            // entra suave (sem estalo) e sai rápido: o som acompanha a ponta da caneta
             float target = writing ? penVolume : 0f;
-            penLoop.volume = Mathf.MoveTowards(penLoop.volume, target, Time.unscaledDeltaTime * 6f);
+            float speed = writing ? 6f : 30f;
+            penLoop.volume = Mathf.MoveTowards(penLoop.volume, target, Time.unscaledDeltaTime * speed);
         }
 
         bool Fits(int side, string candidate)
