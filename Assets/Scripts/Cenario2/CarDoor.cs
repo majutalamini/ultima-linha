@@ -223,11 +223,15 @@ namespace UltimaLinha.Cenario2
             if (v > 0.02f) sfx.PlayOneShot(clip, v);
         }
 
-        /// <summary>Esmagaria um corpo com essas bordas? (só quando a folha está descendo ou fechada).</summary>
+        /// <summary>
+        /// Esmagaria um corpo com essas bordas? Só enquanto a porta está batendo, e só quem está mesmo no vão da porta
+        /// (o meio do corpo dentro da passagem). Encostar na porta já fechada não mata: antes a área de esmagar era mais
+        /// larga que o bloqueio da porta, e o Kai morria só de andar até ela.
+        /// </summary>
         public bool IsCrushing(Bounds b)
         {
-            if (Current != State.Closing && Current != State.Closed) return false;
-            if (b.max.x <= CenterX - halfWidth + 0.04f || b.min.x >= CenterX + halfWidth - 0.04f) return false;
+            if (Current != State.Closing) return false;
+            if (Mathf.Abs(b.center.x - CenterX) > halfWidth) return false;
             return BottomY < b.max.y - 0.08f && BottomY > b.min.y - 0.5f;
         }
 

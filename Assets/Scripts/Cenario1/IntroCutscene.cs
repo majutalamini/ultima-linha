@@ -64,10 +64,12 @@ namespace UltimaLinha.Cenario1
         public List<CutscenePage> pages = new List<CutscenePage>();
 
         public bool IsPlaying { get; private set; }
+        /// <summary>O jogador pulou a abertura (segurou ESC): quem chamou também pula o resto da abertura.</summary>
+        public bool WasSkipped { get; private set; }
         /// <summary>Verdadeiro enquanto o diário está na tela (o resto da cena fica em silêncio).</summary>
         public static bool Active { get; private set; }
 
-        bool skipped;
+        bool skipped, aborted;
         float skipHeld;
         readonly string[] content = new string[2];
 
@@ -78,6 +80,7 @@ namespace UltimaLinha.Cenario1
 
         void Awake()
         {
+            InputHelper.FixHint(continueHint);
             if (group)
             {
                 group.alpha = 0f;
@@ -91,6 +94,8 @@ namespace UltimaLinha.Cenario1
             IsPlaying = true;
             Active = true;
             skipped = false;
+            aborted = false;
+            WasSkipped = false;
             skipHeld = 0f;
             if (group) group.alpha = 1f;
             if (diary) diary.alpha = 0f;
@@ -155,12 +160,14 @@ namespace UltimaLinha.Cenario1
                 yield return Wait(1.3f);
             }
 
+            if (aborted) yield break;
             // escuridão: o diário some, o drone some e o último trem chega
             if (drone) StartCoroutine(FadeAudio(drone, 0f, 2.5f));
             if (skipGroup) skipGroup.alpha = 0f;
             float fade = skipped ? 0.6f : 2.6f;
             skipped = false; // deixa o fade final acontecer
             yield return FadeGroup(diary, diary ? diary.alpha : 1f, 0f, fade);
+            if (aborted) yield break;
             if (sfx && trainClip) sfx.PlayOneShot(trainClip);
             yield return new WaitForSecondsRealtime(trainSeconds);
             if (drone) drone.Stop();
@@ -343,7 +350,28 @@ namespace UltimaLinha.Cenario1
             skipHeld = holding ? skipHeld + Time.unscaledDeltaTime : Mathf.Max(0f, skipHeld - Time.unscaledDeltaTime * 2f);
             if (skipGroup) skipGroup.alpha = Mathf.MoveTowards(skipGroup.alpha, skipHeld > 0.05f ? 1f : 0f, Time.unscaledDeltaTime * 4f);
             if (skipFill) skipFill.fillAmount = Mathf.Clamp01(skipHeld / skipHoldTime);
-            if (skipHeld >= skipHoldTime) skipped = true;
+            if (skipHeld >= skipHoldTime)
+            {
+                skipped = true;
+                WasSkipped = true;
+            }
+        }
+
+        /// <summary>Para a abertura na hora (botão "Pular abertura"): some com o diário e cala a caneta, o drone e o trem.</summary>
+        public void Abort()
+        {
+            aborted = true;
+            skipped = true;
+            StopAllCoroutines();
+            if (group) group.alpha = 0f;
+            if (diary) diary.alpha = 0f;
+            if (continueHint) continueHint.alpha = 0f;
+            if (skipGroup) skipGroup.alpha = 0f;
+            if (penLoop) penLoop.Stop();
+            if (drone) drone.Stop();
+            if (sfx) sfx.Stop();
+            IsPlaying = false;
+            Active = false;
         }
 
         IEnumerator Wait(float seconds)

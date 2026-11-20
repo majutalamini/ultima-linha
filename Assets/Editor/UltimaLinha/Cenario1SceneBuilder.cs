@@ -28,7 +28,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario1SceneBuilder
     {
-        const int BuildVersion = 20; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 21; // aumente para forçar a cena a ser recriada automaticamente
 
         const string ScenePath = "Assets/Scenes/Cenario1.unity";
         internal const string Art = "Assets/Art/Cenario1";
@@ -699,6 +699,12 @@ namespace UltimaLinha.EditorTools
             r.bordaFrente = r.bordaTras + largura;
             r.quedaY = chao - 2.5f;
             SpriteObj("Tunel", root, Obj("tunel"), new Vector3((r.bordaTras + r.bordaFrente) / 2f, -150f / PixelArtImporter.Ppu, 0f), -130);
+            // sem chão: do piso para baixo é o escuro (os trilhos do túnel ficavam na altura do piso e pareciam chão),
+            // e as duas beiradas ganham a faixa de perigo
+            var abismo = SpriteObj("Abismo", root, Obj("vao_abismo"), new Vector3((r.bordaTras + r.bordaFrente) / 2f, chao, 0f), -120);
+            abismo.transform.localScale = new Vector3(largura / (8f / PixelArtImporter.Ppu), 1f, 1f);
+            SpriteObj("BeiradaTras", root, Obj("vao_beirada"), new Vector3(r.bordaTras, chao, 0f), -93);
+            SpriteObj("BeiradaFrente", root, Obj("vao_beirada"), new Vector3(r.bordaFrente, chao, 0f), -93).flipX = true;
             r.tras = BuildPortaPonta(root, xTras, false, sfx);
             // o painel que abre a porta de trás (na Abertura ele funciona; no Cenário 1 é só o que ficou para trás)
             r.painel = new Vector3(xTras + U(24f), chao, 0f);
@@ -1635,6 +1641,8 @@ namespace UltimaLinha.EditorTools
             { "porta_ponta_9", Vector2.zero },
             { "porta_ponta_10", Vector2.zero },
             { "tunel", new Vector2(0.5f, 0f) },
+            { "vao_abismo", new Vector2(0.5f, 100f / 116f) }, // pivô na linha do piso (Ferramentas/Cenario1/vao_arte.py)
+            { "vao_beirada", new Vector2(1f, 1f) },             // canto de cima à direita: a quina da plataforma
             { "ponteiro", new Vector2(0.19f, 0.164f) },     // eixo do ponteiro: o anel
         };
 

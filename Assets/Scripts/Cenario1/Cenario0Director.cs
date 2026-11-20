@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using Platformer.Mechanics;
+using TMPro;
 using UltimaLinha.Salas;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace UltimaLinha.Cenario1
 {
@@ -77,8 +80,14 @@ namespace UltimaLinha.Cenario1
         public List<DialogueLine> primeiraQueda = new List<DialogueLine>();
 
         Vector2 previousGravity;
-        bool leaving, noVao, voltando, dormindo;
+        bool leaving, noVao, voltando, dormindo, sentado;
         int quedas;
+
+        // botão "Pular abertura" (diário + trem limpo + piscadas): vai direto para o Kai acordado no trem
+        bool aberturaAcabou, pularPedido;
+        Coroutine fadeEscuro;
+        GameObject botaoPular;
+        float escSegurado;
 
         void Awake()
         {
@@ -104,8 +113,19 @@ namespace UltimaLinha.Cenario1
             bool continuing = GameSave.BeginScene(SceneManager.GetActiveScene().name);
             if (!continuing)
             {
-                if (playIntroCutscene && introCutscene && PlayerPrefs.GetInt(ChaveTeste, 0) == 0) yield return introCutscene.Play();
-                yield return TremNormal();
+                CriaBotaoPular();
+                var abertura = StartCoroutine(Abertura());
+                while (!aberturaAcabou && !pularPedido)
+                {
+                    if (introCutscene && introCutscene.WasSkipped) pularPedido = true; // segurou ESC no diário
+                    yield return null;
+                }
+                if (!aberturaAcabou)
+                {
+                    StopCoroutine(abertura);
+                    yield return PulaAbertura();
+                }
+                TiraBotaoPular();
             }
             else
             {
@@ -122,6 +142,16 @@ namespace UltimaLinha.Cenario1
         void Update()
         {
             if (leaving) return;
+            if (botaoPular)
+            {
+                // abertura na tela: segurar ESC pula tudo (no diário quem conta é a própria cutscene)
+                var k = UnityEngine.InputSystem.Keyboard.current;
+                var g = UnityEngine.InputSystem.Gamepad.current;
+                bool segura = (k != null && k.escapeKey.isPressed) || (g != null && g.startButton.isPressed);
+                escSegurado = segura ? escSegurado + Time.unscaledDeltaTime : 0f;
+                if (escSegurado >= 1.2f) pularPedido = true;
+                return;
+            }
             if (InputHelper.BackPressed() && !DialogueBox.IsBusy && !DiarioKai.IsOpen && !Modal.IsOpen && !IntroCutscene.Active)
                 StartCoroutine(Leave(menuScene));
             if (!noVao && player && player.transform.position.x > inicioVao) StartCoroutine(EntraNoVao());
@@ -144,6 +174,8 @@ namespace UltimaLinha.Cenario1
 
         void Sentado(bool sim)
         {
+            if (sentado == sim) return;
+            sentado = sim;
             if (kai && kai.shadow) kai.shadow.transform.localPosition += Vector3.up * (sim ? pesSentado : -pesSentado);
             if (kai && kai.contato) kai.contato.transform.localPosition += Vector3.up * (sim ? pesSentado : -pesSentado);
             if (kai && kai.reflexo) kai.reflexo.transform.localPosition += Vector3.up * (sim ? 2f * pesSentado : -2f * pesSentado);
@@ -185,7 +217,7 @@ namespace UltimaLinha.Cenario1
             if (sfx && freioClip) sfx.PlayOneShot(freioClip, 0.8f);
             if (cameraFollow) cameraFollow.Shake(0.25f, 0.6f);
             yield return new WaitForSeconds(0.5f);
-            if (Hud.Instance) StartCoroutine(Hud.Instance.FadeScreen(1f, 1.2f));
+            if (Hud.Instance) fadeEscuro = StartCoroutine(Hud.Instance.FadeScreen(1f, 1.2f));
             yield return Fade(vermelho, 0f, 1.6f);
             yield return new WaitForSeconds(1.8f); // silêncio no escuro
             if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 2.6f);
@@ -212,6 +244,129 @@ namespace UltimaLinha.Cenario1
                 yield return new WaitForSeconds(0.25f);
                 t += 0.25f;
             }
+        }
+
+        // ------------------------------------------------------------------ pular a abertura
+
+        IEnumerator Abertura()
+        {
+            if (playIntroCutscene && introCutscene && PlayerPrefs.GetInt(ChaveTeste, 0) == 0) yield return introCutscene.Play();
+            if (!pularPedido) yield return TremNormal();
+            aberturaAcabou = true;
+        }
+
+        /// <summary>Corta o que estiver tocando da abertura e deixa o Kai acordado no trem de verdade, como no "Continuar".</summary>
+        IEnumerator PulaAbertura()
+        {
+            TiraBotaoPular();
+            if (introCutscene) introCutscene.Abort();
+            if (fadeEscuro != null) StopCoroutine(fadeEscuro);
+            if (Hud.Instance && Hud.Instance.fader) Hud.Instance.fader.alpha = 1f; // troca o trem por baixo do preto
+            if (vermelho) vermelho.alpha = 0f;
+            if (ambience) ambience.Stop();
+            if (sfx) sfx.Stop();
+            dormindo = false;
+            Sentado(false);
+            if (kai) kai.Soltar();
+            Decrepito(true);
+            if (cameraFollow) cameraFollow.Snap();
+            yield return new WaitForSeconds(0.3f);
+            if (Hud.Instance) yield return Hud.Instance.FadeScreen(0f, 1.2f);
+        }
+
+        /// <summary>Botão no canto de baixo à direita, por cima de tudo (até do preto da abertura).</summary>
+        void CriaBotaoPular()
+        {
+            if (botaoPular) return;
+            if (!EventSystem.current)
+            {
+                var es = new GameObject("EventSystem", typeof(EventSystem), typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
+                es.transform.SetParent(transform, false);
+            }
+            botaoPular = new GameObject("PularAbertura", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler),
+                typeof(GraphicRaycaster), typeof(CanvasGroup));
+            botaoPular.layer = 5;
+            var canvas = botaoPular.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 900;
+            var scaler = botaoPular.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+            var grupo = botaoPular.GetComponent<CanvasGroup>();
+            grupo.alpha = 0f;
+
+            var fonte = Hud.Instance && Hud.Instance.objectiveText ? Hud.Instance.objectiveText.font : TMP_Settings.defaultFontAsset;
+            var cor = new Color(0.91f, 0.86f, 0.77f, 1f);
+
+            var rt = new GameObject("Botao", typeof(RectTransform), typeof(Image), typeof(Button)).GetComponent<RectTransform>();
+            rt.gameObject.layer = 5;
+            rt.SetParent(botaoPular.transform, false);
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-48f, 48f);
+            rt.sizeDelta = new Vector2(330f, 60f);
+            var fundo = rt.GetComponent<Image>();
+            fundo.color = new Color(0.07f, 0.06f, 0.055f, 0.85f);
+            var borda = rt.gameObject.AddComponent<Outline>();
+            borda.effectColor = new Color(cor.r, cor.g, cor.b, 0.45f);
+            borda.effectDistance = new Vector2(2f, -2f);
+            var botao = rt.GetComponent<Button>();
+            botao.targetGraphic = fundo;
+            var cores = botao.colors;
+            cores.normalColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            cores.highlightedColor = Color.white;
+            cores.pressedColor = new Color(0.6f, 0.5f, 0.45f, 1f);
+            botao.colors = cores;
+            botao.navigation = new Navigation { mode = Navigation.Mode.None };
+            botao.onClick.AddListener(() => pularPedido = true);
+
+            var texto = new GameObject("Texto", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+            texto.gameObject.layer = 5;
+            texto.rectTransform.SetParent(rt, false);
+            texto.rectTransform.anchorMin = Vector2.zero;
+            texto.rectTransform.anchorMax = Vector2.one;
+            texto.rectTransform.offsetMin = texto.rectTransform.offsetMax = Vector2.zero;
+            if (fonte) texto.font = fonte;
+            texto.text = "PULAR ABERTURA  ››";
+            texto.fontSize = 24;
+            texto.characterSpacing = 10;
+            texto.color = cor;
+            texto.alignment = TextAlignmentOptions.Center;
+            texto.raycastTarget = false;
+
+            var dica = new GameObject("Dica", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+            dica.gameObject.layer = 5;
+            dica.rectTransform.SetParent(botaoPular.transform, false);
+            dica.rectTransform.anchorMin = dica.rectTransform.anchorMax = dica.rectTransform.pivot = new Vector2(1f, 0f);
+            dica.rectTransform.anchoredPosition = new Vector2(-48f, 18f);
+            dica.rectTransform.sizeDelta = new Vector2(330f, 26f);
+            if (fonte) dica.font = fonte;
+            dica.text = "ou segure ESC";
+            dica.fontSize = 16;
+            dica.characterSpacing = 6;
+            dica.color = new Color(cor.r, cor.g, cor.b, 0.5f);
+            dica.alignment = TextAlignmentOptions.Center;
+            dica.raycastTarget = false;
+
+            StartCoroutine(MostraBotaoPular(grupo));
+        }
+
+        static IEnumerator MostraBotaoPular(CanvasGroup grupo)
+        {
+            yield return new WaitForSecondsRealtime(1.2f);
+            float t = 0f;
+            while (grupo && t < 0.8f)
+            {
+                t += Time.unscaledDeltaTime;
+                grupo.alpha = t / 0.8f;
+                yield return null;
+            }
+        }
+
+        void TiraBotaoPular()
+        {
+            if (botaoPular) Destroy(botaoPular);
+            botaoPular = null;
         }
 
         // ------------------------------------------------------------------ tutorial

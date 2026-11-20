@@ -14,7 +14,7 @@ namespace UltimaLinha.Cenario1
     }
 
     /// <summary>
-    /// Diário do Kai: Tab (Select no controle) abre e fecha a qualquer momento do jogo; A/D ou as setas viram a página.
+    /// Diário do Kai: Tab (Select no controle) abre e fecha a qualquer momento do jogo; Esc também fecha; A/D ou as setas viram a página.
     /// Pausa o jogo enquanto está aberto. Não abre por cima de diálogo, cutscene ou painel.
     /// </summary>
     public class DiarioKai : MonoBehaviour
@@ -57,6 +57,12 @@ namespace UltimaLinha.Cenario1
                 return;
             }
             if (!IsOpen) return;
+            if (InputHelper.BackPressed())
+            {
+                InputHelper.ConsumeBack(); // o mesmo Esc não leva ao menu
+                Fecha();
+                return;
+            }
             var k = Keyboard.current;
             var g = Gamepad.current;
             if ((k != null && (k.dKey.wasPressedThisFrame || k.rightArrowKey.wasPressedThisFrame)) || (g != null && g.dpad.right.wasPressedThisFrame)) Vira(1);

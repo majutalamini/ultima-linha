@@ -5,21 +5,27 @@ from sons import write, lowpass, t, SR, rng
 def bandpass(x, lo, hi):
     return lowpass(x, hi) - lowpass(x, lo)
 
-def caneta(sec=3.0):
-    """Lápis macio no papel: riscos irregulares, grave e abafado (o chiado agudo de 1,8-7 kHz irritava)."""
-    n = int(sec * SR); tt = np.arange(n) / SR
-    base = bandpass(rng.normal(0, 1, n), 250, 2200)
-    env = np.zeros(n); pos = 0.0
-    while pos < sec:
-        dur = 0.08 + rng.random() * 0.16
-        i0, i1 = int(pos * SR), int(min(sec, pos + dur) * SR)
-        seg = np.arange(i1 - i0) / SR
-        env[i0:i1] += np.sin(np.pi * seg / dur) ** 1.5 * (0.35 + rng.random() * 0.4)
-        pos += dur + rng.random() * 0.05
-    x = lowpass(base * env, 1600) * (0.9 + 0.1 * np.sin(2 * np.pi * 3 * tt))
-    f = int(0.15 * SR); w = np.linspace(0, 1, f)
-    x[:f] = x[:f] * w + x[-f:] * (1 - w)
-    return x[:-f]
+def caneta(sec=4.0):
+    """Lápis bem macio no papel, quase um sussurro: ruído só nos graves e médios (180-1100 Hz, sem nada agudo),
+    traços longos que se emendam (nada de ritmo picotado) e volume baixo. O loop emenda sem corte: o ruído é
+    filtrado no domínio da frequência (circular) e o envelope dá a volta no fim."""
+    n = int(sec * SR)
+    spec = np.fft.rfft(rng.normal(0, 1, n))
+    f = np.fft.rfftfreq(n, 1 / SR)
+    shape = np.exp(-0.5 * (np.log(np.maximum(f, 1.0) / 420.0) / 0.55) ** 2)  # sino em torno de 420 Hz
+    shape[f > 1400] *= np.exp(-(f[f > 1400] - 1400) / 250.0)                  # corta o chiado de vez
+    base = np.fft.irfft(spec * shape, n)
+    tt = np.arange(n) / SR
+    env = np.zeros(n)
+    pos = 0.0
+    while pos < sec:                                                          # traços longos e sobrepostos
+        dur = 0.35 + rng.random() * 0.45
+        c = pos + dur / 2
+        for k in (-1, 0, 1):                                                  # dá a volta: o loop não estala
+            env += np.exp(-0.5 * ((tt - c - k * sec) / (dur / 3.2)) ** 2) * (0.6 + rng.random() * 0.25)
+        pos += dur * (0.55 + rng.random() * 0.25)
+    env = 0.55 + 0.45 * env / env.max()                                       # nunca some, nunca pica
+    return base * env
 
 def pagina():
     """Folha virando: sopro de papel com dois picos."""
@@ -30,6 +36,6 @@ def pagina():
     return x * env + lowpass(crackle, 4000) * env
 
 if __name__ == '__main__':
-    write('caneta_escrevendo', caneta(), 0.22)
+    write('caneta_escrevendo', caneta(), 0.07)
     write('pagina_virando', pagina(), 0.7)
     print('ok')
