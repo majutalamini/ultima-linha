@@ -420,8 +420,34 @@ namespace UltimaLinha.Salas
         /// </summary>
         void PortaoVira()
         {
+            AchaPortao();
             if (portaoBatente) portaoBatente.sortingOrder = batenteNaFrente;
             if (portaoPassagem) portaoPassagem.ativo = true;
+        }
+
+        /// <summary>
+        /// Cenas montadas antes do batente/passagem não têm essas ligações: acha pelo nome e monta a passagem aqui
+        /// (do canto da grade até a borda esquerda do poste, que fica a 152 px do começo do desenho do batente).
+        /// </summary>
+        void AchaPortao()
+        {
+            if (!portaoBatente)
+            {
+                var b = GameObject.Find("PortaoBatente");
+                if (b) portaoBatente = b.GetComponent<SpriteRenderer>();
+            }
+            if (!portaoPassagem)
+            {
+                var v = GameObject.Find("PortaoVao");
+                if (v) portaoPassagem = v.GetComponent<PassagemEscura>();
+                if (v && !portaoPassagem && portaoBatente && portaoBatente.sprite)
+                {
+                    var vr = v.GetComponent<SpriteRenderer>();
+                    portaoPassagem = v.AddComponent<PassagemEscura>();
+                    portaoPassagem.x0 = vr ? vr.bounds.min.x : v.transform.position.x;
+                    portaoPassagem.x1 = portaoBatente.bounds.min.x + 152f / portaoBatente.sprite.pixelsPerUnit;
+                }
+            }
         }
 
         // ---------- Souta e Ren ----------
