@@ -17,7 +17,7 @@ namespace UltimaLinha.Cenario1
     /// <summary>
     /// Diário do Kai: Tab (Select no controle) abre e fecha a qualquer momento do jogo; Esc também fecha; A/D ou as setas viram a página.
     /// Pausa o jogo enquanto está aberto. Não abre por cima de diálogo, cutscene ou painel.
-    /// O botão FECHAR fica no canto de cima à direita (criado quando a cena abre, se a cena não tiver um).
+    /// O botão FECHAR fica no canto de baixo à direita (criado quando a cena abre, se a cena não tiver um).
     /// </summary>
     public class DiarioKai : MonoBehaviour
     {
@@ -30,7 +30,7 @@ namespace UltimaLinha.Cenario1
         public List<PaginaDiario> paginas = new List<PaginaDiario>();
         public AudioSource sfx;
         public AudioClip folhaClip;
-        [Tooltip("Botão FECHAR. Vazio: é criado no canto de cima à direita quando a cena abre.")]
+        [Tooltip("Botão FECHAR. Vazio: é criado no canto de baixo à direita quando a cena abre.")]
         public Button fecharBotao;
 
         int atual;
@@ -56,15 +56,15 @@ namespace UltimaLinha.Cenario1
             if (fecharBotao) fecharBotao.onClick.AddListener(() => { if (IsOpen) Fecha(); });
         }
 
-        /// <summary>Botão FECHAR bem visível, no canto de cima à direita da tela (fora do caderno).</summary>
+        /// <summary>Botão FECHAR bem visível, no canto de baixo à direita da tela (embaixo do caderno, ao lado da dica).</summary>
         Button CriaFechar(TMP_FontAsset fonte)
         {
             var creme = new Color(0.91f, 0.86f, 0.77f, 1f);
             var rt = new GameObject("Fechar", typeof(RectTransform), typeof(Image), typeof(Button)).GetComponent<RectTransform>();
             rt.gameObject.layer = gameObject.layer;
             rt.SetParent(transform, false);
-            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-36f, -26f);
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-36f, 24f);
             rt.sizeDelta = new Vector2(250f, 62f);
             var fundo = rt.GetComponent<Image>();
             fundo.color = new Color(0.3f, 0.07f, 0.06f, 1f);
