@@ -402,7 +402,21 @@ namespace UltimaLinha.Salas
                 if (!DialogueBox.IsBusy && InputHelper.AdvancePressed()) progress += 0.075f;
                 if (!DialogueBox.IsBusy) progress -= 0.12f * Time.deltaTime;   // o Souta puxa de volta
                 progress = Mathf.Clamp01(progress);
-                if (progress <= 0f || t >= fightSeconds) { lost = true; break; }
+                if (progress <= 0f) { lost = true; break; }
+                if (t >= fightSeconds)
+                {
+                    // acabou o tempo: o Souta vence e a barra desce até o fim, para o jogador ver que perdeu
+                    if (ui.label) ui.label.text = "O SOUTA FICOU COM A ARMA";
+                    while (progress > 0f)
+                    {
+                        progress = Mathf.MoveTowards(progress, 0f, 0.9f * Time.deltaTime);
+                        if (ui.fill) ui.fill.fillAmount = progress;
+                        yield return null;
+                    }
+                    yield return new WaitForSeconds(0.5f);
+                    lost = true;
+                    break;
+                }
                 // os dois se empurram para lá e para cá
                 float sway = Mathf.Sin(t * 13f) * 0.07f + Mathf.Sin(t * 5.3f) * 0.12f;
                 player.transform.position = new Vector3(kaiBase + sway, player.transform.position.y, 0f);
@@ -428,6 +442,13 @@ namespace UltimaLinha.Salas
                 if (ui.fill) ui.fill.fillAmount = progress;
                 yield return null;
             }
+            if (lost && ui.fill)
+            {
+                // perdeu: mostra a barra vazia por um instante
+                if (ui.label) ui.label.text = "O SOUTA FICOU COM A ARMA";
+                ui.fill.fillAmount = 0f;
+                yield return new WaitForSeconds(0.6f);
+            }
             if (ui.root) Destroy(ui.root);
             if (lost)
             {
@@ -452,7 +473,7 @@ namespace UltimaLinha.Salas
             ScriptKai(false);
         }
 
-        struct Barra { public GameObject root; public Image fill; }
+        struct Barra { public GameObject root; public Image fill; public TMPro.TMP_Text label; }
 
         /// <summary>Barra "aperte E" da briga, criada na hora por cima de tudo.</summary>
         Barra MashBar(string texto)
@@ -491,7 +512,7 @@ namespace UltimaLinha.Salas
             label.characterSpacing = 10;
             label.alignment = TMPro.TextAlignmentOptions.Center;
             label.color = new Color(0.95f, 0.92f, 0.86f, 1f);
-            return new Barra { root = go, fill = img };
+            return new Barra { root = go, fill = img, label = label };
         }
 
         static RectTransform Caixa(string n, Transform pai, Vector2 pos, Vector2 tam, Color cor)
@@ -614,7 +635,7 @@ namespace UltimaLinha.Salas
             float x0 = tr.position.x, y0 = tr.position.y;
             if (kaiRig) kaiRig.Tocar("salta", true);
             yield return new WaitForSeconds(0.22f);           // o impulso
-            float t = 0f, vx = 2.6f, vy = 5.5f, x = x0, y = y0;
+            float t = 0f, vx = 4.4f, vy = 5.5f, x = x0, y = y0;   // longe o bastante para cair dentro da vala
             bool caindo = false;
             while (y > y0 - 9f)
             {
@@ -710,17 +731,17 @@ namespace UltimaLinha.Salas
             while (t < 0.4f)
             {
                 t += Time.deltaTime;
-                tr.position = new Vector3(Mathf.Lerp(x0, edgeX + 0.35f, t / 0.4f), y0, 0f);
+                tr.position = new Vector3(Mathf.Lerp(x0, edgeX + 0.2f, t / 0.4f), y0, 0f);
                 tr.rotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(0f, -25f, t / 0.4f));
                 yield return null;
             }
             // a queda, para dentro do escuro
-            float x = edgeX + 0.35f, y = y0, vy = 0f, rot = -25f;
+            float x = edgeX + 0.2f, y = y0, vy = 0f, rot = -25f;
             while (y > y0 - 9f)
             {
                 vy += gravity.y * 0.9f * Time.deltaTime;
                 y += vy * Time.deltaTime;
-                x = Mathf.MoveTowards(x, edgeX + 1.4f, 1.4f * Time.deltaTime);
+                x = Mathf.MoveTowards(x, edgeX + 2.2f, 3.2f * Time.deltaTime);
                 rot = Mathf.MoveTowards(rot, -100f, 150f * Time.deltaTime);
                 tr.position = new Vector3(x, y, 0f);
                 tr.rotation = Quaternion.Euler(0f, 0f, rot);

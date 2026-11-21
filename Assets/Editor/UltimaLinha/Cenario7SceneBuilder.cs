@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 11; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 12; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
@@ -30,7 +30,8 @@ namespace UltimaLinha.EditorTools
         const float PePx = 540f;
         // a parede da direita fica antes do Ren: o Kai não passa dele nem chega na beira (só nas cenas do final)
         const float W = 2150f, Floor = 850f, LWall = 60f, RWall = 880f;
-        const float EdgeX = 1155f, RenX = 925f, SoutaX = 705f, TunnelX = 1630f;
+        // EdgeX: a quina da plataforma na linha dos pés (o topo é desenhado em perspectiva; mais à direita já é a vala)
+        const float EdgeX = 985f, RenX = 925f, SoutaX = 705f, TunnelX = 1630f;
         const float PitPy = 991f; // os trilhos, logo abaixo da beirada
         static readonly (float x, float w)[] Tubes = { (590f, 400f), (1590f, 400f) }; // as pintadas
 
@@ -115,8 +116,8 @@ namespace UltimaLinha.EditorTools
             // Souta: mais atrás, ainda com a arma do chefe na mão
             var souta = BuildNpc("Souta", "souta", SoutaX, Floor, 3.55f, player.transform);
             souta.firstTalk = Lines(
-                ("souta", "Não chega perto, Kai. Eu ainda estou com a arma dele."),
-                ("souta", "O Ren quis vir até aqui. Diz que precisa ver os trilhos. Vai lá, fala com ele."));
+                ("souta", "Eu ainda estou com a arma do chefe, Kai. Não me obriga a usar."),
+                ("souta", "O Ren quis vir até aqui. Disse que só fala com você. Vai, mas devagar."));
             souta.repeatTalk = Lines(("souta", "Quatro e dezessete, Kai. Você lembra o que isso quer dizer?"));
             var pistol = Load("Assets/Art/Cenario5", "pistola");
 
@@ -134,12 +135,12 @@ namespace UltimaLinha.EditorTools
             // a vala é funda: o fundo dos trilhos some no escuro (quem cai desaparece; só se ouve a batida)
             ConfigureSprite($"{Paineis4a7}/c7_vala_escura.png", new Vector2(0f, 1f), PixelArtImporter.Ppu, 1024, FilterMode.Point);
             var vala = SpriteObj("ValaEscura", core.world, Load(Paineis4a7, "c7_vala_escura"),
-                new Vector3(668f / PixelArtImporter.Ppu, Y(Floor) + (PePx - 552f) / PixelArtImporter.Ppu, 0f), 30);
+                new Vector3(575f / PixelArtImporter.Ppu, Y(Floor) + (PePx - 552f) / PixelArtImporter.Ppu, 0f), 30);
 
             // a frente do trem que sai do túnel (final em que o Kai se joga nos trilhos)
             ConfigureSprite($"{Paineis4a7}/c7_trem_frente.png", new Vector2(0.5f, 0f), PixelArtImporter.Ppu, 256, FilterMode.Point);
             var trainFront = SpriteObj("TremDeFrente", core.world, Load(Paineis4a7, "c7_trem_frente"), new Vector3(X(TunnelX), Y(600f), 0f), 62);
-            trainFront.color = new Color(0.8f, 0.79f, 0.78f, 1f);
+            trainFront.color = Color.white; // a arte já vem com as cores escuras do vagão do Cenário 6
             var lights = new List<SpriteRenderer>();
             foreach (var lx in new[] { -56f, 55f })
             {

@@ -22,7 +22,7 @@ ART7 = os.path.join(RAIZ, "Assets", "Art", "Cenario7")
 SOUTA = os.path.join(RAIZ, "Assets", "Art", "Personagens", "PixelArt", "Souta")
 PAINEL = os.path.join(ART, "c7_painel_b.png")
 
-BEIRA = 668          # px do painel onde a plataforma termina
+BEIRA = 575          # px do painel: na linha dos pés, a quina da plataforma (o topo é em perspectiva)
 VALA_Y0, VALA_Y1 = 552, 612   # o escuro começa a cobrir em VALA_Y0 e é total a partir de VALA_Y1
 
 
@@ -40,66 +40,102 @@ def vala():
     return s
 
 
-def trem_frente():
-    w, h = 184, 204
-    s = np.zeros((h, w, 4), np.uint8)
-    yy, xx = np.mgrid[0:h, 0:w]
-    r = 26
-    dentro = np.ones((h, w), bool)
-    for cx, cy in ((r, r), (w - 1 - r, r)):
-        canto = ((xx - cx) ** 2 + (yy - cy) ** 2 > r * r) & (np.abs(xx - cx) <= r) & (yy < r) & (
-            (xx < r) if cx == r else (xx > w - 1 - r))
-        dentro &= ~canto
-    corpo = np.array([150, 150, 144])
-    s[dentro] = (*corpo, 255)
-    # sombreado: mais escuro nas laterais e embaixo
-    sombra = (np.abs(xx - w / 2) / (w / 2)) ** 3 * 50 + (yy / h) ** 2 * 30
-    for c in range(3):
-        s[..., c] = np.where(dentro, np.clip(s[..., c] - sombra, 0, 255), 0)
-    borda = dentro & ~(np.roll(dentro, 1, 0) & np.roll(dentro, -1, 0) & np.roll(dentro, 1, 1) & np.roll(dentro, -1, 1))
-    s[borda] = (34, 34, 36, 255)
+def painel_c6():
+    """Os três painéis do Cenário 6 lado a lado: é de lá que vem o trem do cenário (cores e sujeira)."""
+    ims = [Image.open(os.path.join(ART, n + ".png")).convert("RGBA") for n in ("c6_inicio", "c6_meio", "c6_fim")]
+    bg = Image.new("RGBA", (sum(i.width for i in ims), ims[0].height))
+    x = 0
+    for i in ims:
+        bg.paste(i, (x, 0))
+        x += i.width
+    return np.array(bg)
 
-    def ret(x0, y0, x1, y1, c):
-        s[y0:y1, x0:x1] = (*c, 255)
-    # letreiro de destino com os pontos laranja
-    ret(52, 12, 132, 26, (14, 12, 10))
-    for x in range(56, 129, 3):
-        for y in (16, 20):
-            if (x * 7 + y) % 5:
-                s[y:y + 2, x:x + 2] = (230, 130, 40, 255)
-    # para-brisa com reflexo
-    ret(16, 34, 168, 104, (18, 22, 26))
-    for k in range(-60, 160, 26):
-        for i in range(70):
-            x, y = 16 + k + i, 34 + i
-            if 16 <= x < 166 and y < 104:
-                s[y, x:x + 6] = (52, 58, 64, 255)
-    ret(90, 34, 94, 104, (40, 40, 42))
-    ret(16, 104, 168, 108, (60, 60, 60))
-    # porta de emergência da frente
-    for x in (70, 112):
-        ret(x, 110, x + 2, 176, (70, 70, 68))
-    # faixa vermelha
-    ret(2, 122, w - 2, 134, (132, 30, 26))
-    ret(2, 122, w - 2, 124, (170, 48, 40))
-    # faróis e lanternas
-    for cx in (36, w - 37):
-        d = (xx - cx) ** 2 + (yy - 152) ** 2
-        s[d <= 110] = (60, 58, 52, 255)
-        s[d <= 64] = (255, 244, 205, 255)
-        s[d <= 16] = (255, 255, 240, 255)
-    for cx in (18, w - 19):
-        ret(cx - 5, 166, cx + 5, 172, (150, 24, 20))
-    # para-choque e engate
-    ret(0, 180, w, h, (38, 38, 40))
-    ret(0, 180, w, 182, (70, 70, 72))
-    ret(78, 186, 106, h, (24, 24, 26))
-    # sujeira
-    rng = np.random.default_rng(3)
-    n = rng.integers(-8, 9, (h, w))
+
+def trem_frente():
+    """A frente do mesmo trem do Cenário 6 (o vagão pintado parado no fim do túnel), vista de frente: a lata bege
+    encardida com escorridos, a faixa vermelho-escura, as janelas escuras de canto redondo. As texturas são recortadas
+    do próprio vagão pintado, então a cor e a sujeira são as mesmas."""
+    c6 = painel_c6()
+    lata = c6[270:400, 3315:3355, :3]          # parede lisa do vagão, com os escorridos
+    faixa = c6[407:432, 3315:3355, :3]         # a faixa vermelha
+    saia = c6[436:470, 3315:3355, :3]          # embaixo da faixa
+    teto = c6[238:262, 3330:3370, :3]          # o teto arredondado
+    vidro = c6[282:372, 3524:3558, :3]         # o vidro escuro de uma janela
+    moldura = np.median(c6[276:280, 3522:3560, :3].reshape(-1, 3), axis=0)
+    baixo = c6[478:520, 3300:3480, :3]         # chassi escuro
+
+    w, h = 184, 204
+    rng = np.random.default_rng(6)
+    s = np.zeros((h, w, 4), np.uint8)
+
+    def ladrilha(patch, y0, y1):
+        ph, pw = patch.shape[:2]
+        x = 0
+        while x < w:
+            off = int(rng.integers(0, max(1, pw - 8)))
+            larg = min(pw - off, w - x)
+            alt = y1 - y0
+            fonte = patch[np.arange(alt) * ph // alt][:, off:off + larg]
+            s[y0:y1, x:x + larg, :3] = fonte
+            x += larg
+        s[y0:y1, :, 3] = 255
+
+    ladrilha(teto, 0, 22)
+    ladrilha(lata, 22, 128)
+    ladrilha(faixa, 128, 146)
+    ladrilha(saia, 146, 178)
+    # chassi/para-choque
+    bx = np.arange(w) * baixo.shape[1] // w
+    s[178:h, :, :3] = baixo[np.arange(h - 178) * baixo.shape[0] // (h - 178)][:, bx]
+    s[178:h, :, 3] = 255
+
+    # cantos de cima arredondados, como a ponta do vagão
+    yy, xx = np.mgrid[0:h, 0:w]
+    r = 24
+    for cx in (r, w - 1 - r):
+        lado = (xx < r) if cx == r else (xx > w - 1 - r)
+        s[lado & (yy < r) & ((xx - cx) ** 2 + (yy - r) ** 2 > r * r), 3] = 0
     m = s[..., 3] > 0
+    # sombreado das laterais (a frente é curva)
+    sombra = (np.abs(xx - w / 2) / (w / 2)) ** 3 * 0.35
     for c in range(3):
-        s[..., c] = np.where(m, np.clip(s[..., c].astype(int) + n, 0, 255), s[..., c])
+        s[..., c] = np.where(m, (s[..., c] * (1 - sombra)).astype(np.uint8), 0)
+    borda = m & ~(np.roll(m, 1, 0) & np.roll(m, -1, 0) & np.roll(m, 1, 1) & np.roll(m, -1, 1))
+    s[borda] = (18, 16, 14, 255)
+
+    def janela(x0, y0, x1, y1, raio=6):
+        jy, jx = np.mgrid[y0:y1, x0:x1]
+        dentro = np.ones(jy.shape, bool)
+        for cx, cy in ((x0 + raio, y0 + raio), (x1 - 1 - raio, y0 + raio), (x0 + raio, y1 - 1 - raio), (x1 - 1 - raio, y1 - 1 - raio)):
+            canto = (np.abs(jx - cx) <= raio) & (np.abs(jy - cy) <= raio) & ((jx < x0 + raio) | (jx > x1 - 1 - raio)) & (
+                (jy < y0 + raio) | (jy > y1 - 1 - raio))
+            dentro &= ~(canto & ((jx - cx) ** 2 + (jy - cy) ** 2 > raio * raio))
+        vy = (np.arange(y1 - y0) * vidro.shape[0] // (y1 - y0))
+        vx = (np.arange(x1 - x0) * vidro.shape[1] // (x1 - x0))
+        miolo = vidro[vy][:, vx]
+        reg = s[y0:y1, x0:x1]
+        reg[dentro, :3] = miolo[dentro]
+        anel = dentro & ~(np.roll(dentro, 2, 0) & np.roll(dentro, -2, 0) & np.roll(dentro, 2, 1) & np.roll(dentro, -2, 1))
+        reg[anel, :3] = moldura
+
+    janela(16, 32, 90, 104)                    # para-brisa em duas folhas, como as janelas do vagão
+    janela(94, 32, 168, 104)
+    janela(70, 108, 114, 176, 4)               # a porta de emergência da frente
+    # letreiro apagado em cima
+    s[10:22, 60:124, :3] = (16, 14, 12)
+    for x in range(64, 120, 4):
+        if rng.random() < 0.6:
+            s[14:17, x:x + 2, :3] = (120, 66, 26)
+    # faróis: as lanterninhas do vagão, acesas
+    for cx in (34, w - 35):
+        d = (xx - cx) ** 2 + (yy - 160) ** 2
+        s[d <= 64, :3] = (40, 36, 30)
+        s[d <= 30, :3] = (236, 222, 180)
+        s[d <= 8, :3] = (255, 248, 225)
+    # escorridos de ferrugem extra embaixo da faixa
+    for _ in range(14):
+        x = int(rng.integers(4, w - 4)); y0 = 146; comp = int(rng.integers(6, 26))
+        s[y0:y0 + comp, x, :3] = (s[y0:y0 + comp, x, :3] * 0.7).astype(np.uint8)
     return s
 
 
