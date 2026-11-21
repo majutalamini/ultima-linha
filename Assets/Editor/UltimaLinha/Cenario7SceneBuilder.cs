@@ -21,14 +21,15 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 7; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 8; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
         // fundo: o painel c7_painel_b do usuário (Ferramentas/Cenarios4a7): a plataforma termina na beirada amarela (11,55 u),
         // depois vêm os trilhos e a boca do túnel. Tudo foi trazido para perto do começo do painel (px "antigos": 100 por u).
         const float PePx = 540f;
-        const float W = 2150f, Floor = 850f, LWall = 60f, RWall = 1110f;
+        // a parede da direita fica antes do Ren: o Kai não passa dele nem chega na beira (só nas cenas do final)
+        const float W = 2150f, Floor = 850f, LWall = 60f, RWall = 880f;
         const float EdgeX = 1155f, RenX = 925f, SoutaX = 705f, TunnelX = 1630f;
         const float PitPy = 991f; // os trilhos, logo abaixo da beirada
         static readonly (float x, float w)[] Tubes = { (590f, 400f), (1590f, 400f) }; // as pintadas
@@ -130,6 +131,34 @@ namespace UltimaLinha.EditorTools
             muzzle.transform.localScale = Vector3.one * 0.5f;
             muzzle.color = new Color(1f, 0.9f, 0.6f, 0f);
 
+            // a vala é funda: o fundo dos trilhos some no escuro (quem cai desaparece; só se ouve a batida)
+            ConfigureSprite($"{Paineis4a7}/c7_vala_escura.png", new Vector2(0f, 1f), PixelArtImporter.Ppu, 1024, FilterMode.Point);
+            var vala = SpriteObj("ValaEscura", core.world, Load(Paineis4a7, "c7_vala_escura"),
+                new Vector3(668f / PixelArtImporter.Ppu, Y(Floor) + (PePx - 552f) / PixelArtImporter.Ppu, 0f), 30);
+
+            // a frente do trem que sai do túnel (final em que o Kai se joga nos trilhos)
+            ConfigureSprite($"{Paineis4a7}/c7_trem_frente.png", new Vector2(0.5f, 0f), PixelArtImporter.Ppu, 256, FilterMode.Point);
+            var trainFront = SpriteObj("TremDeFrente", core.world, Load(Paineis4a7, "c7_trem_frente"), new Vector3(X(TunnelX), Y(600f), 0f), 50);
+            trainFront.color = new Color(0.8f, 0.79f, 0.78f, 1f);
+            var lights = new List<SpriteRenderer>();
+            foreach (var lx in new[] { -56f, 55f })
+            {
+                var l = SpriteObj("FarolFrente", trainFront.transform, Spr("brilho"), Vector3.zero, 51);
+                l.transform.localPosition = new Vector3(lx / PixelArtImporter.Ppu, 52f / PixelArtImporter.Ppu, 0f);
+                l.transform.localScale = Vector3.one * 0.45f;
+                l.color = new Color(1f, 0.96f, 0.85f, 0.9f);
+                lights.Add(l);
+            }
+            trainFront.gameObject.SetActive(false);
+
+            // sangue do Souta: poça que cresce embaixo dele e respingos no chão atrás
+            foreach (var n in new[] { "c7_sangue_poca", "c7_sangue_respingo" })
+                ConfigureSprite($"{Paineis4a7}/{n}.png", new Vector2(0.5f, 0.5f), PixelArtImporter.Ppu, 256, FilterMode.Point);
+            var pool = SpriteObj("SangueDoSouta", core.world, Load(Paineis4a7, "c7_sangue_poca"), new Vector3(X(SoutaX), Y(Floor) + 0.05f, 0f), 4);
+            pool.gameObject.SetActive(false);
+            var spatter = SpriteObj("RespingosDoSouta", core.world, Load(Paineis4a7, "c7_sangue_respingo"), new Vector3(X(SoutaX), Y(Floor) + 0.1f, 0f), 4);
+            spatter.gameObject.SetActive(false);
+
             // farol do trem (sai do túnel à direita)
             var head = SpriteObj("FarolDoTrem", core.world, Spr("brilho"), new Vector3(X(TunnelX), Y(609f), 0f), 60);
             head.color = new Color(1f, 0.96f, 0.85f, 0f);
@@ -155,6 +184,12 @@ namespace UltimaLinha.EditorTools
             dir.gunOnFloor = gunFloor.gameObject;
             dir.muzzleFlash = muzzle;
             dir.headlight = head;
+            dir.trainFront = trainFront.transform;
+            dir.trainFrontY = Y(600f);
+            dir.trainFrontEndY = Y(Floor) - 3.2f;
+            dir.bloodPool = pool;
+            dir.bloodSpatter = spatter;
+            dir.trenchDark = vala;
             dir.edgeX = X(EdgeX);
             dir.floorY = Y(Floor);
             dir.pitY = Y(PitPy);
@@ -177,6 +212,9 @@ namespace UltimaLinha.EditorTools
             dir.ambulanceClip = Clip("sirene_ambulancia");
             dir.policeClip = Clip("sirene_policia");
             dir.brakeClip = Clip("trem_freando");
+            dir.pitImpactClip = Clip("c7_queda_vala");
+            dir.crushClip = Clip("c7_esmagamento");
+            dir.struggleClip = Clip("c7_luta");
 
             dir.intro = Lines(
                 ("kai", "<i>A última plataforma. O nome está escrito na parede: ÚLTIMA LINHA.</i>"),
@@ -199,8 +237,10 @@ namespace UltimaLinha.EditorTools
                 ("ren", "Kai...? O que você vai...?"));
             dir.soutaPanic = Lines(
                 ("souta", "REN!"),
-                ("souta", "Você empurrou ele! Ele bateu lá embaixo, ele não está se mexendo!"),
-                ("souta", "Fica longe de mim! Fica longe!"));
+                ("souta", "Você empurrou ele! Eu ouvi... eu ouvi ele bater lá embaixo!"),
+                ("souta", "Fica longe de mim! Para, Kai! Eu atiro!"));
+            dir.fightLines = Lines(("kai", "<i>Ele não vai atirar. Não em mim.</i>"));
+            dir.fightWon = Lines(("souta", "Me solta! Kai, me solta!"));
             dir.pointGun = Lines(
                 ("souta", "Kai, abaixa isso. Sou eu. Sou eu, Kai."),
                 ("kai", "Eu sei."));
@@ -217,18 +257,20 @@ namespace UltimaLinha.EditorTools
                 ("ren", "KAI!"),
                 ("kai", "<i>Desculpa.</i>"));
 
-            dir.policeChannel = "JORNAL DA NOITE  ·  PLANTÃO";
+            dir.policeChannel = "EDIÇÃO EXTRA  ·  QUARTA-FEIRA";
             dir.policeHeadline = "FUNCIONÁRIO É PRESO NO TRABALHO POR TENTATIVA DE MASSACRE";
             dir.policeBody =
                 "Kai, 27 anos, funcionário da companhia de trens, foi preso na madrugada desta quarta-feira, por volta das 4h17, " +
-                "na estação onde trabalhava. Segundo a polícia, ele empurrou um colega para a vala dos trilhos e atirou em outro " +
-                "com a arma do antigo diretor da empresa, encontrado morto na semana passada.\n\n" +
+                "na estação onde trabalhava. Segundo a polícia, ele empurrou um colega para a vala dos trilhos e, depois de lutar " +
+                "com outro pela arma do antigo diretor da empresa, encontrado morto na semana passada, atirou nele.\n\n" +
                 "Testemunhas contam que, antes do ataque, ele conversava sozinho com duas pessoas que chamava de Souta e Ren. " +
                 "Os dois funcionários feridos foram levados ao hospital.";
             dir.policeTicker =
-                "URGENTE  ·  Suspeito foi detido na última plataforma da linha  ·  Estação permanece fechada  ·  " +
-                "Polícia investiga ligação com a morte do diretor da empresa  ·  ";
-            dir.ambulanceChannel = "JORNAL DA NOITE  ·  PLANTÃO";
+                "<b>ESTAÇÃO FECHADA</b>\nA última plataforma da linha segue interditada. A polícia investiga a ligação do caso " +
+                "com a morte do diretor da empresa.";
+            dir.policePhoto = Load(Art7, "jornal_foto_eles");
+            dir.policeCaption = "A última plataforma da linha, onde o funcionário foi detido na madrugada.";
+            dir.ambulanceChannel = "EDIÇÃO EXTRA  ·  QUARTA-FEIRA";
             dir.ambulanceHeadline = "TRABALHADOR TIRA A PRÓPRIA VIDA NO LOCAL DE TRABALHO";
             dir.ambulanceBody =
                 "Um funcionário de 27 anos, identificado como Kai, morreu na madrugada desta quarta-feira, por volta das 4h17, " +
@@ -236,8 +278,10 @@ namespace UltimaLinha.EditorTools
                 "As câmeras mostram que ele passou a noite andando sozinho pela estação, falando com duas pessoas: Souta e Ren. " +
                 "Não existe nenhum registro de alguém com esses nomes. Para os médicos, eles nunca estiveram lá: eram parte da doença.";
             dir.ambulanceTicker =
-                "SAÚDE MENTAL  ·  Se você ou alguém próximo precisa conversar, ligue 188 (CVV), 24 horas, de graça  ·  " +
-                "Esquizofrenia tem tratamento  ·  ";
+                "<b>PRECISA CONVERSAR?</b>\nSe você ou alguém próximo está passando por um momento difícil, o CVV atende " +
+                "24 horas, de graça, pelo 188. Esquizofrenia tem tratamento.";
+            dir.ambulancePhoto = Load(Art7, "jornal_foto_mim");
+            dir.ambulanceCaption = "A linha ficou fechada por três horas na madrugada.";
 
             SetSpeakers(core.ui.dialogue);
         }
@@ -327,66 +371,100 @@ namespace UltimaLinha.EditorTools
             return ui;
         }
 
+        /// <summary>A notícia dos finais como uma página de jornal em cima de uma mesa escura: nome do jornal, data,
+        /// manchete, foto em meio-tom com legenda, o texto em duas colunas e um quadro no pé da página.</summary>
         static NewsView BuildNews(Transform root, Fonts fonts, AudioSource voice)
         {
-            var rt = Stretch("Plantao", root);
+            var rt = Stretch("Jornal", root);
             var group = rt.gameObject.AddComponent<CanvasGroup>();
             group.alpha = 0f;
             group.blocksRaycasts = false;
             var view = rt.gameObject.AddComponent<NewsView>();
-            Img(Stretch("Fundo", rt), new Color(0.025f, 0.03f, 0.045f, 1f));
-            var red = Hex("C0281E");
+            Img(Stretch("Mesa", rt), new Color(0.035f, 0.03f, 0.028f, 1f));
+            var tinta = new Color(0.1f, 0.09f, 0.08f, 1f);
+            var tintaClara = new Color(0.28f, 0.26f, 0.23f, 1f);
 
-            // barra de cima: canal, "ao vivo" e a hora
-            Img(TopLeft("BarraTopo", rt, 0, 0, 1920, 90), new Color(0.06f, 0.07f, 0.1f, 1f));
-            var channel = Label("Canal", rt, "", fonts.sans, 24, Cream, 120, 30, 1100, 34);
-            channel.characterSpacing = 14;
-            var dotRt = TopLeft("AoVivo", rt, 1470, 34, 22, 22);
-            Img(dotRt, red);
-            var dot = dotRt.gameObject.AddComponent<CanvasGroup>();
-            var live = Label("AoVivoTexto", rt, "AO VIVO", fonts.sans, 22, Cream, 1504, 30, 200, 34);
-            live.characterSpacing = 12;
-            var clock = Label("Hora", rt, "04:17", fonts.sans, 26, Cream, 1660, 28, 160, 34);
-            clock.alignment = TextAlignmentOptions.TopRight;
+            // a página, um pouco torta, com sombra
+            var sombra = TopLeft("Sombra", rt, 344, 46, 1260, 1020);
+            Img(sombra, new Color(0f, 0f, 0f, 0.55f));
+            sombra.localRotation = Quaternion.Euler(0f, 0f, -1.2f);
+            var pagina = TopLeft("Pagina", rt, 330, 30, 1260, 1020);
+            pagina.localRotation = Quaternion.Euler(0f, 0f, -1.2f);
+            var papel = Img(pagina, Color.white);
+            papel.sprite = Load(Art7, "jornal_papel");
 
-            // faixa "PLANTÃO", manchete e texto
-            Img(TopLeft("Faixa", rt, 120, 190, 330, 66), red);
-            var tag = Label("FaixaTexto", rt, "PLANTÃO", fonts.sans, 36, Color.white, 120, 198, 330, 50);
-            tag.alignment = TextAlignmentOptions.Top;
-            tag.characterSpacing = 20;
-            var headline = Label("Manchete", rt, "", fonts.serif, 66, Cream, 120, 290, 1680, 250);
-            headline.textWrappingMode = TextWrappingModes.Normal;
-            headline.lineSpacing = -10;
-            Img(TopLeft("Traco", rt, 120, 548, 1680, 2), Rule);
-            var body = Label("Texto", rt, "", fonts.serif, 32, Hex("C9C2B5"), 120, 580, 1450, 330);
-            body.textWrappingMode = TextWrappingModes.Normal;
-            body.lineSpacing = 8;
+            TextMeshProUGUI Texto(string nome, string texto, TMP_FontAsset fonte, float tamanho, Color cor, float x, float y, float w, float h)
+            {
+                var t = Label(nome, pagina, texto, fonte, 30, cor, x, y, w, h);
+                t.fontSize = tamanho;
+                return t;
+            }
+            void Linha(string nome, float x, float y, float w, float h) => Img(TopLeft(nome, pagina, x, y, w, h), tinta);
 
-            // letreiro correndo embaixo
-            Img(TopLeft("LetreiroEtiqueta", rt, 0, 980, 220, 64), red);
-            var lbl = Label("LetreiroEtiquetaTexto", rt, "URGENTE", fonts.sans, 26, Color.white, 0, 994, 220, 40);
-            lbl.alignment = TextAlignmentOptions.Top;
-            lbl.characterSpacing = 10;
-            var strip = TopLeft("Letreiro", rt, 220, 980, 1700, 64);
-            Img(strip, new Color(0.9f, 0.88f, 0.84f, 1f));
-            strip.gameObject.AddComponent<RectMask2D>();
-            var ticker = Label("LetreiroTexto", strip, "", fonts.sans, 28, Hex("1A1A1A"), 0, 14, 6000, 40);
-            ticker.characterSpacing = 4;
+            // cabeçalho
+            var nomeJornal = Texto("NomeDoJornal", "JORNAL DA MANHÃ", fonts.serif, 84, tinta, 40, 20, 1180, 100);
+            nomeJornal.alignment = TextAlignmentOptions.Top;
+            nomeJornal.fontStyle = FontStyles.Bold;
+            nomeJornal.characterSpacing = 6;
+            Linha("Fio1", 40, 120, 1180, 2);
+            Linha("Fio2", 40, 126, 1180, 5);
+            var data = Texto("Data", "", fonts.sans, 20, tinta, 40, 140, 800, 28);
+            data.characterSpacing = 8;
+            var numero = Texto("Numero", "ANO XLII  ·  Nº 4.217  ·  R$ 4,50", fonts.sans, 20, tinta, 720, 140, 500, 28);
+            numero.alignment = TextAlignmentOptions.TopRight;
+            numero.characterSpacing = 6;
+            Linha("Fio3", 40, 174, 1180, 2);
 
-            var hint = Label("Continuar", rt, "ESPAÇO  ›  continuar", fonts.sans, 18, Muted, 1500, 930, 300, 28);
+            // manchete
+            var manchete = Texto("Manchete", "", fonts.serif, 54, tinta, 40, 190, 1180, 150);
+            manchete.fontStyle = FontStyles.Bold;
+            manchete.textWrappingMode = TextWrappingModes.Normal;
+            manchete.lineSpacing = -12;
+
+            // foto e legenda
+            var foto = Img(TopLeft("Foto", pagina, 40, 352, 600, 394), Color.white);
+            foto.preserveAspect = true;
+            Img(TopLeft("MolduraFoto", pagina, 40, 746, 600, 2), tinta);
+            var legenda = Texto("Legenda", "", fonts.serif, 20, tintaClara, 40, 754, 600, 56);
+            legenda.fontStyle = FontStyles.Italic;
+            legenda.textWrappingMode = TextWrappingModes.Normal;
+
+            // o texto em duas colunas
+            var col1 = Texto("Coluna1", "", fonts.serif, 22, tinta, 670, 352, 265, 600);
+            var col2 = Texto("Coluna2", "", fonts.serif, 22, tinta, 955, 352, 265, 600);
+            foreach (var c in new[] { col1, col2 })
+            {
+                c.textWrappingMode = TextWrappingModes.Normal;
+                c.alignment = TextAlignmentOptions.TopJustified;
+                c.lineSpacing = 4;
+            }
+            Linha("FioColunas", 945, 352, 1, 600);
+
+            // quadro no pé da página
+            var quadro = TopLeft("Quadro", pagina, 40, 826, 600, 150);
+            Img(quadro, tinta);
+            Img(TopLeft("QuadroMiolo", quadro, 3, 3, 594, 144), new Color(0.9f, 0.87f, 0.79f, 1f));
+            var quadroTexto = Label("QuadroTexto", quadro, "", fonts.sans, 30, tinta, 18, 14, 564, 124);
+            quadroTexto.fontSize = 21;
+            quadroTexto.textWrappingMode = TextWrappingModes.Normal;
+            quadroTexto.lineSpacing = 6;
+            Linha("FioRodape", 40, 990, 1180, 2);
+
+            var hint = Label("Continuar", rt, "ESPAÇO  ›  continuar", fonts.sans, 18, Muted, 1605, 1010, 300, 28);
             hint.alignment = TextAlignmentOptions.TopRight;
 
             view.group = group;
-            view.channel = channel;
-            view.headline = headline;
-            view.body = body;
-            view.ticker = ticker;
-            view.tickerStrip = strip;
+            view.channel = data;
+            view.headline = manchete;
+            view.body = col1;
+            view.bodyColumn2 = col2;
+            view.photo = foto;
+            view.caption = legenda;
+            view.ticker = quadroTexto;
+            view.tickerStrip = null;
             view.hint = hint;
-            view.clock = clock;
-            view.liveDot = dot;
             view.sfx = voice;
-            view.stingClip = Clip("plantao");
+            view.stingClip = Clip("papel_virar");
             return view;
         }
     }

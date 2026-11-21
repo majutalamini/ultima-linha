@@ -964,10 +964,17 @@ namespace UltimaLinha.EditorTools
                 {
                     Extra("lever", Clip("lever")), Extra("search", Clip("search")), Extra("dorme", Clip("acorda", 0, 0), 1f), Extra("dormeLimpo", Clip("dormelimpo", 0, 0), 1f), Extra("acorda", Clip("acorda", 1, 9), 2.2f),
                     Extra("empurra", Clip("final", 0, 2), 7f), Extra("aponta", Clip("final", 3, 5), 4f),
+                    // final do Cenário 7: o pulo da beira da plataforma (impulso e queda)
+                    Extra("salta", Clip("jump", 0, 3), 9f), Extra("despenca", Clip("jump", 4, 5), 6f),
                 };
             }
             else if (id == "souta")
-                ch.extras = new[] { Extra("gun", Clip("gun"), 4f), Extra("arma", Clip("gun", 3, 3), 1f), Extra("fallen", Clip("fallen"), 6f) };
+                ch.extras = new[]
+                {
+                    Extra("gun", Clip("gun"), 4f), Extra("arma", Clip("gun", 3, 3), 1f), Extra("fallen", Clip("fallen"), 6f),
+                    // morte no Cenário 7: cambaleia, se joga para trás e fica estendido de costas (deitado_00)
+                    Extra("cai", Clip("fallen", 0, 3), 9f), Extra("deitado", Clip("deitado"), 1f),
+                };
             else
                 ch.extras = new[] { Extra("panic", Clip("panic"), 5f) };
 
