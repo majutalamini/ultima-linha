@@ -19,7 +19,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario6SceneBuilder
     {
-        const int BuildVersion = 9; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 10; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario6.unity";
         const string Art6 = "Assets/Art/Cenario6";
 
@@ -171,6 +171,7 @@ namespace UltimaLinha.EditorTools
             dir.train = train.transform;
             dir.trainLight = train.transform.Find("Farol").GetComponent<SpriteRenderer>();
             dir.trainY = Y(Floor) - 0.3f;
+            dir.trainSpeed = 22f;
             dir.trainSource = Source(core.audioRoot, "TremQueVem", null);
             dir.hornClip = Clip("trem_buzina");
             dir.approachClip = Clip("trem_aproxima");
