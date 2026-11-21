@@ -79,7 +79,6 @@ namespace UltimaLinha.Salas
         public List<DialogueLine> confront3 = new List<DialogueLine>();
         public List<DialogueLine> afterLock = new List<DialogueLine>();
         public List<DialogueLine> renOutside = new List<DialogueLine>();
-        public List<DialogueLine> cabinetHint = new List<DialogueLine>();
         [Tooltip("O Kai tenta abrir o arquivo da chave antes dos outros: está emperrado.")]
         public List<DialogueLine> cabinetLocked = new List<DialogueLine>();
         public List<DialogueLine> doorNoKey = new List<DialogueLine>();
@@ -91,7 +90,7 @@ namespace UltimaLinha.Salas
         public string endSubtitle = "A estação ainda espera pela alavanca.";
 
         Vector2 previousGravity;
-        bool introDone, leaving, confronted, locked, hasKey, keyRevealed, memoRead, hintGiven, renSpoke, running, cutscene;
+        bool introDone, leaving, confronted, locked, hasKey, keyRevealed, memoRead, renSpoke, running, cutscene;
 
         void Awake()
         {
@@ -303,7 +302,7 @@ namespace UltimaLinha.Salas
         void OnDeskRead(ObjectSpot spot, bool firstTime)
         {
             if (!locked || memoRead) return;
-            memoRead = true;               // o arquivo de DEMISSÕES passa a brilhar
+            memoRead = true;
             GameSave.Mark("memorando");
         }
 
@@ -343,12 +342,7 @@ namespace UltimaLinha.Salas
                 GameSave.Mark("ren_bateu");
                 StartCoroutine(RenKnocks());
             }
-            else if (!hintGiven && OthersStillClosed() == 0 && !hasKey)
-            {
-                hintGiven = true;
-                memoRead = true;           // a dica também acende o arquivo certo
-                Say(cabinetHint);
-            }
+            // sem dica de onde está a chave: o jogador explora e descobre sozinho
         }
 
         IEnumerator RenKnocks()
