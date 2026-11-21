@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario5SceneBuilder
     {
-        const int BuildVersion = 6; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 7; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario5.unity";
         const string Art5 = "Assets/Art/Cenario5";
 
@@ -34,8 +34,8 @@ namespace UltimaLinha.EditorTools
         const float BossDeskX = 1840f, BodyX = 2505f;
         // corpo e cabeça (sprites separados, mesmas medidas de Ferramentas/Cenarios45/cenario5.py: BODY_BOX e HEAD_BOX)
         // o corpo: um passageiro do C0 deitado (Ferramentas/Cenario5/corpo.py, 178 x 55 px; a cabeça, 40 px, à direita)
-        const float BodyCx = 2468f, BodyCy = 808f, HeadCx = 2656f, HeadCy = 808f, BodyX0 = 2300f, BodyX1 = 2710f;
-        const float PlateY = 383f, KeyY = 620f, DrawerY = 655f; // plaquinhas e gavetas dos arquivos pintados
+        const float BodyCx = 2500f, BodyCy = 814f, HeadCx = 2597f, HeadCy = 803f, BodyX0 = 2360f, BodyX1 = 2650f;
+        const float PlateY = 383f, KeyY = 620f, DrawerTopY = 600f, DrawerDx = 3.5f; // plaquinhas e topo da 3ª gaveta dos arquivos pintados
         static readonly (string id, string label, float x0, float x1)[] Cabinets =
         {
             ("arquivoA", "ADMISSÕES", 1320f, 1490f),
@@ -131,7 +131,7 @@ namespace UltimaLinha.EditorTools
             crossing.head = headSr.transform;
             crossing.headX = X(HeadCx);
             crossing.sfx = sfx;
-            crossing.squelch = new[] { Clip("pegajoso_1"), Clip("pegajoso_2"), Clip("pegajoso_3") };
+            crossing.squelch = new[] { Clip("sangue_passo_1"), Clip("sangue_passo_2"), Clip("sangue_passo_3") };
             crossing.headClip = Clip("cabeca_solta");
             crossing.firstSticky = Lines(("kai", "<i>O chão gruda nos sapatos. É sangue. Ainda está mole.</i>"));
             crossing.headLoose = Lines(
@@ -163,17 +163,30 @@ namespace UltimaLinha.EditorTools
                 ("kai", "<i>\"A chave reserva fica junto dos papéis de demissão.\"</i>"));
             desk.again = Lines(("kai", "<i>Arquivo de demissões. É lá que está a chave.</i>"));
 
+            // gaveta aberta: frente recortada do próprio painel (mesmo visual da fechada) + vão com as pastas
+            foreach (var n in new[] { "gaveta_frente", "gaveta_dentro" })
+                ConfigureSprite($"{Paineis4a7}/{n}.png", new Vector2(0.5f, 1f), PixelArtImporter.Ppu, 256, FilterMode.Point);
             var cabSpots = new List<ObjectSpot>();
             for (int ci = 0; ci < Cabinets.Length; ci++)
             {
                 var cab = Cabinets[ci];
                 SpriteObj("Placa_" + cab.id, core.world, Load(Art5, Plates[ci]), new Vector3(X((cab.x0 + cab.x1) / 2f), Y(PlateY), 0f), 1);
-                var spot = BuildSpot(spots, cab.id, (cab.x0 + cab.x1) / 2f, Floor, 3.5f, 1.2f, core.sfx, Clip("gaveta_abre"));
+                // a gaveta de demissões abre sem som (a chave aparece em silêncio)
+                var abre = cab.id == "arquivoC" ? null : Clip("gaveta_abre");
+                var spot = BuildSpot(spots, cab.id, (cab.x0 + cab.x1) / 2f, Floor, 3.5f, 1.2f, core.sfx, abre);
                 spot.again = Lines(("kai", "<i>Já olhei aqui.</i>"));
-                var open = SpriteObj("GavetaAberta_" + cab.id, core.world, Load(Art5, "arquivo_gaveta"),
-                    new Vector3(X((cab.x0 + cab.x1) / 2f), Y(DrawerY), 0f), 2);
-                open.gameObject.SetActive(false);
-                spot.openVisual = open.gameObject;
+                var open = new GameObject("GavetaAberta_" + cab.id);
+                open.transform.SetParent(core.world, false);
+                open.transform.position = new Vector3(X((cab.x0 + cab.x1) / 2f + DrawerDx), Y(DrawerTopY), 0f);
+                var dentro = SpriteObj("Pastas", open.transform, Load(Paineis4a7, "gaveta_dentro"), open.transform.position, 2);
+                var frente = SpriteObj("Frente", open.transform, Load(Paineis4a7, "gaveta_frente"), open.transform.position, 3);
+                var anim = open.AddComponent<GavetaAbrindo>();
+                anim.frente = frente.transform;
+                anim.dentro = dentro.transform;
+                anim.saida = 10f / PixelArtImporter.Ppu;
+                anim.pixel = 1f / PixelArtImporter.Ppu;
+                open.SetActive(false);
+                spot.openVisual = open;
                 cabSpots.Add(spot);
             }
             cabSpots[0].first = Lines(
@@ -274,6 +287,9 @@ namespace UltimaLinha.EditorTools
             dir.renOutside = Lines(
                 ("ren", "<i>(do outro lado da porta)</i> Kai... a gente vai chamar alguém. Fica quieto, por favor."),
                 ("kai", "<i>Ren... eu juro que eu não sabia.</i>"));
+            dir.cabinetLocked = Lines(
+                ("kai", "<i>Emperrada. O trinco dessa gaveta é preso aos outros arquivos...</i>"),
+                ("kai", "<i>Preciso abrir os outros primeiro.</i>"));
             dir.cabinetHint = Lines(
                 ("kai", "<i>Nenhuma chave nesses arquivos. Só falta o de demissões.</i>"),
                 ("kai", "<i>Se ele escondesse algo, seria junto da minha própria demissão.</i>"));

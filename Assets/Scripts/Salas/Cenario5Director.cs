@@ -80,6 +80,8 @@ namespace UltimaLinha.Salas
         public List<DialogueLine> afterLock = new List<DialogueLine>();
         public List<DialogueLine> renOutside = new List<DialogueLine>();
         public List<DialogueLine> cabinetHint = new List<DialogueLine>();
+        [Tooltip("O Kai tenta abrir o arquivo da chave antes dos outros: está emperrado.")]
+        public List<DialogueLine> cabinetLocked = new List<DialogueLine>();
         public List<DialogueLine> doorNoKey = new List<DialogueLine>();
         public List<DialogueLine> keyFound = new List<DialogueLine>();
         public List<DialogueLine> doorUnlocked = new List<DialogueLine>();
@@ -90,7 +92,6 @@ namespace UltimaLinha.Salas
 
         Vector2 previousGravity;
         bool introDone, leaving, confronted, locked, hasKey, keyRevealed, memoRead, hintGiven, renSpoke, running, cutscene;
-        int wrongSearches;
 
         void Awake()
         {
@@ -126,7 +127,8 @@ namespace UltimaLinha.Salas
                     c.available = false;
                     c.Presented += OnSearched;
                     // com a chave à mostra, o E no próprio arquivo também pega a chave (o lugar da chave ficava escondido atrás dele)
-                    if (c.id == keyCabinetId) c.Intercept = s => { if (!keyRevealed || hasKey) return false; OnKeyPickup(keyPickup); return true; };
+                    // e o arquivo da chave só abre depois que os outros três foram abertos
+                    if (c.id == keyCabinetId) c.Intercept = KeyCabinetIntercept;
                 }
             if (keyPickup) keyPickup.Intercept = OnKeyPickup;
             if (door)
@@ -305,6 +307,26 @@ namespace UltimaLinha.Salas
             GameSave.Mark("memorando");
         }
 
+        bool KeyCabinetIntercept(ObjectSpot spot)
+        {
+            if (hasKey) return false;
+            if (keyRevealed) { OnKeyPickup(keyPickup); return true; }
+            int faltam = OthersStillClosed();
+            if (faltam == 0) return false;
+            Say(cabinetLocked);
+            if (Hud.Instance) Hud.Instance.Toast(faltam == 1 ? "Falta abrir 1 arquivo." : $"Faltam abrir {faltam} arquivos.");
+            return true;
+        }
+
+        /// <summary>Quantos arquivos (fora o da chave) ainda não foram abertos.</summary>
+        int OthersStillClosed()
+        {
+            int n = 0;
+            foreach (var c in cabinets)
+                if (c && c.id != keyCabinetId && c.Uses == 0 && !GameSave.Has("arquivo_" + c.id)) n++;
+            return n;
+        }
+
         void OnSearched(ObjectSpot spot, bool firstTime)
         {
             if (!locked) return;
@@ -315,14 +337,13 @@ namespace UltimaLinha.Salas
                 return;
             }
             if (!firstTime) return;
-            wrongSearches++;
             if (!renSpoke)
             {
                 renSpoke = true;
                 GameSave.Mark("ren_bateu");
                 StartCoroutine(RenKnocks());
             }
-            else if (!hintGiven && wrongSearches >= 2 && !hasKey)
+            else if (!hintGiven && OthersStillClosed() == 0 && !hasKey)
             {
                 hintGiven = true;
                 memoRead = true;           // a dica também acende o arquivo certo
@@ -341,8 +362,7 @@ namespace UltimaLinha.Salas
         /// <summary>O arquivo certo foi aberto: a chave aparece na gaveta, brilhando, para o Kai pegar.</summary>
         IEnumerator RevealKey(ObjectSpot cabinet)
         {
-            ShowKey();
-            if (sfx && keyClip) sfx.PlayOneShot(keyClip, 0.45f);
+            ShowKey();                     // sem som: a gaveta de demissões abre em silêncio
             yield return null;
             if (Hud.Instance) Hud.Instance.SetObjective(objectiveTakeKey);
         }
