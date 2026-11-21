@@ -582,6 +582,8 @@ namespace UltimaLinha.Salas
                 float k = Mathf.Clamp01(t / dur);
                 float e = k * k * k;                          // vem de longe e acelera em cima da câmera
                 trainFront.localScale = Vector3.one * Mathf.Lerp(0.3f, 4.6f, e);
+                // o brilho do farol de longe dá lugar ao trem (que vem por cima dele)
+                if (headlight) headlight.color = new Color(1f, 0.96f, 0.85f, Mathf.Lerp(0.85f, 0f, Mathf.Clamp01(k / 0.35f)));
                 trainFront.position = new Vector3(p0.x, Mathf.Lerp(trainFrontY, trainFrontEndY, e), 0f);
                 if (cameraFollow && Time.frameCount % 6 == 0) cameraFollow.Shake(0.03f + 0.25f * e, 0.25f);
                 if (!crushed && k > 0.78f)

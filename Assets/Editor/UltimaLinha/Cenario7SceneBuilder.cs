@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 9; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 10; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
@@ -138,12 +138,12 @@ namespace UltimaLinha.EditorTools
 
             // a frente do trem que sai do túnel (final em que o Kai se joga nos trilhos)
             ConfigureSprite($"{Paineis4a7}/c7_trem_frente.png", new Vector2(0.5f, 0f), PixelArtImporter.Ppu, 256, FilterMode.Point);
-            var trainFront = SpriteObj("TremDeFrente", core.world, Load(Paineis4a7, "c7_trem_frente"), new Vector3(X(TunnelX), Y(600f), 0f), 50);
+            var trainFront = SpriteObj("TremDeFrente", core.world, Load(Paineis4a7, "c7_trem_frente"), new Vector3(X(TunnelX), Y(600f), 0f), 62);
             trainFront.color = new Color(0.8f, 0.79f, 0.78f, 1f);
             var lights = new List<SpriteRenderer>();
             foreach (var lx in new[] { -56f, 55f })
             {
-                var l = SpriteObj("FarolFrente", trainFront.transform, Spr("brilho"), Vector3.zero, 51);
+                var l = SpriteObj("FarolFrente", trainFront.transform, Spr("brilho"), Vector3.zero, 63);
                 l.transform.localPosition = new Vector3(lx / PixelArtImporter.Ppu, 52f / PixelArtImporter.Ppu, 0f);
                 l.transform.localScale = Vector3.one * 0.45f;
                 l.color = new Color(1f, 0.96f, 0.85f, 0.9f);
