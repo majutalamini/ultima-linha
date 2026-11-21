@@ -43,11 +43,11 @@ namespace UltimaLinha.Salas
         public float slowMotion = 0.3f;
 
         [Header("Cores")]
-        public Color accent = new Color(0.38f, 0.75f, 1f, 1f);
-        public Color textIdle = new Color(0.82f, 0.88f, 0.94f, 0.62f);
+        public Color accent = new Color(1f, 0.3f, 0.26f, 1f);   // vermelho
+        public Color textIdle = new Color(0.95f, 0.86f, 0.84f, 0.62f);
         public Color textSelected = new Color(1f, 1f, 1f, 1f);
-        public Color barIdle = new Color(0.02f, 0.04f, 0.07f, 0.32f);
-        public Color barSelected = new Color(0.06f, 0.16f, 0.26f, 0.6f);
+        public Color barIdle = new Color(0.08f, 0.02f, 0.02f, 0.32f);
+        public Color barSelected = new Color(0.3f, 0.05f, 0.04f, 0.6f);
 
         [Header("Som")]
         public AudioSource sfx;

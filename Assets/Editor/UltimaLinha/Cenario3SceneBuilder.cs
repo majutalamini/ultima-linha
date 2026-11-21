@@ -29,7 +29,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario3SceneBuilder
     {
-        const int BuildVersion = 9; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 10; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario3.unity";
         const string Obj3 = "Assets/Art/Cenario3/Objetos/";
         const string MapaC2 = "Assets/Art/Cenario2/Objetos/mapa_linha.png";
@@ -49,6 +49,7 @@ namespace UltimaLinha.EditorTools
             FolhaDir = new Vector4(110.1f, 125.2f, 66.1f, 247.8f);
         static readonly Vector4 PortaoGrade = new Vector4(85.6f, 117.3f, 132.5f, 234.1f);
         const float PortaoChao = 0.2f, PortaoPoste = 170f; // o poste do portão fica em cima da emenda das paredes
+        const float PortaoPosteEsq = 152f; // borda esquerda do poste em portao_batente.png (px)
         const float MaquinaW = 102f;
         static readonly Vector2 MaquinaBandeja = new Vector2(42.3f, 44.5f), BilheteriaPapel = new Vector2(64.8f, 149.9f);
         static readonly Vector2 PainelLampada = new Vector2(39.5f, 108.8f);
@@ -287,10 +288,14 @@ namespace UltimaLinha.EditorTools
             // ---------- O portão de serviço (o poste em cima da emenda das paredes), com o quadro logo ao lado ----------
             var portao0 = s0 - A(PortaoPoste);
             float portaoY = Chao - A(PortaoChao);
-            SpriteObj("PortaoBatente", plat, O("portao_batente"), new Vector3(portao0, portaoY, 0f), ObjOrder + 1);
+            var batente = SpriteObj("PortaoBatente", plat, O("portao_batente"), new Vector3(portao0, portaoY, 0f), ObjOrder + 1);
             var gradePos = new Vector3(portao0 + A(PortaoGrade.x - PortaoGrade.z / 2f), portaoY + A(PortaoGrade.y - PortaoGrade.w / 2f), 0f);
             // o corredor escuro atrás da grade: o portão é uma passagem, não grade pintada em cima dos azulejos
-            SpriteObj("PortaoVao", plat, O("portao_vao"), gradePos + new Vector3(-A(2f), 0f, 0f), ObjOrder - 1);
+            var vao = SpriteObj("PortaoVao", plat, O("portao_vao"), gradePos + new Vector3(-A(2f), 0f, 0f), ObjOrder - 1);
+            // aberto o portão, quem passa pelo vão escurece (do canto da grade até o poste)
+            var passagem = vao.gameObject.AddComponent<PassagemEscura>();
+            passagem.x0 = gradePos.x;
+            passagem.x1 = portao0 + A(PortaoPosteEsq);
             var grade = SpriteObj("PortaoGrade", plat, O("portao_grade"), gradePos, ObjOrder);
             float gradeX = portao0 + A(PortaoGrade.x);
             Box("PortaoBloqueio", solids, gradeX, Chao + 3f, 0.4f, 6f, oneWay: false);
@@ -317,6 +322,8 @@ namespace UltimaLinha.EditorTools
             dir.portaoGrade = grade.transform;
             dir.portaoBloqueio = bloqueio;
             dir.portaoCorre = A(PortaoGrade.z) + 0.1f;
+            dir.portaoBatente = batente;
+            dir.portaoPassagem = passagem;
 
             // ---------- Saguão: o comunicado, a moeda no chão e a máquina ----------
             var sag = new GameObject("Saguao").transform;

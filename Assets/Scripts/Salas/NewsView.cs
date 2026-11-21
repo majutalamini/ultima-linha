@@ -7,8 +7,9 @@ using UnityEngine;
 namespace UltimaLinha.Salas
 {
     /// <summary>
-    /// Plantão do telejornal na tela inteira (finais do Cenário 7): faixa vermelha, manchete, texto e letreiro correndo embaixo.
-    /// Depois de alguns segundos, E, Espaço, Enter ou clique continuam.
+    /// A notícia dos finais do Cenário 7 na tela inteira, como a página de um jornal: cabeçalho com o nome do jornal e a data,
+    /// manchete, foto com legenda, texto em duas colunas e um quadro no pé da página. (Sem tickerStrip o "letreiro" fica parado,
+    /// como o quadro; com ele, corre como num telejornal.) Depois de alguns segundos, E, Espaço, Enter ou clique continuam.
     /// </summary>
     public class NewsView : MonoBehaviour
     {
@@ -18,6 +19,10 @@ namespace UltimaLinha.Salas
         public TMP_Text channel;
         public TMP_Text headline;
         public TMP_Text body;
+        [Tooltip("Segunda coluna: recebe o texto que não coube na primeira.")]
+        public TMP_Text bodyColumn2;
+        public UnityEngine.UI.Image photo;
+        public TMP_Text caption;
         public TMP_Text ticker;
         public RectTransform tickerStrip;
         public TMP_Text hint;
@@ -37,6 +42,7 @@ namespace UltimaLinha.Salas
         void Awake()
         {
             Instance = this;
+            InputHelper.FixHint(hint);
             if (group)
             {
                 group.alpha = 0f;
@@ -51,7 +57,10 @@ namespace UltimaLinha.Salas
             if (IsOpen) Modal.Pop();
         }
 
-        public void Show(string channelName, string title, string text, string tickerText, Action closed)
+        public void Show(string channelName, string title, string text, string tickerText, Action closed) =>
+            Show(channelName, title, text, tickerText, null, null, closed);
+
+        public void Show(string channelName, string title, string text, string tickerText, Sprite photoSprite, string captionText, Action closed)
         {
             if (IsOpen) return;
             IsOpen = true;
@@ -62,12 +71,30 @@ namespace UltimaLinha.Salas
             Modal.SetControl(false);
             if (channel) channel.text = channelName ?? "";
             if (headline) headline.text = title ?? "";
-            if (body) body.text = text ?? "";
+            if (body)
+            {
+                body.text = text ?? "";
+                if (bodyColumn2)
+                {
+                    body.overflowMode = TextOverflowModes.Linked;
+                    body.linkedTextComponent = bodyColumn2;
+                    body.ForceMeshUpdate();
+                }
+            }
+            if (photo)
+            {
+                photo.sprite = photoSprite;
+                photo.enabled = photoSprite;
+            }
+            if (caption) caption.text = captionText ?? "";
             if (ticker)
             {
                 ticker.text = tickerText ?? "";
-                var rt = ticker.rectTransform;
-                rt.anchoredPosition = new Vector2(tickerStrip ? tickerStrip.rect.width : 1920f, rt.anchoredPosition.y);
+                if (tickerStrip)
+                {
+                    var rt = ticker.rectTransform;
+                    rt.anchoredPosition = new Vector2(tickerStrip.rect.width, rt.anchoredPosition.y);
+                }
             }
             if (hint) hint.alpha = 0f;
             if (sfx && stingClip) sfx.PlayOneShot(stingClip);
@@ -79,7 +106,7 @@ namespace UltimaLinha.Salas
         void Update()
         {
             if (!IsOpen) return;
-            if (ticker)
+            if (ticker && tickerStrip)
             {
                 var rt = ticker.rectTransform;
                 var p = rt.anchoredPosition;

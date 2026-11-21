@@ -72,6 +72,7 @@ namespace UltimaLinha.Cenario1
         void Awake()
         {
             Instance = this;
+            InputHelper.FixHint(continueHint);
             if (group)
             {
                 group.alpha = 0f;

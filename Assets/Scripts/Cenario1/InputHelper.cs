@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace UltimaLinha.Cenario1
@@ -14,13 +15,14 @@ namespace UltimaLinha.Cenario1
                    || (g != null && (g.buttonWest.wasPressedThisFrame || g.buttonNorth.wasPressedThisFrame));
         }
 
-        /// <summary>Espaço, Enter ou clique; A no controle. O E fica só para interagir: quem abre a conversa não pula a fala.</summary>
+        /// <summary>E, Espaço, Enter ou clique; A no controle. Quem usa (diálogo, papéis) espera um instante depois de
+        /// abrir, então o E que abriu a conversa ou o papel não pula a primeira fala nem fecha o papel na hora.</summary>
         public static bool AdvancePressed()
         {
             var k = Keyboard.current;
             var m = Mouse.current;
             var g = Gamepad.current;
-            return (k != null && (k.spaceKey.wasPressedThisFrame
+            return (k != null && (k.eKey.wasPressedThisFrame || k.spaceKey.wasPressedThisFrame
                                   || k.enterKey.wasPressedThisFrame || k.numpadEnterKey.wasPressedThisFrame))
                    || (m != null && m.leftButton.wasPressedThisFrame)
                    || (g != null && g.buttonSouth.wasPressedThisFrame);
@@ -43,12 +45,27 @@ namespace UltimaLinha.Cenario1
             return (k != null && k.tabKey.wasPressedThisFrame) || (g != null && g.selectButton.wasPressedThisFrame);
         }
 
-        /// <summary>Esc no teclado, Start no controle.</summary>
+        /// <summary>Esc no teclado, Start no controle. Falso no quadro em que alguém já usou o Esc (ex.: fechar o diário),
+        /// para o mesmo Esc não voltar ao menu.</summary>
         public static bool BackPressed()
         {
+            if (Time.frameCount == backConsumedFrame) return false;
             var k = Keyboard.current;
             var g = Gamepad.current;
             return (k != null && k.escapeKey.wasPressedThisFrame) || (g != null && g.startButton.wasPressedThisFrame);
+        }
+
+        static int backConsumedFrame = -1;
+
+        /// <summary>O Esc deste quadro já foi usado: ninguém mais reage a ele.</summary>
+        public static void ConsumeBack() => backConsumedFrame = Time.frameCount;
+
+        /// <summary>Troca nas dicas da tela o "ESPAÇO" de avançar/fechar por "E / ESPAÇO" (as cenas já montadas mostram só ESPAÇO).</summary>
+        public static void FixHint(TMPro.TMP_Text hint)
+        {
+            if (!hint || hint.text == null || !hint.text.StartsWith("ESPAÇO")) return;
+            hint.text = "E / " + hint.text;
+            hint.textWrappingMode = TMPro.TextWrappingModes.NoWrap; // cresce para o lado do alinhamento, sem quebrar a linha
         }
     }
 }

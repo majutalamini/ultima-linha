@@ -12,7 +12,7 @@ namespace UltimaLinha.Salas
 {
     /// <summary>
     /// Cadeado de combinação estilo Resident Evil: quatro rodas de número. Esquerda/direita escolhem a roda,
-    /// cima/baixo mudam o número, Enter confere. Esc fecha. Também dá para clicar nas setas.
+    /// cima/baixo mudam o número, Enter (ou o botão CONFIRMAR) confere. Esc fecha. Também dá para clicar nas setas.
     /// </summary>
     public class DigitLockUI : MonoBehaviour
     {
@@ -26,6 +26,8 @@ namespace UltimaLinha.Salas
         public UnityEngine.UI.Image[] frames; // moldura de cada roda (destaca a escolhida)
         public UnityEngine.UI.Button[] upButtons;
         public UnityEngine.UI.Button[] downButtons;
+        [Tooltip("Botão CONFIRMAR. Vazio: é criado embaixo das rodas quando a cena abre.")]
+        public UnityEngine.UI.Button confirmButton;
         public TMP_Text status;
 
         public Color normal = new Color(0.91f, 0.88f, 0.83f, 1f);
@@ -63,6 +65,61 @@ namespace UltimaLinha.Salas
                 if (upButtons != null && i < upButtons.Length && upButtons[i]) upButtons[i].onClick.AddListener(() => Step(w, 1));
                 if (downButtons != null && i < downButtons.Length && downButtons[i]) downButtons[i].onClick.AddListener(() => Step(w, -1));
             }
+            if (!confirmButton) confirmButton = CriaConfirmar();
+            if (confirmButton) confirmButton.onClick.AddListener(() => { if (IsOpen && !busy) Submit(); });
+        }
+
+        /// <summary>
+        /// Botão CONFIRMAR embaixo das rodas (as cenas montadas antes dele não o têm): o painel cresce um pouco
+        /// e a linha de ajuda desce para abrir espaço.
+        /// </summary>
+        UnityEngine.UI.Button CriaConfirmar()
+        {
+            if (!panel) return null;
+            var ajuda = panel.Find("Ajuda") as RectTransform;
+            var ajudaTexto = ajuda ? ajuda.GetComponent<TMP_Text>() : null;
+            panel.sizeDelta += new Vector2(0f, 60f);
+            if (ajuda) ajuda.anchoredPosition += new Vector2(0f, -60f);
+            if (ajudaTexto) ajudaTexto.text = ajudaTexto.text.Replace("ENTER CONFIRMA", "ENTER OU CONFIRMAR");
+
+            float w = 280f, h = 58f;
+            var rt = new GameObject("Confirmar", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button))
+                .GetComponent<RectTransform>();
+            rt.gameObject.layer = gameObject.layer;
+            rt.SetParent(panel, false);
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = new Vector2(0f, -612f);
+            rt.sizeDelta = new Vector2(w, h);
+            var fundo = rt.GetComponent<UnityEngine.UI.Image>();
+            fundo.color = new Color(0.16f, 0.12f, 0.1f, 1f);
+            var borda = rt.gameObject.AddComponent<UnityEngine.UI.Outline>();
+            borda.effectColor = selectedFrame;
+            borda.effectDistance = new Vector2(2f, -2f);
+            var botao = rt.GetComponent<UnityEngine.UI.Button>();
+            botao.targetGraphic = fundo;
+            var cores = botao.colors;
+            cores.normalColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            cores.highlightedColor = Color.white;
+            cores.pressedColor = new Color(0.4f, 0.12f, 0.1f, 1f);
+            botao.colors = cores;
+            botao.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+
+            var texto = new GameObject("Texto", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+            texto.gameObject.layer = gameObject.layer;
+            texto.rectTransform.SetParent(rt, false);
+            texto.rectTransform.anchorMin = Vector2.zero;
+            texto.rectTransform.anchorMax = Vector2.one;
+            texto.rectTransform.offsetMin = texto.rectTransform.offsetMax = Vector2.zero;
+            var fonte = ajudaTexto ? ajudaTexto.font : status ? status.font : null;
+            if (fonte) texto.font = fonte;
+            texto.text = "CONFIRMAR";
+            texto.fontSize = 26;
+            texto.characterSpacing = 16;
+            texto.color = normal;
+            texto.alignment = TextAlignmentOptions.Center;
+            texto.raycastTarget = false;
+            return botao;
         }
 
         void OnDestroy()

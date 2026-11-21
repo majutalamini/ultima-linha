@@ -72,6 +72,10 @@ namespace UltimaLinha.Cenario1
         [HideInInspector] public float externalSpeed;
 
         float cicloPasso, clipTime, air, actTimer, actPlayed = -1f;
+        // lado para onde olha na conversa: vale da primeira fala até a caixa fechar (entre uma fala e outra ninguém
+        // está "falando", e sem isto o personagem voltava para o lado de antes e virava de novo a cada fala)
+        float facingConversa;
+        bool naConversa;
         ClipePixel clipe;
         float clipeTempo;
         bool segurar;
@@ -136,7 +140,21 @@ namespace UltimaLinha.Cenario1
             {
                 var alvo = AlvoDaConversa();
                 if (alvo && Mathf.Abs(alvo.transform.position.x - transform.position.x) > 0.3f)
-                    facing = alvo.transform.position.x < transform.position.x ? -1f : 1f;
+                {
+                    facingConversa = alvo.transform.position.x < transform.position.x ? -1f : 1f;
+                    naConversa = true;
+                }
+                if (naConversa) facing = facingConversa;
+            }
+            else if (naConversa)
+            {
+                // a conversa acabou: o jogador continua olhando para onde estava (não volta a virar sozinho)
+                naConversa = false;
+                if (flipSource && !DialogueBox.IsBusy)
+                {
+                    flipSource.flipX = facingConversa < 0f;
+                    facing = facingConversa;
+                }
             }
             transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * Mathf.Sign(facing), transform.localScale.y, 1f);
 

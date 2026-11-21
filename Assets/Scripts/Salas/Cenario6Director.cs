@@ -12,8 +12,10 @@ namespace UltimaLinha.Salas
 {
     /// <summary>
     /// Cenário 6 — a alavanca. O Kai encaixa a alavanca no painel, o metrô liga com um estrondo e uma contagem regressiva
-    /// começa para as últimas ações dele. Ele corre pelo túnel (passando por anteparas que fecham) até o lugar onde o metrô está parado.
-    /// Esmagado por uma antepara: volta ao último ponto de controle. Tempo esgotado: volta ao início da corrida.
+    /// começa. Ele corre pelo túnel, pulando caixotes, cavalete, entulho e buracos no piso, até o metrô parado no fim.
+    /// O tempo só dá correndo (SHIFT); andando não chega, e os buracos só se pulam correndo.
+    /// Caiu num buraco: volta ao último ponto de controle (o tempo continua). Tempo esgotado: um trem vem pelo túnel e
+    /// atropela o Kai; a corrida recomeça do início.
     /// </summary>
     public class Cenario6Director : MonoBehaviour
     {
@@ -35,6 +37,19 @@ namespace UltimaLinha.Salas
         public float countdownSeconds = 70f;
         public Vector2 gravity = new Vector2(0f, -20f);
 
+        [Header("Quedas e atropelamento")]
+        [Tooltip("Abaixo desse y (centro do Kai) ele caiu num buraco.")]
+        public float fallY = -10f;
+        [Tooltip("O trem que vem quando o tempo acaba (pivô na frente, embaixo). Fica desligado até lá.")]
+        public Transform train;
+        public SpriteRenderer trainLight;
+        public float trainY = 0f;
+        public float trainSpeed = 22f;
+        public AudioSource trainSource;
+        public AudioClip hornClip, approachClip, hitClip;
+        [Tooltip("Luminárias da parede que piscam em vermelho com o alarme.")]
+        public LuzAlarme alarmLights;
+
         [Header("Interface")]
         public TMP_Text timerText;
         public CanvasGroup redTint;
@@ -50,11 +65,12 @@ namespace UltimaLinha.Salas
         public AudioClip activateClip, tickClip, crushClip, timeoutClip;
 
         public string objectiveSocket = "Encaixe a alavanca no painel.";
-        public string objectiveRun = "Corra até o metrô antes que o tempo acabe.";
+        public string objectiveRun = "Corra (SHIFT) até o metrô antes que o tempo acabe.";
 
         public List<DialogueLine> intro = new List<DialogueLine>();
         public List<DialogueLine> inserted = new List<DialogueLine>();
         public List<DialogueLine> firstCrush = new List<DialogueLine>();
+        public List<DialogueLine> firstFall = new List<DialogueLine>();
         public List<DialogueLine> timeout = new List<DialogueLine>();
         public List<DialogueLine> doorBefore = new List<DialogueLine>();
         public List<DialogueLine> boarding = new List<DialogueLine>();
@@ -65,7 +81,7 @@ namespace UltimaLinha.Salas
         Vector2 previousGravity;
         bool introDone, leaving, started, dying, finished;
         float remaining;
-        int checkpoint, crushes, lastTick = -1;
+        int checkpoint, crushes, falls, lastTick = -1;
 
         void Awake()
         {
@@ -76,6 +92,8 @@ namespace UltimaLinha.Salas
             foreach (var g in gates) if (g) g.enabled = false; // só se mexem depois que o metrô liga
             if (timerText) timerText.text = "";
             if (redTint) redTint.alpha = 0f;
+            if (train) train.gameObject.SetActive(false);
+            if (alarmLights) alarmLights.ligada = false;
         }
 
         void OnDestroy() { Physics2D.gravity = previousGravity; }
@@ -141,10 +159,11 @@ namespace UltimaLinha.Salas
             }
             GameFlags.Set(GameFlags.MissingLever, false);
             yield return new WaitForSeconds(0.4f);
-            if (sfx && activateClip) sfx.PlayOneShot(activateClip);
+            if (sfx && activateClip) sfx.PlayOneShot(activateClip, 0.6f);
             if (cameraFollow) cameraFollow.Shake(0.09f, 3.2f);
             yield return new WaitForSeconds(1.2f);
-            if (alarm) { alarm.loop = true; alarm.volume = 0.35f; alarm.Play(); }
+            if (alarm) { alarm.loop = true; alarm.volume = 0.3f; alarm.Play(); }
+            if (alarmLights) { alarmLights.som = alarm; alarmLights.ligada = true; } // as luminárias da parede começam a piscar em vermelho
             foreach (var g in gates) if (g) g.enabled = true;
             if (door) door.Unlock();
             yield return new WaitForSeconds(1.6f);
@@ -169,6 +188,7 @@ namespace UltimaLinha.Salas
             var b = player.Bounds;
             foreach (var g in gates)
                 if (g && g.IsCrushing(b)) { StartCoroutine(Die()); return; }
+            if (player.transform.position.y < fallY) { StartCoroutine(Fall()); return; }
             float x = player.transform.position.x;
             for (int i = checkpoints.Length - 1; i > checkpoint; i--)
                 if (x >= checkpoints[i]) { checkpoint = i; break; }
@@ -180,14 +200,15 @@ namespace UltimaLinha.Salas
             if (timerText)
             {
                 timerText.text = $"{sec / 60:00}:{sec % 60:00}";
-                bool low = remaining < 15f;
+                bool low = remaining < 5f;
                 timerText.color = low && Mathf.Repeat(Time.time * 2f, 1f) < 0.5f ? new Color(1f, 0.75f, 0.7f) : new Color(0.85f, 0.27f, 0.23f);
             }
-            if (redTint) redTint.alpha = (0.05f + 0.07f * (0.5f + 0.5f * Mathf.Sin(Time.time * 6f))) * (remaining < 15f ? 2f : 1f);
+            // o vermelho do alarme fica na parede (LuzAlarme), não na tela toda
+            if (redTint) redTint.alpha = 0f;
             if (sec != lastTick)
             {
                 lastTick = sec;
-                if (remaining < 12f && sfx && tickClip) sfx.PlayOneShot(tickClip, 0.6f);
+                if (remaining < 6f && sfx && tickClip) sfx.PlayOneShot(tickClip, 0.5f);
             }
         }
 
@@ -207,15 +228,83 @@ namespace UltimaLinha.Salas
             if (crushes == 1) Say(firstCrush);
         }
 
+        /// <summary>Caiu num buraco do piso: volta ao último ponto de controle. O tempo não volta.</summary>
+        IEnumerator Fall()
+        {
+            if (dying) yield break;
+            dying = true;
+            player.controlEnabled = false;
+            falls++;
+            if (Hud.Instance) Hud.Instance.Toast("O Kai caiu no buraco.");
+            if (Hud.Instance) yield return Hud.Instance.FadeScreen(1f, 0.25f);
+            yield return Respawn(checkpoint);
+            dying = false;
+            if (falls == 1) Say(firstFall);
+        }
+
+        /// <summary>O tempo acabou: um trem vem pelo túnel, o farol enche a tela e ele passa por cima do Kai.</summary>
         IEnumerator TimeUp()
         {
             dying = true;
             player.controlEnabled = false;
-            if (sfx && timeoutClip) sfx.PlayOneShot(timeoutClip);
-            if (Hud.Instance) Hud.Instance.Toast("O tempo acabou. O metrô partiu sem ele... mas voltou.");
-            if (Hud.Instance) yield return Hud.Instance.FadeScreen(1f, 0.8f);
+            if (timerText) timerText.text = "00:00";
+            var cam = Camera.main;
+            float kx = player.transform.position.x;
+            float camL = cam ? cam.transform.position.x - cam.orthographicSize * cam.aspect : kx - 9f;
+            var rig = player.GetComponentInChildren<PersonagemPixel>();
+
+            if (trainSource)
+            {
+                trainSource.Stop();
+                if (approachClip) trainSource.PlayOneShot(approachClip, 0.6f);
+                if (hornClip) trainSource.PlayOneShot(hornClip, 0.55f);
+            }
+            else if (sfx && hornClip) sfx.PlayOneShot(hornClip);
+
+            if (train)
+            {
+                // o farol aparece primeiro, na beira esquerda da tela, e cresce
+                train.gameObject.SetActive(true);
+                train.position = new Vector3(camL - 0.7f, trainY, 0f); // só o farol aparece na beira da tela
+                float t = 0f;
+                while (t < 1.1f)
+                {
+                    t += Time.deltaTime;
+                    if (trainLight) { var c = trainLight.color; c.a = Mathf.Clamp01(t / 1.1f); trainLight.color = c; }
+                    if (cameraFollow && t > 0.6f) cameraFollow.Shake(0.03f, 0.1f);
+                    yield return null;
+                }
+                // e então o trem entra correndo
+                bool bateu = false;
+                float depois = 0f;
+                while (depois < 0.4f)
+                {
+                    train.position += Vector3.right * trainSpeed * Time.deltaTime;
+                    if (!bateu && train.position.x >= kx - 0.2f)
+                    {
+                        bateu = true;
+                        if (sfx && hitClip) sfx.PlayOneShot(hitClip, 0.7f);
+                        if (sfx && crushClip) sfx.PlayOneShot(crushClip, 0.5f);
+                        if (cameraFollow) cameraFollow.Shake(0.3f, 0.6f);
+                        if (rig && rig.view) rig.view.enabled = false;
+                    }
+                    if (bateu) depois += Time.deltaTime;
+                    yield return null;
+                }
+            }
+            else if (sfx && timeoutClip) sfx.PlayOneShot(timeoutClip);
+
+            if (Hud.Instance) yield return Hud.Instance.FadeScreen(1f, 0.2f);
+            if (Hud.Instance) Hud.Instance.Toast("O tempo acabou. O trem atropelou o Kai.");
+            yield return new WaitForSeconds(0.9f);
+            if (trainSource) trainSource.Stop();
+            if (train) train.gameObject.SetActive(false);
+            if (trainLight) { var c = trainLight.color; c.a = 0f; trainLight.color = c; }
+            if (rig && rig.view) rig.view.enabled = true;
             checkpoint = 0;
             remaining = countdownSeconds;
+            lastTick = -1;
+            UpdateTimer();
             yield return Respawn(0);
             dying = false;
             Say(timeout);
@@ -239,6 +328,7 @@ namespace UltimaLinha.Salas
             finished = true;
             if (timerText) timerText.text = "";
             if (redTint) redTint.alpha = 0f;
+            if (alarmLights) alarmLights.ligada = false;
             if (alarm) StartCoroutine(FadeAudio(alarm, 0f, 1f));
             if (player) player.controlEnabled = false;
             yield return new WaitForSeconds(0.5f);

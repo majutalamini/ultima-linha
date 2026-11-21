@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario4SceneBuilder
     {
-        const int BuildVersion = 8; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 9; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario4.unity";
         // fundo: os painéis c4_painel_a/b do usuário (Ferramentas/Cenarios4a7), com os móveis pintados. As medidas abaixo são
         // em px "antigos" (100 por unidade, y para baixo numa tela de 941): X()/Y() dão unidades; foram tiradas da arte.
@@ -194,7 +194,7 @@ namespace UltimaLinha.EditorTools
             dir.lockUI = core.ui.lockUi;
             dir.code = "0417";
             dir.darkness = core.ui.darkness;
-            dir.darkAlpha = 0.5f;
+            dir.darkAlpha = 0.15f; // era 0.5: somado à luz geral baixa, não dava para ver a caixa nem os puzzles
             dir.emergencyLights = reds.ToArray();
             dir.ambience = rumble;
             dir.hum = hum;
@@ -267,7 +267,10 @@ namespace UltimaLinha.EditorTools
         {
             var luzes = new GameObject("Luzes2D").transform;
             luzes.SetParent(core.world, false);
-            EfeitosBuild.Global(luzes, 0.62f, new Color(0.74f, 0.77f, 0.82f));
+            EfeitosBuild.Global(luzes, 0.9f, new Color(0.78f, 0.8f, 0.84f)); // era 0.62: escuro demais para jogar
+            // uma luz suave que anda com o Kai: o que está perto dele (a caixa, a passarela, as alavancas) sempre aparece
+            Renderizador2D.Luz("Luz2D_Kai", core.player.transform, core.player.transform.position + Vector3.up * 1.2f,
+                UnityEngine.Rendering.Universal.Light2D.LightType.Point, new Color(1f, 0.93f, 0.82f), 0.6f, 5f);
             // as luminárias: uma luz fria embaixo de cada halo, que falha junto com ele
             int i = 0;
             foreach (var t in Tubes)

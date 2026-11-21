@@ -33,6 +33,7 @@ namespace UltimaLinha.Salas
         void Awake()
         {
             Instance = this;
+            InputHelper.FixHint(hint);
             if (group)
             {
                 group.alpha = 0f;

@@ -33,7 +33,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario2SceneBuilder
     {
-        const int BuildVersion = 4; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 5; // aumente para forçar a cena a ser recriada automaticamente
 
         const string ScenePath = "Assets/Scenes/Cenario2.unity";
         const string Art2 = "Assets/Art/Cenario2";
