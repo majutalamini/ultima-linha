@@ -88,6 +88,12 @@ namespace UltimaLinha.Salas
         public List<DialogueLine> soutaPanic = new List<DialogueLine>();
         public List<DialogueLine> fightLines = new List<DialogueLine>();
         public List<DialogueLine> fightWon = new List<DialogueLine>();
+        [Tooltip("O Kai perdeu a briga: o Souta fica com a arma.")]
+        public List<DialogueLine> fightLost = new List<DialogueLine>();
+        [Tooltip("Últimas falas antes do Kai pular, depois de perder a briga.")]
+        public List<DialogueLine> lostLast = new List<DialogueLine>();
+        [Tooltip("Segundos da briga: se a barra não encher a tempo, o Kai perde.")]
+        public float fightSeconds = 7f;
         public List<DialogueLine> pointGun = new List<DialogueLine>();
         public List<DialogueLine> afterShot = new List<DialogueLine>();
         public List<DialogueLine> selfStart = new List<DialogueLine>();
@@ -221,8 +227,13 @@ namespace UltimaLinha.Salas
             yield return SayAndWait(soutaPanic);
             if (player) player.controlEnabled = false;
 
-            // a briga pela arma
+            // a briga pela arma; se o Kai perde, o fim é o dos trilhos
             yield return FightForGun();
+            if (!fightWonByKai)
+            {
+                yield return LostFight();
+                yield break;
+            }
             yield return SayAndWait(fightWon);
             if (player) player.controlEnabled = false;
 
@@ -236,7 +247,8 @@ namespace UltimaLinha.Salas
             }
             FaceKai(-1f);
             if (sfx && cockClip) sfx.PlayOneShot(cockClip);
-            yield return Aim(1f, 0.45f);
+            if (kaiRig) kaiRig.Tocar("mira", true);           // a arma já está na mão dele
+            yield return new WaitForSeconds(0.45f);
             yield return SayAndWait(pointGun);
             if (player) player.controlEnabled = false;
             yield return new WaitForSeconds(0.5f);
@@ -278,18 +290,55 @@ namespace UltimaLinha.Salas
         {
             yield return SayAndWait(selfStart);
             if (player) player.controlEnabled = false;
+            yield return KaiToTracks(selfLast);
+        }
+
+        /// <summary>O Kai perdeu a briga: o Souta o empurra para longe com a arma na mão, e o Kai vai para os trilhos.
+        /// O fim é o mesmo de "Acabar comigo".</summary>
+        IEnumerator LostFight()
+        {
+            if (souta && souta.rig) { souta.rig.facing = 1f; souta.rig.Tocar("arma", true); }
+            if (kaiRig) kaiRig.Soltar();
+            // o Souta se solta e o Kai cambaleia para trás, para perto da beira
+            if (player)
+            {
+                ScriptKai(true);
+                var tr = player.transform;
+                float x0 = tr.position.x, t = 0f;
+                if (sfx && bodyClip) sfx.PlayOneShot(bodyClip, 0.6f);
+                if (cameraFollow) cameraFollow.Shake(0.12f, 0.3f);
+                while (t < 0.35f)
+                {
+                    t += Time.deltaTime;
+                    tr.position = new Vector3(x0 + 1.1f * Mathf.SmoothStep(0f, 1f, t / 0.35f), tr.position.y, 0f);
+                    yield return null;
+                }
+                FaceKai(-1f);
+            }
+            if (souta) yield return WalkTo(souta, (player ? player.transform.position.x : edgeX) - 2.6f, 3f);
+            if (souta && souta.rig) { souta.rig.facing = 1f; souta.rig.Tocar("arma", true); }
+            yield return SayAndWait(fightLost);
+            yield return KaiToTracks(lostLast);
+        }
+
+        /// <summary>O Kai anda até a beira, o trem vem do túnel, ele pula e o trem passa por cima. Depois: preto,
+        /// ambulância e o jornal do fim "Acabar comigo".</summary>
+        IEnumerator KaiToTracks(List<DialogueLine> lastLines)
+        {
+            if (player) player.controlEnabled = false;
 
             // o Kai anda até a beira (passa da parede: daqui em diante é cena)
             ScriptKai(true);
+            if (kaiRig) kaiRig.Soltar();
             yield return WalkKai(edgeX - 0.3f, 1.6f);
             FaceKai(1f);
 
-            // o trem vem do túnel; o Souta e o Ren gritam
+            // o trem vem do túnel; quem sobrou grita
             if (trainRumble) { trainRumble.loop = false; trainRumble.volume = 0.8f; trainRumble.Play(); }
             float brakeEnd = Time.time;
             StartCoroutine(TrainComes(4.5f));
             if (souta && souta.rig) souta.rig.facing = 1f;
-            yield return SayAndWait(selfLast);
+            yield return SayAndWait(lastLines);
             if (player) player.controlEnabled = false;
             yield return new WaitForSeconds(0.4f);
             // a câmera fica parada olhando a beira e o túnel (não acompanha a queda)
@@ -322,10 +371,13 @@ namespace UltimaLinha.Salas
 
         // ------------------------------------------------------------------ a briga pela arma
 
-        /// <summary>O Kai avança no Souta e os dois brigam pela arma. Apertar E (ou Espaço) ganha força; no meio da briga
-        /// a arma dispara para o alto. Se o jogador não apertar, o Kai vence sozinho, mais devagar.</summary>
+        bool fightWonByKai;
+
+        /// <summary>O Kai avança no Souta e os dois brigam pela arma. Apertar E (ou Espaço) ganha força e o Souta puxa
+        /// de volta; no meio da briga a arma dispara. Se a barra não encher em fightSeconds (ou esvaziar), o Kai perde.</summary>
         IEnumerator FightForGun()
         {
+            fightWonByKai = false;
             if (!souta || !player) yield break;
             var srig = souta.rig;
             float sx = souta.transform.position.x;
@@ -339,25 +391,27 @@ namespace UltimaLinha.Salas
             Say(fightLines);
 
             var ui = MashBar("APERTE  E  PARA TOMAR A ARMA");
-            float progress = 0f, t = 0f;
+            float progress = 0.3f, t = 0f;
             bool fired = false;
             float kaiBase = player.transform.position.x, soutaBase = souta.transform.position.x;
             float nextStruggle = 0f;
+            bool lost = false;
             while (progress < 1f)
             {
-                t += Time.deltaTime;
-                if (!DialogueBox.IsBusy && InputHelper.AdvancePressed()) progress += 0.085f;
-                progress += (t > 6f ? 0.18f : 0.015f) * Time.deltaTime;   // sozinho ele também vence, devagar
-                progress = Mathf.Clamp01(progress - 0.06f * Time.deltaTime);
+                if (!DialogueBox.IsBusy) t += Time.deltaTime;
+                if (!DialogueBox.IsBusy && InputHelper.AdvancePressed()) progress += 0.075f;
+                if (!DialogueBox.IsBusy) progress -= 0.12f * Time.deltaTime;   // o Souta puxa de volta
+                progress = Mathf.Clamp01(progress);
+                if (progress <= 0f || t >= fightSeconds) { lost = true; break; }
                 // os dois se empurram para lá e para cá
                 float sway = Mathf.Sin(t * 13f) * 0.07f + Mathf.Sin(t * 5.3f) * 0.12f;
                 player.transform.position = new Vector3(kaiBase + sway, player.transform.position.y, 0f);
                 souta.transform.position = new Vector3(soutaBase + sway, souta.transform.position.y, 0f);
                 if (srig) srig.facing = 1f;
                 if (kaiRig) kaiRig.facing = -1f;
-                if (Time.time >= nextStruggle && sfx && struggleClip) { sfx.PlayOneShot(struggleClip, 0.7f); nextStruggle = Time.time + struggleClip.length * 0.9f; }
+                if (Time.time >= nextStruggle && sfx && struggleClip) { sfx.PlayOneShot(struggleClip, 1f); nextStruggle = Time.time + struggleClip.length * 0.9f; }
                 if (Time.frameCount % 15 == 0 && cameraFollow) cameraFollow.Shake(0.02f + 0.03f * progress, 0.2f);
-                if (!fired && progress > 0.45f)
+                if (!fired && (progress > 0.6f || t > fightSeconds * 0.5f))
                 {
                     // a arma dispara no meio da briga
                     fired = true;
@@ -375,12 +429,19 @@ namespace UltimaLinha.Salas
                 yield return null;
             }
             if (ui.root) Destroy(ui.root);
-            // o Kai arranca a arma e o Souta é jogado para trás
+            if (lost)
+            {
+                player.transform.position = new Vector3(kaiBase, player.transform.position.y, 0f);
+                souta.transform.position = new Vector3(soutaBase, souta.transform.position.y, 0f);
+                yield break;                                   // LostFight continua a cena
+            }
+            fightWonByKai = true;
+            // o Kai arranca a arma na hora e o Souta é jogado para trás
             if (sfx && gunDropClip) sfx.PlayOneShot(gunDropClip);
             if (sfx && bodyClip) sfx.PlayOneShot(bodyClip, 0.6f);
             if (cameraFollow) cameraFollow.Shake(0.12f, 0.3f);
             if (srig) srig.Soltar();
-            if (kaiRig) kaiRig.Tocar("aponta", true);
+            if (kaiRig) kaiRig.Tocar("mira", true);          // a arma já fica na mão dele
             float k = 0f;
             while (k < 0.25f)
             {
@@ -695,14 +756,16 @@ namespace UltimaLinha.Salas
             }
         }
 
+        /// <summary>A sirene toca só no começo, no escuro, e some quando o jornal aparece.</summary>
         IEnumerator Siren(AudioClip clip)
         {
             if (!siren || !clip) yield break;
             siren.clip = clip;
             siren.loop = false;
-            siren.volume = 0.9f;
+            siren.volume = 0.8f;
             siren.Play();
-            yield return new WaitForSeconds(Mathf.Min(6.5f, clip.length * 0.6f));
+            yield return new WaitForSeconds(Mathf.Min(4.5f, clip.length * 0.5f));
+            StartCoroutine(FadeAudio(siren, 0f, 1.2f));
         }
 
         IEnumerator ShowNews(string channel, string headline, string body, string ticker, Sprite photo, string caption)

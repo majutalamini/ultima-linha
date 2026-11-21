@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 10; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 11; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
@@ -241,6 +241,14 @@ namespace UltimaLinha.EditorTools
                 ("souta", "Fica longe de mim! Para, Kai! Eu atiro!"));
             dir.fightLines = Lines(("kai", "<i>Ele não vai atirar. Não em mim.</i>"));
             dir.fightWon = Lines(("souta", "Me solta! Kai, me solta!"));
+            // se o Kai perde a briga: o Souta fica com a arma e o Kai vai para os trilhos (mesmo fim de "Acabar comigo")
+            dir.fightLost = Lines(
+                ("souta", "Para trás! Para trás, Kai!"),
+                ("souta", "Acabou. Eu não vou deixar você machucar mais ninguém."),
+                ("kai", "<i>...Ele tem razão. Acabou.</i>"));
+            dir.lostLast = Lines(
+                ("souta", "Kai? Kai, sai daí! O trem!"),
+                ("kai", "<i>Desculpa, Ren.</i>"));
             dir.pointGun = Lines(
                 ("souta", "Kai, abaixa isso. Sou eu. Sou eu, Kai."),
                 ("kai", "Eu sei."));
@@ -301,8 +309,8 @@ namespace UltimaLinha.EditorTools
             group.interactable = false;
             var ui = rt.gameObject.AddComponent<ChoiceUI>();
 
-            var tintRt = Stretch("TomAzul", rt);
-            Img(tintRt, new Color(0.03f, 0.1f, 0.2f, 0.32f));
+            var tintRt = Stretch("TomVermelho", rt);
+            Img(tintRt, new Color(0.2f, 0.02f, 0.02f, 0.32f));
             var tint = tintRt.gameObject.AddComponent<CanvasGroup>();
             tint.alpha = 0f;
             tint.blocksRaycasts = false;
@@ -315,7 +323,7 @@ namespace UltimaLinha.EditorTools
             list.pivot = new Vector2(0f, 0.5f);
             list.sizeDelta = new Vector2(width, count * rowH + (count - 1) * rowGap);
 
-            var title = Label("Titulo", list, "", fonts.sans, 16, new Color(0.6f, 0.8f, 1f, 0.7f), 0, -34, width, 24);
+            var title = Label("Titulo", list, "", fonts.sans, 16, new Color(1f, 0.7f, 0.65f, 0.7f), 0, -34, width, 24);
             title.characterSpacing = 18;
 
             var rows = new RectTransform[count];
@@ -330,15 +338,15 @@ namespace UltimaLinha.EditorTools
                 row.gameObject.AddComponent<CanvasGroup>();
                 rows[i] = row;
 
-                bars[i] = Img(TopLeft("Faixa", row, 0, 4, width - 60, rowH - 8), new Color(0.02f, 0.04f, 0.07f, 0.32f));
+                bars[i] = Img(TopLeft("Faixa", row, 0, 4, width - 60, rowH - 8), new Color(0.08f, 0.02f, 0.02f, 0.32f));
                 bars[i].raycastTarget = true;
 
                 // sem os ícones do controle de PlayStation: só o texto, com o traço embaixo da escolhida
-                var label = Label("Texto", row, "", fonts.sans, 30, new Color(0.82f, 0.88f, 0.94f, 0.62f), 24, 11, width - 90, 40);
+                var label = Label("Texto", row, "", fonts.sans, 30, new Color(0.95f, 0.86f, 0.84f, 0.62f), 24, 11, width - 90, 40);
                 label.characterSpacing = 12;
                 labels[i] = label;
 
-                var line = Img(TopLeft("Traco", row, 74, rowH - 13, 300, 2), new Color(0.38f, 0.75f, 1f, 1f));
+                var line = Img(TopLeft("Traco", row, 74, rowH - 13, 300, 2), new Color(1f, 0.3f, 0.26f, 1f));
                 line.rectTransform.localScale = new Vector3(0f, 1f, 1f);
                 lines[i] = line;
 
@@ -348,7 +356,7 @@ namespace UltimaLinha.EditorTools
                 btn.navigation = new Navigation { mode = Navigation.Mode.None };
                 buttons[i] = btn;
             }
-            var help = Label("Ajuda", list, "↑ ↓  ESCOLHER    ·    E  CONFIRMAR", fonts.sans, 14, new Color(0.75f, 0.85f, 0.95f, 1f),
+            var help = Label("Ajuda", list, "↑ ↓  ESCOLHER    ·    E  CONFIRMAR", fonts.sans, 14, new Color(0.95f, 0.82f, 0.8f, 1f),
                 0, count * (rowH + rowGap) + 6, width, 22);
             help.characterSpacing = 10;
             help.alpha = 0f;

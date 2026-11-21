@@ -3,7 +3,7 @@ mais o som gosmento enviado para o sangue (Ferramentas/Cenario5/origem/sangue_go
 
 - c7_queda_vala    o Ren batendo no fundo da vala: baque surdo, ossos estalando, cascalho e o úmido do corpo
 - c7_esmagamento   o trem passando por cima do Kai: pancada de metal, ossos sendo triturados, o úmido e o freio gritando
-- c7_luta          a briga pela arma: roupa raspando, sapatos arrastando, corpos se chocando
+- c7_luta          a briga pela arma: o som enviado (origem/luta_objeto_quebrando.mp3), convertido para wav
 Grava direto em Assets/Audio/Salas. Uso: python Ferramentas/Cenario7/sons_c7.py"""
 import os
 import sys
@@ -112,6 +112,17 @@ def c7_luta():
     return lp(buf, 6000)
 
 
+def luta_enviada():
+    """O som da briga escolhido pela Maria Júlia (mp3), em mono 44,1 kHz."""
+    import subprocess
+    bruto = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", os.path.join(AQUI, "origem", "luta_objeto_quebrando.mp3"),
+                            "-ac", "1", "-ar", str(SR), "-f", "s16le", "-"], capture_output=True, check=True).stdout
+    x = np.frombuffer(bruto, np.int16).astype(float) / 32768
+    n = int(0.03 * SR)
+    x[-n:] *= np.linspace(1, 0, n)
+    return x
+
+
 def grava(nome, x, ganho=0.85):
     x = np.asarray(x, float)
     x = x / (np.abs(x).max() or 1) * ganho
@@ -126,7 +137,7 @@ def main():
     GOSMA = gosma()
     grava("c7_queda_vala", c7_queda_vala(), 0.8)
     grava("c7_esmagamento", c7_esmagamento(), 0.85)
-    grava("c7_luta", c7_luta(), 0.6)
+    grava("c7_luta", luta_enviada(), 0.6)   # c7_luta() (sintetizado) ficou de reserva
 
 
 if __name__ == "__main__":

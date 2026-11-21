@@ -966,6 +966,8 @@ namespace UltimaLinha.EditorTools
                     Extra("empurra", Clip("final", 0, 2), 7f), Extra("aponta", Clip("final", 3, 5), 4f),
                     // final do Cenário 7: o pulo da beira da plataforma (impulso e queda)
                     Extra("salta", Clip("jump", 0, 3), 9f), Extra("despenca", Clip("jump", 4, 5), 6f),
+                    // já com a arma na mão (tomada na briga): levanta e aponta, sem abaixar para pegar do chão
+                    Extra("mira", Clip("final", 4, 5), 6f),
                 };
             }
             else if (id == "souta")
