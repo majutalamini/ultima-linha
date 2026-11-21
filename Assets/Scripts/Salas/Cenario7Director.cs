@@ -231,7 +231,7 @@ namespace UltimaLinha.Salas
             if (souta)
             {
                 if (souta.rig) souta.rig.Soltar();
-                yield return WalkTo(souta, kaiX - 3.2f, 4.5f);
+                yield return WalkTo(souta, kaiX - 2.6f, 4.5f);
                 if (souta.rig) souta.rig.facing = 1f;
             }
             FaceKai(-1f);
@@ -405,7 +405,7 @@ namespace UltimaLinha.Salas
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
 
-            var fundo = Caixa("Fundo", go.transform, new Vector2(0f, 150f), new Vector2(620f, 22f), new Color(0.05f, 0.05f, 0.06f, 0.85f));
+            var fundo = Caixa("Fundo", go.transform, new Vector2(0f, -250f), new Vector2(620f, 22f), new Color(0.05f, 0.05f, 0.06f, 0.85f));
             var cheio = Caixa("Cheio", fundo, Vector2.zero, new Vector2(612f, 14f), new Color(0.75f, 0.12f, 0.1f, 1f));
             cheio.anchorMin = cheio.anchorMax = new Vector2(0.5f, 0.5f);
             cheio.pivot = new Vector2(0.5f, 0.5f);
@@ -418,9 +418,9 @@ namespace UltimaLinha.Salas
             var txtGo = new GameObject("Texto", typeof(RectTransform));
             var tr = txtGo.GetComponent<RectTransform>();
             tr.SetParent(go.transform, false);
-            tr.anchorMin = tr.anchorMax = new Vector2(0.5f, 0f);
-            tr.pivot = new Vector2(0.5f, 0f);
-            tr.anchoredPosition = new Vector2(0f, 184f);
+            tr.anchorMin = tr.anchorMax = new Vector2(0.5f, 1f);
+            tr.pivot = new Vector2(0.5f, 1f);
+            tr.anchoredPosition = new Vector2(0f, -190f);
             tr.sizeDelta = new Vector2(900f, 50f);
             var label = txtGo.AddComponent<TMPro.TextMeshProUGUI>();
             var modelo = FindAnyObjectByType<TMPro.TMP_Text>();
@@ -437,8 +437,8 @@ namespace UltimaLinha.Salas
         {
             var r = new GameObject(n, typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
             r.SetParent(pai, false);
-            r.anchorMin = r.anchorMax = new Vector2(0.5f, 0f);
-            r.pivot = new Vector2(0.5f, 0f);
+            r.anchorMin = r.anchorMax = new Vector2(0.5f, 1f);   // no alto da tela, longe da caixa de diálogo
+            r.pivot = new Vector2(0.5f, 1f);
             r.anchoredPosition = pos;
             r.sizeDelta = tam;
             r.GetComponent<Image>().color = cor;
@@ -458,7 +458,7 @@ namespace UltimaLinha.Salas
             rig.olhaNaConversa = false;   // morto, não vira mais para quem fala
             if (bloodSpatter)
             {
-                bloodSpatter.transform.position = new Vector3(x0 - 1.3f, floorY + 0.06f, 0f);
+                bloodSpatter.transform.position = new Vector3(x0 - 1.0f, floorY + 0.06f, 0f);
                 bloodSpatter.gameObject.SetActive(true);
             }
             // cambaleia e se joga para trás (para longe do Kai)
@@ -468,7 +468,7 @@ namespace UltimaLinha.Salas
             while (t < dur)
             {
                 t += Time.deltaTime;
-                tr.position = new Vector3(x0 - 1.1f * Mathf.SmoothStep(0f, 1f, t / dur), tr.position.y, 0f);
+                tr.position = new Vector3(x0 - 0.7f * Mathf.SmoothStep(0f, 1f, t / dur), tr.position.y, 0f);
                 yield return null;
             }
             // estendido de costas: cabeça para longe do Kai

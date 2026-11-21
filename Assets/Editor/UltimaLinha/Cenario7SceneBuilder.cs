@@ -21,7 +21,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario7SceneBuilder
     {
-        const int BuildVersion = 8; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 9; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario7.unity";
         const string Art7 = "Assets/Art/Cenario7";
 
@@ -430,7 +430,7 @@ namespace UltimaLinha.EditorTools
             legenda.textWrappingMode = TextWrappingModes.Normal;
 
             // o texto em duas colunas
-            var col1 = Texto("Coluna1", "", fonts.serif, 22, tinta, 670, 352, 265, 600);
+            var col1 = Texto("Coluna1", "", fonts.serif, 22, tinta, 670, 352, 265, 330);
             var col2 = Texto("Coluna2", "", fonts.serif, 22, tinta, 955, 352, 265, 600);
             foreach (var c in new[] { col1, col2 })
             {
@@ -438,7 +438,7 @@ namespace UltimaLinha.EditorTools
                 c.alignment = TextAlignmentOptions.TopJustified;
                 c.lineSpacing = 4;
             }
-            Linha("FioColunas", 945, 352, 1, 600);
+            Linha("FioColunas", 945, 352, 1, 560);
 
             // quadro no pé da página
             var quadro = TopLeft("Quadro", pagina, 40, 826, 600, 150);
