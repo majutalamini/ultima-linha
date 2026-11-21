@@ -44,7 +44,7 @@ namespace UltimaLinha.Salas
         public Transform train;
         public SpriteRenderer trainLight;
         public float trainY = 0f;
-        public float trainSpeed = 30f;
+        public float trainSpeed = 22f;
         public AudioSource trainSource;
         public AudioClip hornClip, approachClip, hitClip;
         [Tooltip("Luminárias da parede que piscam em vermelho com o alarme.")]
@@ -277,7 +277,7 @@ namespace UltimaLinha.Salas
                 // e então o trem entra correndo
                 bool bateu = false;
                 float depois = 0f;
-                while (depois < 0.22f)
+                while (depois < 0.4f)
                 {
                     train.position += Vector3.right * trainSpeed * Time.deltaTime;
                     if (!bateu && train.position.x >= kx - 0.2f)
