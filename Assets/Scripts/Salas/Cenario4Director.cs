@@ -42,7 +42,7 @@ namespace UltimaLinha.Salas
         [Header("Luz da sala")]
         [Tooltip("Preto por cima da sala: some quando a energia volta.")]
         public CanvasGroup darkness;
-        public float darkAlpha = 0.5f;
+        public float darkAlpha = 0.15f;
         public SpriteRenderer[] emergencyLights = new SpriteRenderer[0];
 
         [Header("Física desta cena")]
