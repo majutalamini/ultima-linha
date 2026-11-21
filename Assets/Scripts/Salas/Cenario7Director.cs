@@ -516,6 +516,13 @@ namespace UltimaLinha.Salas
             if (!player) return;
             player.controlEnabled = false;
             player.enabled = !on;
+            // o corpo físico (com interpolação) reescreveria a posição a cada quadro: desligado, o diretor move o Kai
+            var rb = player.GetComponent<Rigidbody2D>();
+            if (rb)
+            {
+                if (!on) rb.position = player.transform.position;
+                rb.simulated = !on;
+            }
             if (kaiRig)
             {
                 kaiRig.mover = on ? null : player;
