@@ -19,7 +19,7 @@ namespace UltimaLinha.EditorTools
     [InitializeOnLoad]
     public static class Cenario6SceneBuilder
     {
-        const int BuildVersion = 8; // aumente para forçar a cena a ser recriada automaticamente
+        const int BuildVersion = 9; // aumente para forçar a cena a ser recriada automaticamente
         const string ScenePath = "Assets/Scenes/Cenario6.unity";
         const string Art6 = "Assets/Art/Cenario6";
 
@@ -272,12 +272,12 @@ namespace UltimaLinha.EditorTools
             {
                 var pos = new Vector3(X(WallLamps[i]), Y(WallLampY), 0f);
                 var mancha = SpriteObj("LuzVermelha" + (i + 1), root.transform, Spr("brilho"), pos, -90);
-                mancha.color = new Color(1f, 0.1f, 0.06f, 0f);
-                mancha.transform.localScale = Vector3.one * 2.4f;
+                mancha.color = new Color(0.95f, 0.14f, 0.1f, 0f);
+                mancha.transform.localScale = Vector3.one * 1.9f;
                 brilhos.Add(mancha);
                 var nucleo = SpriteObj("LuzVermelhaForte" + (i + 1), root.transform, Spr("brilho"), pos, -89);
-                nucleo.color = new Color(1f, 0.2f, 0.12f, 0f);
-                nucleo.transform.localScale = Vector3.one * 0.7f;
+                nucleo.color = new Color(1f, 0.25f, 0.16f, 0f);
+                nucleo.transform.localScale = Vector3.one * 0.55f;
                 brilhos.Add(nucleo);
                 var vidro = SpriteObj("VidroVermelho" + (i + 1), root.transform, Load(Paineis4a7, "c6_alarme_lampada"), pos, -88);
                 vidro.color = new Color(1f, 1f, 1f, 0f);
@@ -287,7 +287,7 @@ namespace UltimaLinha.EditorTools
             alarme.vidros = vidros.ToArray();
             alarme.brilhos = brilhos.ToArray();
             alarme.periodo = 1.1f;
-            alarme.brilhoMax = 0.55f;
+            alarme.brilhoMax = 0.32f; // só tinge a parede em volta da luminária
             return alarme;
         }
 
@@ -302,8 +302,8 @@ namespace UltimaLinha.EditorTools
             body.transform.localPosition = Vector3.zero;
             body.color = new Color(0.85f, 0.83f, 0.85f, 1f);
             var farol = SpriteObj("Farol", root.transform, Spr("brilho"), Vector3.zero, 41);
-            farol.transform.localPosition = new Vector3(0.2f, 1.6f, 0f);
-            farol.transform.localScale = Vector3.one * 3.2f;
+            farol.transform.localPosition = new Vector3(0.3f, 1.7f, 0f);
+            farol.transform.localScale = Vector3.one * 4.5f;
             farol.color = new Color(1f, 0.95f, 0.8f, 0f);
             root.SetActive(false);
             return root;

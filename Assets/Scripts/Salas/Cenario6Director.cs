@@ -265,7 +265,7 @@ namespace UltimaLinha.Salas
             {
                 // o farol aparece primeiro, na beira esquerda da tela, e cresce
                 train.gameObject.SetActive(true);
-                train.position = new Vector3(camL - 2.4f, trainY, 0f);
+                train.position = new Vector3(camL - 0.7f, trainY, 0f); // só o farol aparece na beira da tela
                 float t = 0f;
                 while (t < 1.1f)
                 {
@@ -304,6 +304,7 @@ namespace UltimaLinha.Salas
             checkpoint = 0;
             remaining = countdownSeconds;
             lastTick = -1;
+            UpdateTimer();
             yield return Respawn(0);
             dying = false;
             Say(timeout);
