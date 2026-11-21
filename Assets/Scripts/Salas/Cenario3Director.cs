@@ -33,6 +33,11 @@ namespace UltimaLinha.Salas
         public Transform portaoGrade;
         public Collider2D portaoBloqueio;
         public float portaoCorre = 2.3f;
+        [Tooltip("O batente do portão (poste e trilha): aberto o portão, passa para a frente dos personagens.")]
+        public SpriteRenderer portaoBatente;
+        public int batenteNaFrente = 30;
+        [Tooltip("O vão do portão: quem passa por dentro escurece (aberto o portão).")]
+        public PassagemEscura portaoPassagem;
         public DigitLockUI lockUI;
         public string codigo = "2350";
         public string armadilha = "0417";
@@ -247,6 +252,7 @@ namespace UltimaLinha.Salas
             yield return null;
             if (player) player.controlEnabled = false;
             if (sfx && portaoClip) sfx.PlayOneShot(portaoClip);
+            PortaoVira();
             if (portaoBloqueio) portaoBloqueio.enabled = false;
             if (portao) portao.available = false;
             if (portaoGrade)
@@ -271,6 +277,7 @@ namespace UltimaLinha.Salas
             if (portaoBloqueio) portaoBloqueio.enabled = false;
             if (portao) portao.available = false;
             if (portaoGrade) portaoGrade.localPosition += Vector3.left * portaoCorre;
+            PortaoVira();
         }
 
         // ---------- Parte 2: moeda e peças ----------
@@ -404,6 +411,17 @@ namespace UltimaLinha.Salas
             yield return SayAndWait(doorUnlocked);
             if (player) player.controlEnabled = true;
             Objetivo();
+        }
+
+        /// <summary>
+        /// Portão aberto, ele vira passagem: o batente vai para a frente dos personagens e o vão escurece quem
+        /// atravessa. Assim se vê que eles entram pela porta, e não passam por fora dela. Antes de abrir o batente
+        /// fica atrás, para o Kai usar o teclado no poste.
+        /// </summary>
+        void PortaoVira()
+        {
+            if (portaoBatente) portaoBatente.sortingOrder = batenteNaFrente;
+            if (portaoPassagem) portaoPassagem.ativo = true;
         }
 
         // ---------- Souta e Ren ----------
