@@ -29,11 +29,16 @@ def ambiente_plataforma():
     return loop_fade(x)
 
 def alarme_loop():
-    tt = t(2.0)
-    f = 330 + 90 * (np.sin(2 * np.pi * 0.5 * tt) > 0)
-    x = np.sign(np.sin(2 * np.pi * np.cumsum(f) / SR)) * 0.5 + np.sin(2 * np.pi * np.cumsum(f) / SR)
-    gate = (np.sin(2 * np.pi * 2 * tt) > -0.2).astype(float)
-    return lp(x, 1400) * gate
+    """Alarme do túnel, suave: dois toques por loop (um a cada 1,1 s, no ritmo das luminárias vermelhas da parede),
+    tom de seno com um pouco de harmônico, entrada e saída macias e passa-baixa forte. Nada de onda quadrada."""
+    dur, per = 2.2, 1.1
+    tt = t(dur)
+    fase = np.mod(tt, per)
+    # cada toque sobe um pouquinho de tom (como uma sirene distante) e some
+    f = 440 + 50 * np.clip(fase / 0.5, 0, 1)
+    tom = np.sin(2 * np.pi * np.cumsum(f) / SR) + 0.18 * np.sin(4 * np.pi * np.cumsum(f) / SR)
+    e = np.clip(fase / 0.12, 0, 1) * np.where(fase < 0.45, 1.0, np.exp(-(fase - 0.45) / 0.09))
+    return lp(tom * e, 900)
 
 def metro_ativa():
     buf = np.zeros(int(4.5 * SR)); tt = t(4.5)
@@ -172,9 +177,11 @@ SOUNDS.update(pegajoso_1=pegajoso_1, pegajoso_2=pegajoso_2, pegajoso_3=pegajoso_
               sirene_ambulancia=sirene_ambulancia, sirene_policia=sirene_policia, plantao=plantao, corpo_cai=corpo_cai)
 
 if __name__ == '__main__':
+    # alguns sons ficam bem mais baixos que o resto (o alarme toca o tempo todo: alto, irritava)
+    GANHO = {'alarme_loop': 0.3, 'contagem_tic': 0.45}
     for name, fn in SOUNDS.items():
         x = fn()
-        write(name, x)
+        write(name, x, GANHO.get(name, 0.85))
         # chiado: energia acima de 6 kHz
         from numpy.fft import rfft
         sp = np.abs(rfft(x)) ** 2

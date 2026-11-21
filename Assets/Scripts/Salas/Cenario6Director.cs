@@ -159,11 +159,11 @@ namespace UltimaLinha.Salas
             }
             GameFlags.Set(GameFlags.MissingLever, false);
             yield return new WaitForSeconds(0.4f);
-            if (sfx && activateClip) sfx.PlayOneShot(activateClip);
+            if (sfx && activateClip) sfx.PlayOneShot(activateClip, 0.6f);
             if (cameraFollow) cameraFollow.Shake(0.09f, 3.2f);
             yield return new WaitForSeconds(1.2f);
-            if (alarm) { alarm.loop = true; alarm.volume = 0.35f; alarm.Play(); }
-            if (alarmLights) alarmLights.ligada = true; // as luminárias da parede começam a piscar em vermelho
+            if (alarm) { alarm.loop = true; alarm.volume = 0.3f; alarm.Play(); }
+            if (alarmLights) { alarmLights.som = alarm; alarmLights.ligada = true; } // as luminárias da parede começam a piscar em vermelho
             foreach (var g in gates) if (g) g.enabled = true;
             if (door) door.Unlock();
             yield return new WaitForSeconds(1.6f);
@@ -208,7 +208,7 @@ namespace UltimaLinha.Salas
             if (sec != lastTick)
             {
                 lastTick = sec;
-                if (remaining < 6f && sfx && tickClip) sfx.PlayOneShot(tickClip, 0.6f);
+                if (remaining < 6f && sfx && tickClip) sfx.PlayOneShot(tickClip, 0.5f);
             }
         }
 
@@ -256,8 +256,8 @@ namespace UltimaLinha.Salas
             if (trainSource)
             {
                 trainSource.Stop();
-                if (approachClip) trainSource.PlayOneShot(approachClip, 0.9f);
-                if (hornClip) trainSource.PlayOneShot(hornClip, 1f);
+                if (approachClip) trainSource.PlayOneShot(approachClip, 0.6f);
+                if (hornClip) trainSource.PlayOneShot(hornClip, 0.55f);
             }
             else if (sfx && hornClip) sfx.PlayOneShot(hornClip);
 
@@ -283,8 +283,8 @@ namespace UltimaLinha.Salas
                     if (!bateu && train.position.x >= kx - 0.2f)
                     {
                         bateu = true;
-                        if (sfx && hitClip) sfx.PlayOneShot(hitClip);
-                        if (sfx && crushClip) sfx.PlayOneShot(crushClip, 0.8f);
+                        if (sfx && hitClip) sfx.PlayOneShot(hitClip, 0.7f);
+                        if (sfx && crushClip) sfx.PlayOneShot(crushClip, 0.5f);
                         if (cameraFollow) cameraFollow.Shake(0.3f, 0.6f);
                         if (rig && rig.view) rig.view.enabled = false;
                     }

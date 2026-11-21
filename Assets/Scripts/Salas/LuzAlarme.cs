@@ -16,6 +16,8 @@ namespace UltimaLinha.Salas
         public float periodo = 1.1f;
         [Range(0f, 1f)] public float brilhoMax = 0.5f;
         public bool ligada;
+        [Tooltip("O som do alarme: com ele tocando, a luz pisca junto com os toques (um toque a cada 'periodo').")]
+        public AudioSource som;
 
         float nivel;
 
@@ -27,7 +29,8 @@ namespace UltimaLinha.Salas
             if (ligada)
             {
                 // acende rápido, segura e apaga: metade do ciclo acesa, metade apagada
-                float t = Mathf.Repeat(Time.time / Mathf.Max(0.1f, periodo), 1f);
+                float tempo = som && som.isPlaying ? som.time : Time.time;
+                float t = Mathf.Repeat(tempo / Mathf.Max(0.1f, periodo), 1f);
                 alvo = t < 0.55f ? Mathf.Sin(Mathf.Clamp01(t / 0.55f) * Mathf.PI) : 0f;
                 alvo = Mathf.Clamp01(alvo * 1.4f);
             }
